@@ -44,10 +44,10 @@ int main(int argc, char* argv[]){
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f)); 
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f/600.0f, 0.1f, 100.0f);
         
-        shader.setMat4("model",model);
-        shader.setMat4("view",view);
-        shader.setMat4("projection",projection);
-
+        shader.SetMat4("model",model);
+        shader.SetMat4("view",view);
+        shader.SetMat4("projection",projection);
+         
         //Draw mesh
         mesh.Draw();
         window.SwapBuffers();

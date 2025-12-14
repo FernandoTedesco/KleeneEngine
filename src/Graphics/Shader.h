@@ -10,7 +10,7 @@ class Shader{
     Shader(const std::string& vertexPath, const std::string& fragmentPath);
     void Use();
     
-    void setMat4(const std::string& string, const glm::mat4& matrix);
+    void SetMat4(const std::string& string, const glm::mat4& matrix);
 
     private:
     unsigned int programID;
