@@ -133,6 +133,11 @@ void Shader::CheckCompileErrors(unsigned int ID, const std::string& description,
     
 }
 
+void Shader::SetVec3(const std::string &name, const glm::vec3 &value){
+    GLint location = GetUniformLocation(name);
+    glUniform3f(location, value.x, value.y, value.z);
+}
+
 GLint Shader::GetUniformLocation(const std::string& key){
 
     std::unordered_map<std::string, GLint>::iterator iterator;

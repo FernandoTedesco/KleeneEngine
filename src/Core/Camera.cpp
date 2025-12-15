@@ -37,6 +37,24 @@ glm::mat4 Camera::GetProjectionMatrix(float screenWidth, float screenHeight){
 
 void Camera::ProcessInput(){
 
+    //Mouse update
+    float sensitivity = 0.2f;
+    float xOffset = Input::GetMouseDeltaX() * sensitivity;
+    float yOffset = Input::GetMouseDeltaY() * sensitivity;
+    yaw+=xOffset;
+    pitch-=yOffset;
+
+    if(pitch>89.0f) pitch =89.f;
+    if(pitch<-89.0f)pitch = -89.f;
+    
+    //New Direction
+    glm::vec3 newDirection;
+    newDirection.x = cos(glm::radians(pitch))*cos(glm::radians(yaw));
+    newDirection.y = sin(glm::radians(pitch));
+    newDirection.z = cos(glm::radians(pitch))*sin(glm::radians(yaw));
+    this->directionVector = glm::normalize(newDirection);
+    
+    //Keyboard movement
     if(Input::IsKeyDown(SDL_SCANCODE_W))
     {
         cameraPos += (directionVector * cameraSpeed);

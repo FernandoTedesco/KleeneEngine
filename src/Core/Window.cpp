@@ -57,7 +57,10 @@ bool Window::ProcessEvents(){
     SDL_Event event;
     while(SDL_PollEvent(&event)) 
     {
-     if(event.type == SDL_QUIT || event.type == SDL_KEYDOWN &&  SDL_SCANCODE_ESCAPE) isrunning = false;
+     //Exit program
+     if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) isrunning = false;
+
+     //Inputs
      if(event.type == SDL_KEYDOWN)
      { 
         Input::keys[event.key.keysym.scancode] = true;
@@ -65,6 +68,12 @@ bool Window::ProcessEvents(){
      if(event.type == SDL_KEYUP)
      {     
         Input::keys[event.key.keysym.scancode] = false;
+     }
+     if(event.type == SDL_MOUSEMOTION)
+     {
+        int mouseDeltaX = event.motion.xrel;
+        int mouseDeltaY = event.motion.yrel;
+        Input::UpdateMouseDelta((float)mouseDeltaX,(float)mouseDeltaY);
      }
 
     }
