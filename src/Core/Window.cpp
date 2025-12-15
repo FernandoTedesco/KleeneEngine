@@ -3,7 +3,7 @@
 #include "Window.h"
 #include <iostream>
 #include <exception>
-
+#include "Input.h"
 
 Window::Window(){
     //SDL initialization
@@ -52,10 +52,18 @@ void Window::SwapBuffers(){
 
 bool Window::ProcessEvents(){
     bool isrunning = true;
-    SDL_Event e;
-    while(SDL_PollEvent(&e)) 
+    SDL_Event event;
+    while(SDL_PollEvent(&event)) 
     {
-     if(e.type == SDL_QUIT) isrunning = false;
+     if(event.type == SDL_QUIT) isrunning = false;
+     if(event.type == SDL_KEYDOWN)
+     { 
+        Input::keys[event.key.keysym.scancode] = true;
+     }
+     if(event.type == SDL_KEYUP)
+     {     
+        Input::keys[event.key.keysym.scancode] = false;
+     }
 
     }
 
@@ -63,7 +71,7 @@ bool Window::ProcessEvents(){
 }
 
 int Window::GetWidth(){
-    int height;
+
     int width;
     SDL_GetWindowSize(window, &width,nullptr);
     return width;
@@ -72,7 +80,6 @@ int Window::GetWidth(){
 int Window::GetHeight(){
 
     int height;
-    int width;
     SDL_GetWindowSize(window, nullptr, &height);
     return height;
 }
