@@ -31,6 +31,8 @@ Window::Window(){
         throw std::runtime_error("FATAL: SDL window has failed to be created");
     }
 
+    //Fix mouse position
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     //SDL Context building and GLL Loader Check
     glContext = SDL_GL_CreateContext(this->window); 
 
@@ -55,7 +57,7 @@ bool Window::ProcessEvents(){
     SDL_Event event;
     while(SDL_PollEvent(&event)) 
     {
-     if(event.type == SDL_QUIT) isrunning = false;
+     if(event.type == SDL_QUIT || event.type == SDL_KEYDOWN &&  SDL_SCANCODE_ESCAPE) isrunning = false;
      if(event.type == SDL_KEYDOWN)
      { 
         Input::keys[event.key.keysym.scancode] = true;
