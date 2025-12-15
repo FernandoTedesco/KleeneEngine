@@ -10,7 +10,7 @@ class Camera{
     Camera();
     void ProcessInput();
     glm::mat4 GetViewMatrix();
-    glm::mat4 GetProjectionMatrix();
+    glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
 
     private:
     glm::mat4 cameraViewMatrix;
@@ -19,6 +19,7 @@ class Camera{
     glm::vec3 cameraPos;
     glm::vec3 directionVector;
     glm::vec3 upVector;
+    glm::vec3 rightVector;
 
     //Camera parameters
     float fov; 
