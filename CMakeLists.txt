@@ -10,5 +10,5 @@ include_directories(${CMAKE_SOURCE_DIR}/deps/SDL2/include)
 
 link_directories(${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64)
 
-add_executable(KleeneRuntime src/main.cpp src/glad.c src/Graphics/Shader.cpp src/Graphics/Mesh.cpp src/Core/Window.cpp src/Resources/ResourceManager.cpp)
+add_executable(KleeneRuntime src/main.cpp src/glad.c src/Graphics/Shader.cpp src/Graphics/Mesh.cpp src/Core/Window.cpp src/Resources/ResourceManager.cpp src/Core/Camera.cpp)
 target_link_libraries(KleeneRuntime PRIVATE SDL2 SDL2main shell32) 

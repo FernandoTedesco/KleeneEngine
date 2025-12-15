@@ -50,7 +50,7 @@ void Window::SwapBuffers(){
 
 }
 
-bool Window::processEvents(){
+bool Window::ProcessEvents(){
     bool isrunning = true;
     SDL_Event e;
     while(SDL_PollEvent(&e)) 
@@ -62,6 +62,21 @@ bool Window::processEvents(){
     return(isrunning);
 }
 
+int Window::GetWidth(){
+    int height;
+    int width;
+    SDL_GetWindowSize(window, &width,nullptr);
+    return width;
+}
+
+int Window::GetHeight(){
+
+    int height;
+    int width;
+    SDL_GetWindowSize(window, nullptr, &height);
+    return height;
+}
+
 
 
 Window::~Window()
@@ -71,7 +86,7 @@ Window::~Window()
     SDL_Quit();
 }
     
-   
+
 
    
    

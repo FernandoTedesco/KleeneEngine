@@ -22,7 +22,7 @@ int main(int argc, char* argv[]){
    mesh.SetupMesh();
 
    glEnable(GL_DEPTH_TEST);
-
+   
    //Main Loop
    bool isrunning = true;
      while(isrunning)

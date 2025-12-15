@@ -6,8 +6,10 @@ class Window{
     public:
     Window();
     ~Window();
+    int GetWidth();
+    int GetHeight();
     void SwapBuffers();
-    bool processEvents();
+    bool ProcessEvents();
     private:
     SDL_Window* window;
     SDL_GLContext glContext;
