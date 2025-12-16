@@ -61,14 +61,6 @@ bool Window::ProcessEvents(){
      if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) isrunning = false;
 
      //Inputs
-     if(event.type == SDL_KEYDOWN)
-     { 
-        Input::keys[event.key.keysym.scancode] = true;
-     }
-     if(event.type == SDL_KEYUP)
-     {     
-        Input::keys[event.key.keysym.scancode] = false;
-     }
      if(event.type == SDL_MOUSEMOTION)
      {
         int mouseDeltaX = event.motion.xrel;

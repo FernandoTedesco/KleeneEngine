@@ -1,7 +1,6 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 #include <glm/glm.hpp>
-#include <SDL.h>
 #include "Input.h"
 
 class Camera{
@@ -22,10 +21,11 @@ class Camera{
     glm::vec3 rightVector;
 
     //Camera parameters
-    float fov; 
+    
     float yaw; //horizontal rotation XZ
     float pitch; //vertical rotation YZ
-    float cameraSpeed;
+    const float fov = 90; 
+    const float cameraSpeed = 0.05f;
 };
 
 

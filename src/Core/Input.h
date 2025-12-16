@@ -1,7 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
-#include "SDL.h"
-
+#pragma once
+#include <map>
 class Input{
 
     public:
@@ -9,12 +7,16 @@ class Input{
     Input() = delete;
 
     //Keyboard
-    static bool keys[SDL_NUM_SCANCODES];
-    static bool IsKeyDown(SDL_Scancode key);
+    enum engineKeyCode{
+        W_KEY,
+        S_KEY,
+        A_KEY,
+        D_KEY
 
-    //Mouse
-    //static float GetMouseX();
-    //static float GetMouseY();
+    };
+    
+    static bool IsKeyDown(engineKeyCode key);
+
     static float GetMouseDeltaX();
     static float GetMouseDeltaY();
 
@@ -31,4 +33,3 @@ class Input{
 
 
 };
-#endif

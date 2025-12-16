@@ -1,6 +1,5 @@
-#include <SDL.h>
+
 #include <glm/glm.hpp>
-#include "Window.h"
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -17,10 +16,6 @@ Camera::Camera(){
     upVector = glm::vec3(0,1.0f,0);
     yaw = -90;
     pitch = 0.0f;
-    fov = 90;
-    cameraSpeed = 0.05f;
-    
-
 
 }
 
@@ -55,22 +50,22 @@ void Camera::ProcessInput(){
     this->directionVector = glm::normalize(newDirection);
     
     //Keyboard movement
-    if(Input::IsKeyDown(SDL_SCANCODE_W))
+    if(Input::IsKeyDown(Input::W_KEY))
     {
         cameraPos += (directionVector * cameraSpeed);
     }
-    if(Input::IsKeyDown(SDL_SCANCODE_S))
+    if(Input::IsKeyDown(Input::S_KEY))
     {
         cameraPos -= (directionVector * cameraSpeed);
     }
-    if(Input::IsKeyDown(SDL_SCANCODE_A))
+    if(Input::IsKeyDown(Input::A_KEY))
     {
-        rightVector = glm::cross(upVector, directionVector);
+        rightVector = glm::normalize(glm::cross(upVector, directionVector));
         cameraPos += (rightVector * cameraSpeed);
     }
-    if(Input::IsKeyDown(SDL_SCANCODE_D))
+    if(Input::IsKeyDown(Input::D_KEY))
     {
-        rightVector = glm::cross(upVector, directionVector);
+        rightVector = glm::normalize(glm::cross(upVector, directionVector));
         cameraPos -= (rightVector * cameraSpeed);
     }
 }

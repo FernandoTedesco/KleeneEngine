@@ -21,7 +21,7 @@ int main(int argc, char* argv[]){
    Shader shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
    Camera camera;
    Mesh mesh;
-   mesh.LoadOBJ((currentPath/"assets/models/pyramid.obj").string());
+   mesh.LoadOBJ((currentPath/"assets/models/cube.obj").string());
    mesh.SetupMesh();
    std::vector<glm::vec3> positions;
    positions.push_back(glm::vec3(0.0f,0.0f,0.0f));
@@ -72,7 +72,6 @@ int main(int argc, char* argv[]){
          model = glm::translate(model, positions[i]);
          model = glm::rotate(model,glm::radians(angle) + (float)SDL_GetTicks()/1000.0f,glm::vec3(0.5f, 1.0f, 0.0f)); 
          shader.SetMat4("model",model);
-         shader.SetVec3("objectColor", colors[i]);
          mesh.Draw();
         }
         

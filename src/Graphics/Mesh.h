@@ -10,8 +10,10 @@ class Mesh{
     public:
     Mesh();
     struct Vertex{
-        glm::vec3 pos;
-      
+        glm::vec3 position;
+        glm::vec2 textureCoordinates;
+        glm::vec3 normal;
+    
     };
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indexes;
