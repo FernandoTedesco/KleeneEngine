@@ -14,49 +14,17 @@
 Shader::Shader(const char* vertexPath,const char* fragmentPath){
 
     //Path Reading & Shader code build
-    std::string rawVertexCode;
-    std::string rawFragmentCode;
+    std::string vertexStringCode = LoadShaderSource(vertexPath);
+    std::string fragmentStringCode = LoadShaderSource(fragmentPath);
 
-    
-    const char* vertexCode;
-    const char* fragmentCode;
-
-    std::ifstream vertexFile;
-    std::ifstream fragmentFile;
-    
-    std::stringstream vertexStream;
-    std::stringstream fragmentStream;
-
-    vertexFile.exceptions(std::ifstream::badbit|std::ifstream::failbit);
-    fragmentFile.exceptions(std::ifstream::badbit|std::ifstream::failbit);
-    
-    try{
-        vertexFile.open(vertexPath);
-        vertexStream << vertexFile.rdbuf();
-        vertexFile.close();
-
-        fragmentFile.open(fragmentPath);
-        fragmentStream << fragmentFile.rdbuf();
-        fragmentFile.close();
-    }
-    catch(std::ifstream::failure& e){
-        std::cout<<"ERROR::SHADER::FILE_OPENING_FAIL"<<std::endl;
-        std::cout<<"System log:"<< e.what()<<std::endl;
-        std::cout<<"Tried to open"<< vertexPath << "or" << fragmentPath<<" but failed" <<std::endl;
-        throw std::runtime_error("FATAL: Shader Source File could not be found");
-    }
-    
-    rawVertexCode = vertexStream.str();
-    rawFragmentCode = fragmentStream.str();
-
-    vertexCode = rawVertexCode.c_str();
-    fragmentCode = rawFragmentCode.c_str();
+    const char* vertexCode = vertexStringCode.c_str();
+    const char* fragmentCode = fragmentStringCode.c_str();
 
     //Shader compiling
     unsigned int vertexID = glCreateShader(GL_VERTEX_SHADER);
     unsigned int fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
 
-    glShaderSource(vertexID, 1, &vertexCode, NULL);
+    glShaderSource(vertexID, 1,&vertexCode, NULL);
     glShaderSource(fragmentID, 1, &fragmentCode, NULL);
 
     glCompileShader(vertexID);
@@ -132,10 +100,50 @@ void Shader::CheckCompileErrors(unsigned int ID, const std::string& description,
     
     
 }
+std::string Shader::LoadShaderSource(const std::string& path){
+
+    
+   
+
+    std::string rawShaderCode;
+    
+
+    std::ifstream shaderFile;
+    std::stringstream shaderStream;
+    
+
+    shaderFile.exceptions(std::ifstream::badbit|std::ifstream::failbit);
+    
+    
+    try{
+        shaderFile.open(path);
+        shaderStream << shaderFile.rdbuf();
+        shaderFile.close();
+
+    }
+    catch(std::ifstream::failure& e){
+        std::cout<<"ERROR::SHADER::FILE_OPENING_FAIL"<<std::endl;
+        std::cout<<"System log:"<< e.what()<<std::endl;
+        std::cout<<"Tried to open"<< path << " but failed" <<std::endl;
+        throw std::runtime_error("FATAL: Shader Source File could not be found");
+    }
+    
+    rawShaderCode = shaderStream.str();
+    return(rawShaderCode);
+
+
+}
 
 void Shader::SetVec3(const std::string &name, const glm::vec3 &value){
     GLint location = GetUniformLocation(name);
     glUniform3f(location, value.x, value.y, value.z);
+}
+
+void Shader::SetInt(const std::string &name, int value){
+
+    GLint location = GetUniformLocation(name);
+    glUniform1i(location, value);
+
 }
 
 GLint Shader::GetUniformLocation(const std::string& key){
@@ -162,3 +170,4 @@ GLint Shader::GetUniformLocation(const std::string& key){
 
     }
 }
+

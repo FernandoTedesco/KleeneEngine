@@ -3,7 +3,8 @@ out vec4 FragColor;
 in vec2 textureCoordinate;
 in vec3 normalVector;
 uniform vec3 objectColor;
+uniform sampler2D texture1;
 void main()
 {
-    FragColor = vec4(normalVector, 1.0f);
+    FragColor = texture(texture1, textureCoordinate * 30);
 }

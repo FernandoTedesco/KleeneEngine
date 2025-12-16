@@ -1,5 +1,4 @@
-#ifndef WINDOW_H
-#define WINDOW_H
+#pragma once
 #include <SDL.h>
 
 class Window{
@@ -18,4 +17,3 @@ class Window{
 
 };
 
-#endif

@@ -11,7 +11,7 @@ Camera::Camera(){
     
     
 
-    cameraPos = glm::vec3(0,0,3.0f);
+    cameraPos = glm::vec3(0,10.0f,3.0f);
     directionVector = glm::vec3(0,0,-1.0f);
     upVector = glm::vec3(0,1.0f,0);
     yaw = -90;

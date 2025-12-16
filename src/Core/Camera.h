@@ -1,5 +1,4 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 #include <glm/glm.hpp>
 #include "Input.h"
 
@@ -27,6 +26,3 @@ class Camera{
     const float fov = 90; 
     const float cameraSpeed = 0.05f;
 };
-
-
-#endif

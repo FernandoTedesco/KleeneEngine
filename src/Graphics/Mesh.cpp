@@ -59,11 +59,10 @@ bool Mesh::LoadOBJ(const std::string& filepath)
 
     std::ifstream objFile;
     
-    unsigned int index1,index2,index3;
-    std::string prefix;
+    
 
     
-    std::vector<unsigned int> indexContainer;
+    
 
     std::vector<glm::vec3> positionContainer;
     std::vector<glm::vec2> textureCoordinateContainer;
@@ -79,6 +78,7 @@ bool Mesh::LoadOBJ(const std::string& filepath)
      {
         
         std::stringstream objStream(line);
+        std::string prefix;
         objStream >> prefix;
 
         if(prefix == "v")
@@ -99,7 +99,6 @@ bool Mesh::LoadOBJ(const std::string& filepath)
             glm::vec2 uv;
             objStream >> uv.x;
             objStream >> uv.y;
-        
             textureCoordinateContainer.push_back(uv);
             
             
@@ -115,6 +114,7 @@ bool Mesh::LoadOBJ(const std::string& filepath)
         }
         else if(prefix == "f")
         {
+
           //Main unifier of mesh data
           unsigned int posIndex, uvIndex, normalIndex;
           char slash;

@@ -4,7 +4,6 @@
 
 std::filesystem::path ResourceManager::FolderFinder(const std::string& foldername)
 {
- 
   std::filesystem::path currentPath;
   currentPath = std::filesystem::current_path();
   
@@ -16,13 +15,11 @@ std::filesystem::path ResourceManager::FolderFinder(const std::string& foldernam
 
     return(currentPath);
    }
-   else if (currentPath == currentPath.parent_path())
-   {
+   else if (currentPath == currentPath.parent_path()){
     return std::filesystem::path();
-    
    }
-   else
-   {
+   
+   else{
     currentPath = currentPath.parent_path();
    }
      

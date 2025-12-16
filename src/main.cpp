@@ -1,3 +1,6 @@
+
+#include "StbImage/stb_image.h"
+
 #include <glad/glad.h>
 #include <iostream>
 #include <SDL.h>
@@ -11,7 +14,7 @@
 #include "Resources/ResourceManager.h"
 #include "Core/Camera.h"
 #include <vector>
-
+#include "Resources/Texture.h"
 int main(int argc, char* argv[]){
 
    //Assets Folder Finder
@@ -21,18 +24,19 @@ int main(int argc, char* argv[]){
    Shader shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
    Camera camera;
    Mesh mesh;
-   mesh.LoadOBJ((currentPath/"assets/models/cube.obj").string());
+   mesh.LoadOBJ((currentPath/"assets/models/plane.obj").string());
    mesh.SetupMesh();
+   Texture texture1;
+   texture1.LoadTexture(currentPath/"assets/textures/testgrass.jpg");
+   shader.Use();
+   shader.SetInt("texture1", 0);
+
    std::vector<glm::vec3> positions;
    positions.push_back(glm::vec3(0.0f,0.0f,0.0f));
-   positions.push_back(glm::vec3(2.0f,2.0f,-1.0f));
-   positions.push_back(glm::vec3(3.0f,5.0f,5.0f));
-   positions.push_back(glm::vec3(10.0f,7.0f,10.0f));
+   
    std::vector<glm::vec3> colors;
    colors.push_back(glm::vec3(0.4,0.4,1));
-   colors.push_back(glm::vec3(0.2,0.8,0.4));
-   colors.push_back(glm::vec3(0.5,0.5,0.1));
-   colors.push_back(glm::vec3(0.8,0.4,0.4));
+   
 
    glEnable(GL_DEPTH_TEST);
    //Main Loop
@@ -67,11 +71,11 @@ int main(int argc, char* argv[]){
         //Draw mesh
         for(unsigned int i=0; i<positions.size(); i++)
         {
-         float angle = 20.0f * i;
+         
          glm::mat4 model = glm::mat4(1.0f); 
-         model = glm::translate(model, positions[i]);
-         model = glm::rotate(model,glm::radians(angle) + (float)SDL_GetTicks()/1000.0f,glm::vec3(0.5f, 1.0f, 0.0f)); 
+         
          shader.SetMat4("model",model);
+         texture1.Use(0);
          mesh.Draw();
         }
         

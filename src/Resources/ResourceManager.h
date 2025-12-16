@@ -1,5 +1,4 @@
-#ifndef RESOURCE_MANAGER_H
-#define RESOURCE_MANAGER_H
+#pragma once
 #include <string>
 #include <filesystem>
 
@@ -10,5 +9,3 @@ class ResourceManager{
     static std::filesystem::path FolderFinder(const std::string& foldername);
     
 };
-
-#endif

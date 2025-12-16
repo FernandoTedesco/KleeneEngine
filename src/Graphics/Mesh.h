@@ -1,5 +1,4 @@
-#ifndef MESH_H
-#define MESH_H
+#pragma once
 
 #include <vector>
 #include <glm/glm.hpp>
@@ -26,5 +25,3 @@ class Mesh{
     unsigned int VAO, VBO, EBO;
     
 };
-
-#endif
