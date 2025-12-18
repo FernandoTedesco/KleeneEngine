@@ -7,6 +7,7 @@ class Shader{
     public:
     Shader(const char* vertexPath, const char* fragmentPath);
     Shader(const std::string& vertexPath, const std::string& fragmentPath);
+    ~Shader();
     void Use();
     void SetVec3(const std::string &name, const glm::vec3 &value);
     void SetMat4(const std::string& string, const glm::mat4& matrix);

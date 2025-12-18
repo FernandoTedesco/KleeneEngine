@@ -146,3 +146,23 @@ bool Mesh::LoadOBJ(const std::string& filepath)
     
 
 }
+
+Mesh::~Mesh(){
+
+    if(VAO != 0)
+    {
+        glDeleteVertexArrays(1, &VAO);
+        VAO = 0;
+    }
+    if(VBO != 0)
+    {
+        glDeleteBuffers(1, &VBO);
+        VBO = 0;
+    }
+    if(EBO != 0)
+    {
+        glDeleteBuffers(1, &EBO);
+        EBO = 0;
+    }
+
+}

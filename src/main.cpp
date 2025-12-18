@@ -1,6 +1,5 @@
 
 #include "StbImage/stb_image.h"
-
 #include <glad/glad.h>
 #include <iostream>
 #include <SDL.h>
@@ -22,21 +21,25 @@ int main(int argc, char* argv[]){
    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
    //Window, Shader & Test mesh Initialization
    Window window;
+   
    Shader shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
+
    Camera camera;
+
    Mesh mesh;
    mesh.LoadOBJ((currentPath/"assets/models/plane.obj").string());
    mesh.SetupMesh();
+
    Texture texture1;
    texture1.LoadTexture(currentPath/"assets/textures/testgrass.jpg");
+
    shader.Use();
    shader.SetInt("texture1", 0);
 
    std::vector<glm::vec3> positions;
    positions.push_back(glm::vec3(0.0f,0.0f,0.0f));
    
-   std::vector<glm::vec3> colors;
-   colors.push_back(glm::vec3(0.4,0.4,1));
+   
    
 
    glEnable(GL_DEPTH_TEST);

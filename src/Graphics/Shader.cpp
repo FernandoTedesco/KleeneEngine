@@ -163,7 +163,6 @@ GLint Shader::GetUniformLocation(const std::string& key){
         {
          std::cout<<"ERROR::SHADER::UNIFORM_NOT_FOUND"<<std::endl;
          std::cout<<"Could not find Uniform '"<<key<<"' in the shader program:"<<this->programID<<std::endl; 
-         throw std::runtime_error("FATAL: Uniform not found in shader program");
         }
         uniformslocationCache[key] = location;
         return location;
@@ -171,3 +170,7 @@ GLint Shader::GetUniformLocation(const std::string& key){
     }
 }
 
+Shader::~Shader()
+{
+    glDeleteProgram(programID);
+}
