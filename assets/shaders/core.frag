@@ -6,5 +6,5 @@ uniform vec3 objectColor;
 uniform sampler2D texture1;
 void main()
 {
-    FragColor = texture(texture1, textureCoordinate * 30);
+    FragColor = texture(texture1, textureCoordinate * 10);
 }

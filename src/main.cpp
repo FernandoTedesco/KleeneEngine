@@ -13,6 +13,7 @@
 #include "Graphics/Mesh.h"
 #include "Resources/ResourceManager.h"
 #include "Core/Camera.h"
+#include "Core/Input.h"
 #include <vector>
 #include "Resources/Texture.h"
 int main(int argc, char* argv[]){

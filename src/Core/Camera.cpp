@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
-
+#include "Input.h"
 
 
 Camera::Camera(){

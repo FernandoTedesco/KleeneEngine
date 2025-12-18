@@ -1,7 +1,5 @@
 #pragma once
 #include <glm/glm.hpp>
-#include "Input.h"
-
 class Camera{
 
     public:
@@ -9,7 +7,7 @@ class Camera{
     void ProcessInput();
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
-
+    
     private:
     glm::mat4 cameraViewMatrix;
     glm::mat4 cameraProjectionMatrix;
