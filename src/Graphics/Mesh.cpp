@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include <glm/glm.hpp>
-
+#include <filesystem>
 Mesh::Mesh(){
     VAO = 0;
     VBO = 0;
@@ -53,7 +53,7 @@ void Mesh::Draw()
     
 }
 
-bool Mesh::LoadOBJ(const std::string& filepath)
+bool Mesh::LoadOBJ(const std::filesystem::path filePath)
 {
     
 
@@ -69,7 +69,7 @@ bool Mesh::LoadOBJ(const std::string& filepath)
     std::vector<glm::vec3> normalContainer;
     std::string line;
     
-    objFile.open(filepath);
+    objFile.open(filePath.string());
     if(objFile.is_open())
     {
      

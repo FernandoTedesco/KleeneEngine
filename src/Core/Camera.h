@@ -5,10 +5,21 @@ class Camera{
     public:
     Camera();
     void ProcessInput();
+    
+
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
+    static enum cameraMode{
+        FREECAM,
+        SCENE_EDITOR,
+        GAME
+    };
+    void ChangeMode(cameraMode mode);
+    
     
     private:
+    cameraMode cameraMode;
+
     glm::mat4 cameraViewMatrix;
     glm::mat4 cameraProjectionMatrix;
 

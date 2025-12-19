@@ -19,7 +19,7 @@ class Mesh{
     std::vector<unsigned int> indexes;
     void Draw();
     void SetupMesh();
-    bool LoadOBJ(const std::string& filepath);
+    bool LoadOBJ(const std::filesystem::path filePath);
     
 
     private:

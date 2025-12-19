@@ -173,4 +173,5 @@ GLint Shader::GetUniformLocation(const std::string& key){
 Shader::~Shader()
 {
     glDeleteProgram(programID);
+    programID = 0;
 }

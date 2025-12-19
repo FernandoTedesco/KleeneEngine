@@ -14,24 +14,22 @@
 #include "Core/Camera.h"
 #include "Core/Input.h"
 #include <vector>
-#include "Resources/Texture.h"
+#include "Graphics/Texture.h"
+#include "Core/Engine.h"
+
 int main(int argc, char* argv[]){
 
    //Assets Folder Finder
    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-   //Window, Shader & Test mesh Initialization
-   Window window;
+   ResourceManager::CreateMesh("plane",currentPath/"assets/models/plane.obj");
+   ResourceManager::CreateTexture("grass", currentPath/"assets/textures/testgrass.jpg")
    
+   Engine kleeneEngine;
+
    Shader shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
 
-   Camera camera;
+   
 
-   Mesh mesh;
-   mesh.LoadOBJ((currentPath/"assets/models/plane.obj").string());
-   mesh.SetupMesh();
-
-   Texture texture1;
-   texture1.LoadTexture(currentPath/"assets/textures/testgrass.jpg");
 
    shader.Use();
    shader.SetInt("texture1", 0);
@@ -50,8 +48,10 @@ int main(int argc, char* argv[]){
      {
         
         isrunning=window.ProcessEvents();
-        camera.ProcessInput();
-        window.GetHeight();
+        Engine::camera.ProcessInput();
+        
+
+       
         float screenWidth = (float)window.GetWidth();
         float screenHeight = (float)window.GetHeight();
         glm::mat4 viewMatrix = camera.GetViewMatrix();
@@ -83,8 +83,10 @@ int main(int argc, char* argv[]){
          mesh.Draw();
         }
         
-        Input::ResetMouseDelta();
+        
         window.SwapBuffers();
+        Input::ResetMouseDelta();
+        Input::UpdateLastState();
 
      }
 

@@ -11,12 +11,16 @@ class Input{
         W_KEY,
         S_KEY,
         A_KEY,
-        D_KEY
+        D_KEY,
+        F1_KEY,
+        F2_KEY,
+        F3_KEY
 
     };
     
     static bool IsKeyDown(engineKeyCode key);
-
+    static bool IsKeyPressed(engineKeyCode key);
+    static void UpdateLastState();
     static float GetMouseDeltaX();
     static float GetMouseDeltaY();
 
@@ -24,6 +28,8 @@ class Input{
     static void ResetMouseDelta();
 
     private:
+    static Uint8 lastFrameKeys[SDL_NUM_SCANCODES];
+    static const Uint8* keyboardStateIndex;
     static float mouseX;
     static float mouseY;
 
