@@ -46,6 +46,7 @@ Window::Window(){
     }
     SDL_SetRelativeMouseMode(SDL_TRUE);
     glEnable(GL_DEPTH_TEST);
+    std::cout<<"[INIT] Window instance sucessfully!"<<std::endl;
 }
 
 void Window::SwapBuffers(){
@@ -59,7 +60,8 @@ bool Window::ProcessEvents(){
     while(SDL_PollEvent(&event)) 
     {
      //Exit program
-     if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) isrunning = false;
+     if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) 
+     isrunning = false;
 
      //Inputs
      if(event.type == SDL_MOUSEMOTION)

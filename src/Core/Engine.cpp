@@ -8,8 +8,11 @@
 #include "Scenes/SceneLoader.h"
 #include "Resources/ResourceManager.h"
 #include <filesystem>
+#include "Development/Terminal.h"
 Engine::Engine(){ 
 
+    terminal = new Terminal();
+    terminal->WriteArt();
     window = new Window();
     camera = new Camera();
     resourceManager = new ResourceManager();
@@ -47,6 +50,9 @@ void Engine::Run(){
         Input::ResetMouseDelta();
         
     }
+    
+
+    
 
 }
 
@@ -67,6 +73,7 @@ void Engine::SetScene(Scene*newScene){
 
 Engine::~Engine(){
 
+    delete terminal;
     delete camera;
     delete shader;
     delete resourceManager;

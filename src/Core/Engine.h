@@ -5,6 +5,7 @@ class ResourceManager;
 class Scene;
 class Renderer;
 class Shader;
+class Terminal;
 class Engine{
     public:
     Engine();
@@ -23,7 +24,7 @@ class Engine{
     Renderer* renderer;
     ResourceManager* resourceManager;
     Scene* activeScene;
-    
+    Terminal* terminal;
     bool isRunning;
 
 };

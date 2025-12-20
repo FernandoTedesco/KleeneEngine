@@ -44,6 +44,7 @@ Shader::Shader(const char* vertexPath,const char* fragmentPath){
 
     glDeleteShader(vertexID);
     glDeleteShader(fragmentID);
+    std::cout<<"[SUCCESS] Shaders created sucessfully!"<<std::endl;
 
 }
 

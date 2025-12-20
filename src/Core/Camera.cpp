@@ -3,7 +3,7 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include "Input.h"
-
+#include <iostream>
 
 Camera::Camera(){
 
@@ -16,6 +16,7 @@ Camera::Camera(){
     upVector = glm::vec3(0,1.0f,0);
     yaw = -90;
     pitch = 0.0f;
+    std::cout<<"[INIT] Camera instance successfully!"<<std::endl;
 
 }
 
@@ -91,12 +92,12 @@ void Camera::ProcessInput(){
             if(Input::IsKeyDown(Input::A_KEY))
             {
                 
-                cameraPos -= (rightVector * cameraSpeed);
+                cameraPos += (rightVector * cameraSpeed);
             }
             if(Input::IsKeyDown(Input::D_KEY))
             {
                 
-                cameraPos += (rightVector * cameraSpeed);
+                cameraPos -= (rightVector * cameraSpeed);
             }
             break;
         }
@@ -111,6 +112,8 @@ void Camera::ChangeMode(Camera::CameraMode mode){
     {
         case(FREECAM):
         {
+            pitch = -0.0f;
+            yaw = -90.0f;
             //fixed vectors
             directionVector.x = 0;
             directionVector.y = 0;
@@ -128,22 +131,24 @@ void Camera::ChangeMode(Camera::CameraMode mode){
         {
             cameraPos.y = 10;
             Input::SetRelativeMouse(false);
+            //fixed pitch
+            pitch = -80.0f;
+            yaw = -90.0f;
             //Fixed vectors
             //direction aka where the camera is looking
-            directionVector.x = 0;
-            directionVector.y = -1;
-            directionVector.z = 0;
-            //right in editors mode always (1, 0, 0)
-            rightVector.x = 1;
-            rightVector.y = 0;
-            rightVector.z = 0;
+            directionVector.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+            directionVector.y = sin(glm::radians(pitch));
+            directionVector.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+            directionVector = glm::normalize(directionVector);
             //upvector
             upVector.x = 0;
-            upVector.y = 0;
-            upVector.z = -1;
-            //fixed pitch
-            pitch = -60.0f;
-            yaw = -89.0f;
+            upVector.y = 1;
+            upVector.z = 0;
+
+            rightVector = glm::normalize(glm::cross(upVector, directionVector));
+            
+            
+            
             this->cameraMode = SCENE_EDITOR;
             break;
         }
