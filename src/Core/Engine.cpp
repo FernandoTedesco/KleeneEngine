@@ -3,13 +3,23 @@
 #include "Camera.h"
 #include "Input.h"
 #include "Scenes/Scene.h"
+#include "Graphics/Shader.h"
+#include "Graphics/Renderer.h"
+#include "Scenes/SceneLoader.h"
 #include "Resources/ResourceManager.h"
+#include <filesystem>
 Engine::Engine(){ 
 
     window = new Window();
     camera = new Camera();
     resourceManager = new ResourceManager();
-    activeScene = nullptr;
+    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+    shader = new Shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
+    renderer = new Renderer();
+    activeScene = new Scene();
+    SceneLoader sceneLoader;
+    sceneLoader.LoadScene((currentPath/"assets/scenes/test.kleene"), *activeScene);
+    isRunning = true;
 }
 
 void Engine::HandleInput(){
@@ -24,31 +34,43 @@ void Engine::Update()
 
 void Engine::Run(){
 
-    while(isrunning){
+    while(isRunning){
 
-        isrunning = window->ProcessEvents();
+        isRunning = window->ProcessEvents();
         this->HandleInput();
         this->Update();
+        
+        renderer->Render(activeScene, resourceManager, shader, camera, window);
+        
+        
+        
         Input::UpdateLastState();
+        
     }
 
 }
 
-void Engine::SetScene(){
+void Engine::SetScene(Scene*newScene){
+    
     if(activeScene != nullptr)
     {
         delete activeScene;
+        activeScene = newScene;
     }
     else
     {
         activeScene = newScene;
-        activeScene->Init();
     }
+    
+           
 }
 
 Engine::~Engine(){
 
     delete camera;
+    delete shader;
+    delete resourceManager;
+    delete renderer;
     delete window;
 
 

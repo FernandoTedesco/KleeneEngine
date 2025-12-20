@@ -2,59 +2,82 @@
 #include <filesystem>
 #include "Graphics/Mesh.h"
 #include "Graphics/Texture.h"
+#include "StbImage/stb_image.h"
+
 
 ResourceManager::ResourceManager(){
   
 }
-Mesh* ResourceManager::CreateMesh(std::string& name, std::filesystem::path filePath)
+uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::path filePath)
 {
-  std::map<std::string, Mesh*>::iterator iterator;
+  std::map<std::string, uint32_t>::iterator iterator;
   iterator = meshMap.find(name);
   if(iterator == meshMap.end()) 
   {
     Mesh* newMesh = new Mesh();
+    uint32_t id;
+    
     newMesh->LoadOBJ(filePath);
     newMesh->SetupMesh();
-    meshMap[name]=newMesh;
-    return newMesh;
+    meshVector.push_back(newMesh);
+    id = meshVector.size() - 1;
+    meshMap[name]= id;
+    
+    return id;
   }
   else  
   {
     return iterator->second;
   }
   
-};
+}
 
-Mesh* ResourceManager::GetMesh(std::string& name)
+Mesh* ResourceManager::GetMesh(uint32_t id)
 {
-  std::map<std::string, Mesh*>::iterator iterator;
-  iterator = meshMap.find(name);
-  if(iterator == meshMap.end())
+
+  if(id>=meshVector.size())
   {
     return nullptr;
+  }
+  else
+  {
+    return meshVector[id];
+  }
+}
+
+
+Texture* ResourceManager::GetTexture(uint32_t id)
+{
+
+  if(id>=textureVector.size())
+  {
+    return nullptr;
+  }
+  else
+  {
+    return textureVector[id];
+  }
+}
+
+uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem::path filePath)
+{
+  std::map<std::string,uint32_t>::iterator iterator;
+  iterator = textureMap.find(name);
+  if(iterator == textureMap.end())
+  {
+    uint32_t id;
+    Texture* newTexture = new Texture();
+    newTexture->LoadTexture(filePath);
+    textureVector.push_back(newTexture);
+    id = textureVector.size() - 1;
+    textureMap[name] = id;
+    return id;
   }
   else
   {
     return iterator->second;
   }
 }
-
-Texture* ResourceManager::CreateTexture(std::string& name, std::filesystem::path filePath)
-{
-  std::map<std::string,Texture*>::iterator iterator;
-  iterator = textureMap.find(name);
-  if(iterator == textureMap.end())
-  {
-    Texture* newTexture = new Texture();
-    newTexture->LoadTexture(filePath);
-    textureMap[name] = newTexture;
-    return newTexture;
-  }
-  else
-  {
-    return iterator->second;
-  }
-};
 
 std::filesystem::path ResourceManager::FolderFinder(const std::string& foldername)
 {
@@ -82,13 +105,17 @@ std::filesystem::path ResourceManager::FolderFinder(const std::string& foldernam
 
 
 ResourceManager::~ResourceManager(){
-  for(std::pair<const std::string, Mesh*>& meshPair : meshMap)
+  for(size_t i=0;i<meshVector.size();i++)
   {
-    delete meshPair.second;
+    delete meshVector[i];
   }
-  for(std::pair<const std::string, Texture*>& texturePair : textureMap)
+  for(size_t i=0;i<textureVector.size();i++)
   {
-    delete texturePair.second;
+    delete textureVector[i];
   }
-  textureMap.clear();
+
+   meshVector.clear();
+   meshMap.clear();
+   textureVector.clear();
+   textureMap.clear();
 }

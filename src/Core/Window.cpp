@@ -44,7 +44,7 @@ Window::Window(){
         throw std::runtime_error("FATAL: Failed to load OpenGL function adresses");
 
     }
-
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Window::SwapBuffers(){

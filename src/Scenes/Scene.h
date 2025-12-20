@@ -1,10 +1,17 @@
+#pragma once
+#include <vector>
+#include "glm/glm.hpp"
 class Scene{
-
+    friend class SceneLoader;
     public:
-    virtual void Init() = 0;
-    virtual void Update(float deltaTime)=0;
-    virtual void Render()=0;
-    virtual ~Scene(){};
+    Scene(){};
+    std::vector<glm::vec3> scenePositions;
+    std::vector<glm::vec3> sceneScales;
+    std::vector<glm::vec4> sceneRotations;
+    std::vector<uint32_t> sceneMeshes;
+    std::vector<uint32_t> sceneTextures;
+    
+    ~Scene(){};
 
 
 

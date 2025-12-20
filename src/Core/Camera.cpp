@@ -103,9 +103,9 @@ void Camera::ProcessInput(){
    
 }
 
-void Camera::ChangeMode(cameraMode mode){
+void Camera::ChangeMode(Camera::CameraMode mode){
 
-    switch(cameraMode)
+    switch(mode)
     {
         case(FREECAM):
         {
