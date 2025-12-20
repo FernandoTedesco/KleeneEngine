@@ -6,6 +6,7 @@ class Scene;
 class Renderer;
 class Shader;
 class Terminal;
+class Editor;
 class Engine{
     public:
     Engine();
@@ -15,7 +16,7 @@ class Engine{
     void Run();
     
     private:
-    void HandleInput();
+    
     void Update();
 
     Window* window;
@@ -25,6 +26,7 @@ class Engine{
     ResourceManager* resourceManager;
     Scene* activeScene;
     Terminal* terminal;
+    Editor* editor;
     bool isRunning;
 
 };

@@ -9,13 +9,16 @@
 #include "Resources/ResourceManager.h"
 #include <filesystem>
 #include "Development/Terminal.h"
+#include "Development/Editor.h"
 Engine::Engine(){ 
 
     terminal = new Terminal();
     terminal->WriteArt();
     window = new Window();
+    editor = new Editor(window);
     camera = new Camera();
     resourceManager = new ResourceManager();
+
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
     renderer = new Renderer();
@@ -25,9 +28,7 @@ Engine::Engine(){
     isRunning = true;
 }
 
-void Engine::HandleInput(){
-    
-}
+
 
 void Engine::Update()
 {
@@ -39,16 +40,18 @@ void Engine::Run(){
     while(isRunning){
 
         isRunning = window->ProcessEvents();
-        this->HandleInput();
+        editor->BeginFrame();
+        editor->DrawEditorUI();
+        
         this->Update();
         
         renderer->Render(activeScene, resourceManager, shader, camera, window);
-        
-        
+        editor->EndFrame();
+
         
         Input::UpdateLastState();
         Input::ResetMouseDelta();
-        
+        window->SwapBuffers();
     }
     
 
@@ -73,12 +76,13 @@ void Engine::SetScene(Scene*newScene){
 
 Engine::~Engine(){
 
-    delete terminal;
+    delete editor;
     delete camera;
     delete shader;
     delete resourceManager;
     delete renderer;
     delete window;
+    delete terminal;
 
 
 }

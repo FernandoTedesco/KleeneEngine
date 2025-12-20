@@ -48,6 +48,6 @@ void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *sh
             mesh->Draw();
         }
     }
-    window->SwapBuffers();
+    
 }
 

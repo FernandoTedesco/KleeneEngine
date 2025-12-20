@@ -9,7 +9,8 @@ class Window{
     int GetHeight();
     void SwapBuffers();
     bool ProcessEvents();
-    
+    SDL_Window* GetWindow();
+    SDL_GLContext GetglContext();
     private:
     SDL_Window* window;
     SDL_GLContext glContext;

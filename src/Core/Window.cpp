@@ -4,7 +4,8 @@
 #include <iostream>
 #include <exception>
 #include "Input.h"
-
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
 Window::Window(){
     //SDL initialization
     if(SDL_Init(SDL_INIT_VIDEO)<0) 
@@ -46,6 +47,8 @@ Window::Window(){
     }
     SDL_SetRelativeMouseMode(SDL_TRUE);
     glEnable(GL_DEPTH_TEST);
+   
+
     std::cout<<"[INIT] Window instance sucessfully!"<<std::endl;
 }
 
@@ -59,21 +62,30 @@ bool Window::ProcessEvents(){
     SDL_Event event;
     while(SDL_PollEvent(&event)) 
     {
+     ImGui_ImplSDL2_ProcessEvent(&event);
      //Exit program
      if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) 
      isrunning = false;
 
      //Inputs
-     if(event.type == SDL_MOUSEMOTION)
+     
+    if(event.type == SDL_MOUSEMOTION)
+    {
+     if(!ImGui::GetIO().WantCaptureMouse)
      {
         int mouseDeltaX = event.motion.xrel;
         int mouseDeltaY = event.motion.yrel;
         Input::UpdateMouseDelta((float)mouseDeltaX,(float)mouseDeltaY);
      }
+     
+
+     
+        
+    }
+     
 
     }
-
-    return(isrunning);
+   return(isrunning);
 }
 
 int Window::GetWidth(){
@@ -91,7 +103,14 @@ int Window::GetHeight(){
 }
 
 
-
+SDL_Window* Window::GetWindow()
+{
+    return window;
+}
+SDL_GLContext Window::GetglContext()
+{
+    return glContext;
+}
 
 Window::~Window()
 {
