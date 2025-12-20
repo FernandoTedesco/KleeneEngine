@@ -74,3 +74,17 @@ void Input::UpdateLastState()
 {
     memcpy(lastFrameKeys, keyboardStateIndex, SDL_NUM_SCANCODES);
 }
+
+void Input::SetRelativeMouse(bool state)
+{
+    if(state)
+    {
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+    }
+    else
+    {
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+    }
+    
+
+}

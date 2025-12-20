@@ -31,8 +31,8 @@ Window::Window(){
         throw std::runtime_error("FATAL: SDL window has failed to be created");
     }
 
-    //Fix mouse position
-    SDL_SetRelativeMouseMode(SDL_TRUE);
+    
+    
     //SDL Context building and GLL Loader Check
     glContext = SDL_GL_CreateContext(this->window); 
 
@@ -44,6 +44,7 @@ Window::Window(){
         throw std::runtime_error("FATAL: Failed to load OpenGL function adresses");
 
     }
+    SDL_SetRelativeMouseMode(SDL_TRUE);
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -86,6 +87,7 @@ int Window::GetHeight(){
     SDL_GetWindowSize(window, nullptr, &height);
     return height;
 }
+
 
 
 

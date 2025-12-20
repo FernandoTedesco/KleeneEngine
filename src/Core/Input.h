@@ -24,7 +24,7 @@ class Input{
     static void UpdateLastState();
     static float GetMouseDeltaX();
     static float GetMouseDeltaY();
-
+    static void SetRelativeMouse(bool state);
     static void UpdateMouseDelta(float deltaX, float deltaY);
     static void ResetMouseDelta();
 

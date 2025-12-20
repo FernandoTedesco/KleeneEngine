@@ -32,7 +32,9 @@ glm::mat4 Camera::GetProjectionMatrix(float screenWidth, float screenHeight){
 
 void Camera::ProcessInput(){
 
-    //Mouse update
+    if(Input::IsKeyPressed(Input::F1_KEY))this->ChangeMode(FREECAM);
+    if(Input::IsKeyPressed(Input::F2_KEY))this->ChangeMode(SCENE_EDITOR);
+
     switch(cameraMode)
     {
         case(FREECAM):{
@@ -109,22 +111,40 @@ void Camera::ChangeMode(Camera::CameraMode mode){
     {
         case(FREECAM):
         {
+            //fixed vectors
+            directionVector.x = 0;
+            directionVector.y = 0;
+            directionVector.z = -1;
+            
+            upVector.x = 0;
+            upVector.y = 1;
+            upVector.z = 0;
+            Input::SetRelativeMouse(true);
+            this->cameraMode = FREECAM;
+            
             break;
         }
         case(SCENE_EDITOR):
         {
+            cameraPos.y = 10;
+            Input::SetRelativeMouse(false);
             //Fixed vectors
             //direction aka where the camera is looking
             directionVector.x = 0;
-            directionVector.y = -0.95;
+            directionVector.y = -1;
             directionVector.z = 0;
             //right in editors mode always (1, 0, 0)
             rightVector.x = 1;
             rightVector.y = 0;
             rightVector.z = 0;
+            //upvector
+            upVector.x = 0;
+            upVector.y = 0;
+            upVector.z = -1;
             //fixed pitch
-            pitch = -89.0f;
+            pitch = -60.0f;
             yaw = -89.0f;
+            this->cameraMode = SCENE_EDITOR;
             break;
         }
         

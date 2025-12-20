@@ -23,8 +23,7 @@ Engine::Engine(){
 }
 
 void Engine::HandleInput(){
-    if(Input::IsKeyPressed(Input::F1_KEY))camera->ChangeMode(Camera::FREECAM);
-    if(Input::IsKeyPressed(Input::F2_KEY))camera->ChangeMode(Camera::SCENE_EDITOR);
+    
 }
 
 void Engine::Update()
@@ -45,6 +44,7 @@ void Engine::Run(){
         
         
         Input::UpdateLastState();
+        Input::ResetMouseDelta();
         
     }
 

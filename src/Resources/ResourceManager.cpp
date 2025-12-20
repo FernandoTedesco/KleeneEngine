@@ -3,10 +3,12 @@
 #include "Graphics/Mesh.h"
 #include "Graphics/Texture.h"
 #include "StbImage/stb_image.h"
-
+#include "iostream"
 
 ResourceManager::ResourceManager(){
-  
+  std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+  CreateMesh("plane", currentPath/"assets/models/plane.obj");
+  CreateTexture("grass", currentPath/"assets/textures/testgrass.jpg");
 }
 uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::path filePath)
 {
@@ -93,6 +95,7 @@ std::filesystem::path ResourceManager::FolderFinder(const std::string& foldernam
     return(currentPath);
    }
    else if (currentPath == currentPath.parent_path()){
+    std::cout<<"FolderFinder fail"<<std::endl;
     return std::filesystem::path();
    }
    

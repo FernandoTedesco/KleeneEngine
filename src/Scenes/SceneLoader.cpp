@@ -24,6 +24,7 @@ bool SceneLoader::LoadScene(std::filesystem::path filePath, Scene& targetScene)
             sceneStream.read(reinterpret_cast<char*>(&version), 2);
             if(version == 0x0001)
             {
+                std::cout<<"Version pass"<<std::endl;
                 sceneStream.read(reinterpret_cast<char*>(&count),4);
                 targetScene.scenePositions.resize(count);
                 sceneStream.read(reinterpret_cast<char*>(targetScene.scenePositions.data()),count*sizeof(glm::vec3));
@@ -40,6 +41,8 @@ bool SceneLoader::LoadScene(std::filesystem::path filePath, Scene& targetScene)
             }   
             else
             {
+                std::cout<<"Version fail"<<std::endl;
+
                 return false;
             }
         }
