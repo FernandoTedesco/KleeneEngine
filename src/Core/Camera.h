@@ -9,7 +9,7 @@ class Camera{
 
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
-    static enum CameraMode{
+    enum CameraMode{
         FREECAM,
         SCENE_EDITOR,
         GAME

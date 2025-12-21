@@ -23,7 +23,7 @@ void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *sh
     shader->Use();
     int windowHeight = window->GetHeight();
     int windowWidth = window->GetWidth();
-    glm::mat4 projectionMatrix = camera->GetProjectionMatrix(windowWidth, windowHeight);
+    glm::mat4 projectionMatrix = camera->GetProjectionMatrix(float(windowWidth), float(windowHeight));
     glm::mat4 viewMatrix = camera->GetViewMatrix();
     shader->SetMat4("projection",projectionMatrix);
     shader->SetMat4("view",viewMatrix);

@@ -5,7 +5,7 @@
 #include "Scenes/Scene.h"
 #include "Graphics/Shader.h"
 #include "Graphics/Renderer.h"
-#include "Scenes/SceneLoader.h"
+#include "Scenes/SceneManager.h"
 #include "Resources/ResourceManager.h"
 #include <filesystem>
 #include "Development/Terminal.h"
@@ -15,16 +15,19 @@ Engine::Engine(){
     terminal = new Terminal();
     terminal->WriteArt();
     window = new Window();
-    editor = new Editor(window);
+    
     camera = new Camera();
     resourceManager = new ResourceManager();
+    sceneManager = new SceneManager();
+    activeScene = new Scene();
+    editor = new Editor(window, activeScene, sceneManager);
 
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
     renderer = new Renderer();
-    activeScene = new Scene();
-    SceneLoader sceneLoader;
-    sceneLoader.LoadScene((currentPath/"assets/scenes/test.kleene"), *activeScene);
+    
+    
+    sceneManager->LoadScene((currentPath/"assets/scenes/testar.kleene"), *activeScene);
     isRunning = true;
 }
 
@@ -80,6 +83,8 @@ Engine::~Engine(){
     delete camera;
     delete shader;
     delete resourceManager;
+    delete activeScene;
+    delete sceneManager;
     delete renderer;
     delete window;
     delete terminal;

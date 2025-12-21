@@ -7,7 +7,9 @@ class Renderer;
 class Shader;
 class Terminal;
 class Editor;
+class SceneManager;
 class Engine{
+
     public:
     Engine();
     ~Engine();
@@ -27,6 +29,7 @@ class Engine{
     Scene* activeScene;
     Terminal* terminal;
     Editor* editor;
+    SceneManager* sceneManager;
     bool isRunning;
 
 };

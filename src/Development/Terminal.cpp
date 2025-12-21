@@ -83,9 +83,9 @@ void Terminal::WriteArt(){
 
     SetConsoleOutputCP(65001);
     std::cout<<signature<<std::endl;
-
-    
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_RED |FOREGROUND_INTENSITY);
+    std::cout<<"F.T"<<std::endl;
+    SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE |FOREGROUND_INTENSITY);
     std::cout<<"Terminal has initialized successfully!"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN|FOREGROUND_INTENSITY);
     std::cout<<"Build 0.3 (Unstable)"<<std::endl;
