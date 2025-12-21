@@ -27,7 +27,7 @@ Engine::Engine(){
     renderer = new Renderer();
     
     
-    sceneManager->LoadScene((currentPath/"assets/scenes/testar.kleene"), *activeScene);
+    sceneManager->LoadScene((currentPath/"assets/scenes/test.kleene"), *activeScene);
     isRunning = true;
 }
 
@@ -39,7 +39,7 @@ void Engine::Update()
 }
 
 void Engine::Run(){
-
+    unsigned int count;
     while(isRunning){
 
         isRunning = window->ProcessEvents();
@@ -47,7 +47,14 @@ void Engine::Run(){
         editor->DrawEditorUI();
         
         this->Update();
+        count = terminal->UpdateConsoleInput();
+        while(count>0)
+        {
+            terminal->ProcessConsoleInput();
+            count--;
+        }
         
+
         renderer->Render(activeScene, resourceManager, shader, camera, window);
         editor->EndFrame();
 

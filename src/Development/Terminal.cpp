@@ -3,18 +3,15 @@
 #include <stdio.h>
 #include <iostream>
 
-static const char* signature = R"(
- █████   ████ █████       ██████████ ██████████ ██████   █████ ██████████    ██████████ ██████   █████   █████████  █████ ██████   █████ ██████████
-░░███   ███░ ░░███       ░░███░░░░░█░░███░░░░░█░░██████ ░░███ ░░███░░░░░█   ░░███░░░░░█░░██████ ░░███   ███░░░░░███░░███ ░░██████ ░░███ ░░███░░░░░█
- ░███  ███    ░███        ░███  █ ░  ░███  █ ░  ░███░███ ░███  ░███  █ ░     ░███  █ ░  ░███░███ ░███  ███     ░░░  ░███  ░███░███ ░███  ░███  █ ░ 
- ░███████     ░███        ░██████    ░██████    ░███░░███░███  ░██████       ░██████    ░███░░███░███ ░███          ░███  ░███░░███░███  ░██████   
- ░███░░███    ░███        ░███░░█    ░███░░█    ░███ ░░██████  ░███░░█       ░███░░█    ░███ ░░██████ ░███    █████ ░███  ░███ ░░██████  ░███░░█   
- ░███ ░░███   ░███      █ ░███ ░   █ ░███ ░   █ ░███  ░░█████  ░███ ░   █    ░███ ░   █ ░███  ░░█████ ░░███  ░░███  ░███  ░███  ░░█████  ░███ ░   █
- █████ ░░████ ███████████ ██████████ ██████████ █████  ░░█████ ██████████    ██████████ █████  ░░█████ ░░█████████  █████ █████  ░░█████ ██████████
-░░░░░   ░░░░ ░░░░░░░░░░░ ░░░░░░░░░░ ░░░░░░░░░░ ░░░░░    ░░░░░ ░░░░░░░░░░    ░░░░░░░░░░ ░░░░░    ░░░░░   ░░░░░░░░░  ░░░░░ ░░░░░    ░░░░░ ░░░░░░░░░░ 
-                                                                                                                                                   
-                                                                                                                                                   
-)";
+static const char* signature = R"(                                                                                        
+  ▄▄▄▄   ▄▄▄ ▄▄                             ▄▄▄▄▄▄▄                                     
+ █▀ ██  ██    ██                           █▀██▀▀▀                               ▄ ▄ ▄  
+    ██ ██     ██             ▄               ██     ▄        ▄▄ ▀▀ ▄             ▄███▄  
+    █████     ██ ▄█▀█▄ ▄█▀█▄ ████▄ ▄█▀█▄     ████   ████▄ ▄████ ██ ████▄ ▄█▀█▄   ▄▀█▀▄  
+    ██ ██▄    ██ ██▄█▀ ██▄█▀ ██ ██ ██▄█▀     ██     ██ ██ ██ ██ ██ ██ ██ ██▄█▀          
+  ▀██▀  ▀██▄ ▄██▄▀█▄▄▄▄▀█▄▄▄▄██ ▀█▄▀█▄▄▄     ▀█████▄██ ▀█▄▀████▄██▄██ ▀█▄▀█▄▄▄          
+                                                             ██                         
+                                                           ▀▀▀                          )";
 
 
 
@@ -31,7 +28,7 @@ Terminal::Terminal()
     //Terminal Creation
     outputHandle = (void*)GetStdHandle(STD_OUTPUT_HANDLE);
     windowHandle = (void*)GetConsoleWindow();
-
+    inputHandle = (void*)GetStdHandle(STD_INPUT_HANDLE);
     FILE* temp1;
     FILE* temp2;
     FILE* temp3;
@@ -73,10 +70,60 @@ Terminal::Terminal()
 
 }
 
+unsigned long Terminal::UpdateConsoleInput()
+{
+    
+    unsigned long bucket;
+    GetNumberOfConsoleInputEvents(this->inputHandle, &bucket);
+    return bucket;
+}
+void Terminal::ProcessConsoleInput()
+{
+    INPUT_RECORD recordBuffer;
+    unsigned long eventsRead;
+    ReadConsoleInput((HANDLE)this->inputHandle, &recordBuffer, 1, &eventsRead);
+    if(recordBuffer.EventType == KEY_EVENT)
+    {
+        if(recordBuffer.Event.KeyEvent.bKeyDown)
+        {
+            char character = recordBuffer.Event.KeyEvent.uChar.AsciiChar;
+            if(character == 8)//backspace
+            {
+                if(!commandBuffer.empty())
+                {
+                    commandBuffer.pop_back();
+                    std::cout<<'\b'<<' '<<'\b';
+                }
+            }
+            else if(character == 13) //enter
+            {
+                std::cout<<std::endl;
+                this->ExecuteConsoleCommand();
+                commandBuffer.clear();
+            }
+            else //anything else
+            {
+                if(character>=32 && character <=126){ //filter so its only ascii chars
+                    commandBuffer += character;
+                    std::cout<<character;
+                }
+            }
+        }
+
+    }
+}
 
 void Terminal::Clear(){
 
+    CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo;
 
+    
+    GetConsoleScreenBufferInfo((HANDLE)outputHandle, &consoleScreenBufferInfo);
+    unsigned long bufferArea = consoleScreenBufferInfo.dwSize.X * consoleScreenBufferInfo.dwSize.Y;
+    unsigned long charsWritten;
+    FillConsoleOutputCharacter(outputHandle, ' ', bufferArea,COORD {0,0},&charsWritten );
+    SetConsoleCursorPosition( outputHandle, COORD{0,0});
+    
 }
 
 void Terminal::WriteArt(){
@@ -88,12 +135,24 @@ void Terminal::WriteArt(){
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE |FOREGROUND_INTENSITY);
     std::cout<<"Terminal has initialized successfully!"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN|FOREGROUND_INTENSITY);
-    std::cout<<"Build 0.3 (Unstable)"<<std::endl;
+    std::cout<<"Build 0.4 (Unstable)"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE|FOREGROUND_RED|FOREGROUND_GREEN);
     std::cout<<"===================================================================="<<std::endl;
 }
 
+void Terminal::ExecuteConsoleCommand()
+{
+    if(commandBuffer == "/clear")
+    {
+        this->Clear();
+    }
+    if(commandBuffer == "/art")
+    {
+        this->WriteArt();
+    }
+    
 
+}
 Terminal::~Terminal(){
 
     FreeConsole();
