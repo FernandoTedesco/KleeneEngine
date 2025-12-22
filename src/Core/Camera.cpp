@@ -158,3 +158,25 @@ void Camera::ChangeMode(Camera::CameraMode mode){
 
 
 }
+
+
+
+glm::vec3 Camera::GetRayDirection(float mouseX, float mouseY, float screenWidth, float screenHeight)
+{
+    float x = (mouseX/screenWidth) *2.0f-1.0f;
+    float y = 1.0f - (mouseY/screenHeight) * 2.0f;
+
+    glm::vec4 rayClip = glm::vec4(x,y,-1,1);
+    
+    glm::vec4 rayEye =  glm::inverse(cameraProjectionMatrix) * rayClip;
+    rayEye.z = -1;
+    rayEye.w = 0;
+    glm::vec3 rayWorld = glm::vec3(glm::inverse(cameraViewMatrix) * rayEye);
+    rayWorld = glm::normalize(rayWorld);
+    return rayWorld;
+}
+
+glm::vec3 Camera::GetCameraPos() const
+{
+    return cameraPos;
+}

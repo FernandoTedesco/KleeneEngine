@@ -20,7 +20,7 @@ Engine::Engine(){
     resourceManager = new ResourceManager();
     sceneManager = new SceneManager();
     activeScene = new Scene();
-    editor = new Editor(window, activeScene, sceneManager);
+    editor = new Editor(window, activeScene, sceneManager, camera);
 
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());

@@ -6,8 +6,9 @@
 #include "Core/Window.h"
 #include <iostream>
 #include "Scenes/SceneManager.h"
+#include "Core/Camera.h"
 
-Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager){
+Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera){
 
 
     ImGui::CreateContext();
@@ -18,6 +19,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager){
     this->window = window;
     this->scene = scene;
     this->sceneManager = sceneManager;
+    this->camera = camera;
     
 
 }
@@ -33,7 +35,7 @@ void Editor::BeginFrame()
 void Editor::DrawEditorUI()
 {
     ImGui::SetNextWindowPos(ImVec2(0,0));
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window->GetWidth()),40.0f));
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window->GetWidth()),80.0f));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166/255.0f, 166/255.0f, 166/255.0f, 0.8f));
     
     ImGui::Begin("EditorUI",nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
@@ -78,6 +80,23 @@ void Editor::DrawEditorUI()
     }
     
     ImGui::PopStyleColor(1);
+    ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,camera->GetCameraPos().y,camera->GetCameraPos().z);
+    glm::vec3 rayDirection = camera->GetRayDirection(ImGui::GetIO().MousePos.x,ImGui::GetIO().MousePos.y, (float)window->GetWidth(),(float)window->GetHeight());
+    glm::vec3 rayOrigin = camera->GetCameraPos();
+    if(rayDirection.y < 0.0f)
+    {
+        float distance = -rayOrigin.y/rayDirection.y;
+        glm::vec3 hitPoint = rayOrigin + (rayDirection * distance);
+
+        int gridX = static_cast<int>(std::floor(hitPoint.x));
+        int gridZ = static_cast<int>(std::floor(hitPoint.z));
+        ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
+
+    }
+    else
+    {
+        ImGui::Text("Grid Target: Sky");
+    }
     ImGui::End();
 }
 

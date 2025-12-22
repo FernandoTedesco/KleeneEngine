@@ -5,8 +5,8 @@ class Camera{
     public:
     Camera();
     void ProcessInput();
+    glm::vec3 GetCameraPos() const;
     
-
     glm::mat4 GetViewMatrix();
     glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
     enum CameraMode{
@@ -15,11 +15,12 @@ class Camera{
         GAME
     };
     void ChangeMode(CameraMode mode);
-    
+    glm::vec3 GetRayDirection(float mouseX, float mouseY, float screenWidth, float screenHeight);
     
     private:
     CameraMode cameraMode;
-
+    
+    
     glm::mat4 cameraViewMatrix;
     glm::mat4 cameraProjectionMatrix;
 

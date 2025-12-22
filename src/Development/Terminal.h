@@ -6,6 +6,7 @@ class Terminal{
     Terminal();
     void Clear();
     void WriteArt();
+    void Help();
 
     unsigned long UpdateConsoleInput();
     void ProcessConsoleInput();

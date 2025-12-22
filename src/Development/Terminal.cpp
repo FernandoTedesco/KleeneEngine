@@ -140,6 +140,13 @@ void Terminal::WriteArt(){
     std::cout<<"===================================================================="<<std::endl;
 }
 
+void Terminal::Help()
+{
+    std::cout<<"Command List:"<<std::endl;
+    std::cout<<"/help"<< " - List all possible terminal commands"<<std::endl;
+    std::cout<<"/art"<< " - Print the terminal initial default message"<<std::endl;
+    std::cout<<"/clear"<< " - Clear the terminal buffer"<<std::endl;
+}
 void Terminal::ExecuteConsoleCommand()
 {
     if(commandBuffer == "/clear")
@@ -149,6 +156,10 @@ void Terminal::ExecuteConsoleCommand()
     if(commandBuffer == "/art")
     {
         this->WriteArt();
+    }
+    if(commandBuffer == "/help")
+    {
+        this->Help();
     }
     
 
