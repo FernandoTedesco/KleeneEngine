@@ -11,7 +11,9 @@ class Terminal{
     unsigned long UpdateConsoleInput();
     void ProcessConsoleInput();
     void ExecuteConsoleCommand();
+    void ChangeLog();
     ~Terminal();
+
     private:
     void* windowHandle;
     void* outputHandle;

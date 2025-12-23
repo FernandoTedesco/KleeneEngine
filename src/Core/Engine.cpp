@@ -14,6 +14,7 @@ Engine::Engine(){
 
     terminal = new Terminal();
     terminal->WriteArt();
+    terminal->ChangeLog();
     window = new Window();
     
     camera = new Camera();

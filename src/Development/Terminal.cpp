@@ -135,9 +135,14 @@ void Terminal::WriteArt(){
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE |FOREGROUND_INTENSITY);
     std::cout<<"Terminal has initialized successfully!"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN|FOREGROUND_INTENSITY);
-    std::cout<<"Build 0.4 (Unstable)"<<std::endl;
+    std::cout<<"Build 0.4 (InDev)"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE|FOREGROUND_RED|FOREGROUND_GREEN);
     std::cout<<"===================================================================="<<std::endl;
+}
+
+void Terminal::ChangeLog()
+{
+    std::cout<<"Changelog of build 0.4:"<<std::endl;
 }
 
 void Terminal::Help()
@@ -145,6 +150,7 @@ void Terminal::Help()
     std::cout<<"Command List:"<<std::endl;
     std::cout<<"/help"<< " - List all possible terminal commands"<<std::endl;
     std::cout<<"/art"<< " - Print the terminal initial default message"<<std::endl;
+    std::cout<<"/changelog"<< " - prints out the latest build changes"<<std::endl;
     std::cout<<"/clear"<< " - Clear the terminal buffer"<<std::endl;
 }
 void Terminal::ExecuteConsoleCommand()
@@ -161,7 +167,10 @@ void Terminal::ExecuteConsoleCommand()
     {
         this->Help();
     }
-    
+    if(commandBuffer == "/changelog")
+    {
+        this->ChangeLog();
+    }
 
 }
 Terminal::~Terminal(){

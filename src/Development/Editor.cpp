@@ -8,6 +8,8 @@
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
 #include "EditorGrid.h"
+#include <psapi.h>
+#include <windows.h>
 
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera){
 
@@ -24,6 +26,16 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     editorGrid = new EditorGrid(50);
 
 
+}
+
+static float GetRAMUsage()
+{
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if(GetProcessMemoryInfo(GetCurrentProcess(),(PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+    {
+        return static_cast<float>(pmc.WorkingSetSize)/(1024.0f * 1024.0f);
+    }
+    return 0.0f;
 }
 
 
@@ -82,7 +94,18 @@ void Editor::DrawEditorUI()
     }
     
     ImGui::PopStyleColor(1);
+    ImGui::NewLine();
+    float fps = ImGui::GetIO().Framerate;
+    float frameTime = 1000.0f/fps;
+    float ram = GetRAMUsage();
+
     ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,camera->GetCameraPos().y,camera->GetCameraPos().z);
+    ImGui::SameLine(0,20);
+    ImGui::Text("FPS: %5.1f", fps);
+    ImGui::SameLine(0,20);
+    ImGui::Text("Frame Time: %6.3fms", frameTime);
+    ImGui::SameLine(0,20);
+    ImGui::Text("RAM Usage: %6.2fMB", ram);
     glm::vec3 rayDirection = camera->GetRayDirection(ImGui::GetIO().MousePos.x,ImGui::GetIO().MousePos.y, (float)window->GetWidth(),(float)window->GetHeight());
     glm::vec3 rayOrigin = camera->GetCameraPos();
     if(rayDirection.y < 0.0f)
@@ -101,6 +124,9 @@ void Editor::DrawEditorUI()
     }
     ImGui::End();
 }
+
+
+
 
 void Editor::EndFrame()
 {

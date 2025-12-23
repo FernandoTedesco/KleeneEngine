@@ -47,7 +47,7 @@ Window::Window(){
     }
     SDL_SetRelativeMouseMode(SDL_TRUE);
     glEnable(GL_DEPTH_TEST);
-   
+    //SDL_GL_SetSwapInterval(0);
 
     std::cout<<"[INIT] Window instance sucessfully!"<<std::endl;
 }
