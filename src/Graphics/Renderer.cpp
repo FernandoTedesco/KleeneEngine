@@ -10,12 +10,13 @@
 #include "glm/glm.hpp"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include "Development/EditorGrid.h"
 Renderer::Renderer()
 {
     
 }
 
-void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *shader, Camera *camera, Window* window)
+void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *shader, Camera *camera, Window* window, EditorGrid* editorGrid)
 {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -47,6 +48,10 @@ void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *sh
             texture->Use(0);
             mesh->Draw();
         }
+    }
+    if(editorGrid != nullptr)
+    {
+        editorGrid->EditorGridDraw(camera,(float)window->GetWidth(),(float)window->GetHeight());
     }
     
 }

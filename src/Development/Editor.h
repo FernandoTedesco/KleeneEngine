@@ -3,6 +3,7 @@ class Window;
 class Scene;
 class SceneManager;
 class Camera;
+class EditorGrid;
 class Editor{
 
     public:
@@ -10,7 +11,7 @@ class Editor{
     void BeginFrame();
     void DrawEditorUI();
     void EndFrame();
-
+    EditorGrid* GetGrid(){return editorGrid;}
     ~Editor();
 
     private:
@@ -18,6 +19,7 @@ class Editor{
     SceneManager* sceneManager;
     Scene* scene;
     Camera* camera;
+    EditorGrid* editorGrid;
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
 };

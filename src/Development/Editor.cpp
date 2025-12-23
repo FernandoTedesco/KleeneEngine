@@ -7,6 +7,7 @@
 #include <iostream>
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
+#include "EditorGrid.h"
 
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera){
 
@@ -20,7 +21,8 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->scene = scene;
     this->sceneManager = sceneManager;
     this->camera = camera;
-    
+    editorGrid = new EditorGrid(50);
+
 
 }
 
@@ -113,4 +115,5 @@ Editor::~Editor()
     ImGui_ImplSDL2_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui::DestroyContext();
+    delete this->editorGrid;
 }

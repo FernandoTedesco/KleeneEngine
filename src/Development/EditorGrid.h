@@ -9,7 +9,7 @@ class EditorGrid
 {
     public:
     EditorGrid(int size);
-    void EditorGridDraw(Camera *camera);
+    void EditorGridDraw(Camera *camera,float screenWidth, float screenHeight);
     ~EditorGrid();
 
     

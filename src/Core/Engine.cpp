@@ -55,7 +55,7 @@ void Engine::Run(){
         }
         
 
-        renderer->Render(activeScene, resourceManager, shader, camera, window);
+        renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
         editor->EndFrame();
 
         
