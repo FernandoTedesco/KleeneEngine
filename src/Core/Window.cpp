@@ -66,12 +66,12 @@ bool Window::ProcessEvents(){
      //Exit program
      if(event.type == SDL_QUIT || (event.type == SDL_KEYDOWN &&  event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)) 
      isrunning = false;
-
+     bool isRelativeMode = SDL_GetRelativeMouseMode();
      //Inputs
      
     if(event.type == SDL_MOUSEMOTION)
     {
-     if(!ImGui::GetIO().WantCaptureMouse)
+     if(!ImGui::GetIO().WantCaptureMouse||isRelativeMode)
      {
         int mouseDeltaX = event.motion.xrel;
         int mouseDeltaY = event.motion.yrel;
