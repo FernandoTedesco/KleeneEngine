@@ -4,7 +4,7 @@
 
 float Input::mouseDeltaX = 0.0f;
 float Input::mouseDeltaY = 0.0f;
-
+float Input::mouseScroll = 0.0f;
 Uint8 Input::lastFrameKeys[SDL_NUM_SCANCODES];
 const Uint8* Input::keyboardStateIndex = SDL_GetKeyboardState(NULL);
 static std::map<Input::engineKeyCode, SDL_Scancode> KeyCodeMap
@@ -46,11 +46,18 @@ float Input::GetMouseDeltaX(){
 float Input::GetMouseDeltaY(){
     return(mouseDeltaY);
 }
+float  Input::GetMouseScroll(){
 
+    return mouseScroll;
+}
+void Input::UpdateMouseScroll(float y)
+{
+    mouseScroll = y;
+}
 void Input::ResetMouseDelta(){
     mouseDeltaX = 0;
     mouseDeltaY = 0;
-
+    mouseScroll = 0;
 }
 
 void Input::UpdateMouseDelta(float deltaX, float deltaY){

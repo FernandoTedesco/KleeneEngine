@@ -22,7 +22,7 @@ Window::Window(){
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
     //Window Builder
-    window = SDL_CreateWindow("Kleene Engine",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,800,600,SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN);//| com suporte a opengl e seja visivel na tela
+    window = SDL_CreateWindow("Kleene Engine",SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,1280,720,SDL_WINDOW_OPENGL|SDL_WINDOW_SHOWN);//| com suporte a opengl e seja visivel na tela
     if(!this->window) 
     {
         
@@ -77,11 +77,15 @@ bool Window::ProcessEvents(){
         int mouseDeltaY = event.motion.yrel;
         Input::UpdateMouseDelta((float)mouseDeltaX,(float)mouseDeltaY);
      }
-     
-
-     
         
     }
+    if(event.type == SDL_MOUSEWHEEL)
+     {
+        if(!ImGui::GetIO().WantCaptureMouse)
+        {
+            Input::UpdateMouseScroll((float)event.wheel.y);
+        }
+     }
      
 
     }

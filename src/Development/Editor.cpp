@@ -114,6 +114,8 @@ void Editor::DrawEditorUI()
 
     ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,camera->GetCameraPos().y,camera->GetCameraPos().z);
     ImGui::SameLine(0,20);
+    ImGui::Text("Zoom level: %.1f", camera->GetCameraPos().y); //A bit useless as of right now but nice to have nonetheless
+    ImGui::SameLine(0,20);
     ImGui::Text("FPS: %5.1f", fps);
     ImGui::SameLine(0,20);
     ImGui::Text("Frame Time: %6.3fms", frameTime);

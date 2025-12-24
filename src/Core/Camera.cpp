@@ -35,7 +35,7 @@ void Camera::ProcessInput(){
 
     if(Input::IsKeyPressed(Input::F1_KEY))this->ChangeMode(FREECAM);
     if(Input::IsKeyPressed(Input::F2_KEY))this->ChangeMode(SCENE_EDITOR);
-
+    float scroll = Input::GetMouseScroll();
     switch(cameraMode)
     {
         case(FREECAM):{
@@ -79,7 +79,13 @@ void Camera::ProcessInput(){
      case(SCENE_EDITOR):
         {
 
+            //Zoom
+            if(scroll != 0.0f)
+            {
+                float zoomSpeed = 2.0f;
+                cameraPos += directionVector * scroll * zoomSpeed;
 
+            }
             //Keyboard movement
             if(Input::IsKeyDown(Input::W_KEY))
             {

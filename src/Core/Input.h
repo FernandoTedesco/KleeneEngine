@@ -26,6 +26,8 @@ class Input{
     static float GetMouseDeltaY();
     static void SetRelativeMouse(bool state);
     static void UpdateMouseDelta(float deltaX, float deltaY);
+    static float GetMouseScroll();
+    static void UpdateMouseScroll(float y);
     static void ResetMouseDelta();
 
     private:
@@ -33,6 +35,7 @@ class Input{
     static const Uint8* keyboardStateIndex;
     static float mouseX;
     static float mouseY;
+    static float mouseScroll;
 
     static float mouseDeltaX;
     static float mouseDeltaY;
