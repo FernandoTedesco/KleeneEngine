@@ -62,7 +62,7 @@ Terminal::Terminal()
     //real size
     terminalSize.Left = 0;
     terminalSize.Top = 0;
-    terminalSize.Right = 149;
+    terminalSize.Right = 89;
     terminalSize.Bottom = 29;
     SetConsoleWindowInfo((HANDLE)outputHandle, true, &terminalSize);
 
@@ -137,7 +137,7 @@ void Terminal::WriteArt(){
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN|FOREGROUND_INTENSITY);
     std::cout<<"Build 0.4 (InDev)"<<std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE|FOREGROUND_RED|FOREGROUND_GREEN);
-    std::cout<<"===================================================================="<<std::endl;
+    std::cout<<"=========================================================================================="<<std::endl;
 }
 
 void Terminal::ChangeLog()
