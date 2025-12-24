@@ -7,8 +7,7 @@
 
 ResourceManager::ResourceManager(){
   std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-  CreateMesh("plane", currentPath/"assets/models/plane.obj");
-  CreateTexture("grass", currentPath/"assets/textures/testgrass.jpg");
+
 }
 uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::path filePath)
 {

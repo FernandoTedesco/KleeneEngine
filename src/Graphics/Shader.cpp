@@ -53,6 +53,17 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragPath):Shade
 {
 }
 
+void Shader::SetVec2(const std::string &name, const glm::vec2 &value)
+{
+    GLint location = GetUniformLocation(name);
+    glUniform2f(location, value.x, value.y);
+}
+
+void Shader::SetFloat(const std::string& name, float value)
+{
+    GLint location = GetUniformLocation(name);
+    glUniform1f(location, value);
+}
 
 
 void Shader::Use(){
@@ -61,11 +72,11 @@ glUseProgram(this->programID);
 
 }
 
-void Shader::SetMat4(const std::string& string, const glm::mat4& matrix){
+void Shader::SetMat4(const std::string& string, const glm::mat4& value){
 
     GLint location = GetUniformLocation(string);
 
-    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix));
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 
 }
 

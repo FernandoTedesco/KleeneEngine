@@ -93,3 +93,13 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene)
     
     
 }   
+
+
+void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshIndex, uint32_t textureIndex)
+{
+    targetScene.scenePositions.push_back(position);
+    targetScene.sceneScales.push_back(glm::vec3(1.0f,1.0f,1.0f));
+    targetScene.sceneRotations.push_back(glm::vec4(0.0f,0.0f,0.0f,1.0f));
+    targetScene.sceneMeshes.push_back(meshIndex);
+    targetScene.sceneTextures.push_back(textureIndex);
+}

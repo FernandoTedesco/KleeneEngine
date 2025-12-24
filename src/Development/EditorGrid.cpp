@@ -53,6 +53,7 @@ void EditorGrid::EditorGridDraw(Camera *camera, float screenWidth, float screenH
     glBindVertexArray(0);
 }
     
+
 EditorGrid::~EditorGrid()
 {
     glDeleteVertexArrays(1, &VAO);

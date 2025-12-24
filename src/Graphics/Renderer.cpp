@@ -46,6 +46,9 @@ void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *sh
             
             shader->SetMat4("model",modelMatrix);
             texture->Use(0);
+            shader->SetInt("material.diffuse", 0);
+            shader->SetVec3("material.color", glm::vec3(1.0f,1.0f,1.0f));
+            shader->SetVec2("material.tiling", glm::vec2(1.0f,1.0f));
             mesh->Draw();
         }
     }

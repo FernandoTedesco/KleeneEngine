@@ -10,8 +10,8 @@
 #include "EditorGrid.h"
 #include <psapi.h>
 #include <windows.h>
-
-Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera){
+#include <Resources/ResourceManager.h>
+Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera, ResourceManager* resourceManager){
 
 
     ImGui::CreateContext();
@@ -23,8 +23,12 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->scene = scene;
     this->sceneManager = sceneManager;
     this->camera = camera;
+    this->resourceManager = resourceManager;
     editorGrid = new EditorGrid(50);
 
+    this->listLoaded = false;
+    this->selectedMeshIndex = 0;
+    this->selectedTextureIndex = 0;
 
 }
 
@@ -48,6 +52,15 @@ void Editor::BeginFrame()
 
 void Editor::DrawEditorUI()
 {
+    if(!listLoaded)
+    {
+        std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+  
+        availableMeshes = ScanDirectory(currentPath/"assets/models");
+        availableTextures = ScanDirectory(currentPath/"assets/textures");
+
+        listLoaded = true;
+    }
     ImGui::SetNextWindowPos(ImVec2(0,0));
     ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window->GetWidth()),80.0f));
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166/255.0f, 166/255.0f, 166/255.0f, 0.8f));
@@ -116,6 +129,10 @@ void Editor::DrawEditorUI()
         int gridX = static_cast<int>(std::floor(hitPoint.x));
         int gridZ = static_cast<int>(std::floor(hitPoint.z));
         ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
+        if(ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+        {
+            this->PlaceObject(gridX, gridZ);
+        }
 
     }
     else
@@ -123,9 +140,103 @@ void Editor::DrawEditorUI()
         ImGui::Text("Grid Target: Sky");
     }
     ImGui::End();
+
+    //Inspector
+    float sidebarWidth = 100.0f;
+    float windowWidth = (float)window->GetWidth();
+    float windowHeight = (float)window->GetHeight();
+    
+    ImGui::SetNextWindowPos(ImVec2(windowWidth - sidebarWidth, 80.0f));
+    ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - 80.0f));
+    ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
+    ImGui::Text("Asset Browser");
+    ImGui::Separator();
+    if(!availableMeshes.empty())
+    {
+        if(selectedMeshIndex >= availableMeshes.size()) 
+        {
+            selectedMeshIndex = 0;
+        }
+
+        ImGui::Text("Mesh");
+        if(ImGui::BeginCombo("##mesh", availableMeshes[selectedMeshIndex].c_str()))
+        {
+            for(int i = 0; i<availableMeshes.size();i++)
+            {
+                bool isSelected = (selectedMeshIndex == i);
+                if(ImGui::Selectable(availableMeshes[i].c_str(),isSelected))
+                {
+                    selectedMeshIndex = i;
+                }
+                
+                if(isSelected) 
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+
+            }
+            ImGui::EndCombo();
+        }
+        
+    }
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
+    if(!availableTextures.empty())
+    {
+        if(selectedTextureIndex >= availableTextures.size()) 
+        {
+            selectedTextureIndex = 0;
+        }
+
+        ImGui::Text("Texture");
+        if(ImGui::BeginCombo("##texture", availableTextures[selectedTextureIndex].c_str()))
+        {
+            for(int i = 0; i<availableTextures.size();i++)
+            {
+                bool isSelected = (selectedTextureIndex == i);
+                if(ImGui::Selectable(availableTextures[i].c_str(),isSelected))
+                selectedTextureIndex = i;
+                if(isSelected) 
+                {
+                    ImGui::SetItemDefaultFocus();
+                }
+
+            }
+            ImGui::EndCombo();
+        }
+        
+    }
+    ImGui::End();
+
+
+
+
 }
 
+void Editor::PlaceObject(int gridX, int gridZ)
+{
+    if(!availableMeshes.empty())
+    {
+        std::string meshName = availableMeshes[selectedMeshIndex];
+        std::string textureName = availableTextures[selectedTextureIndex];
 
+        std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+        uint32_t meshID = resourceManager->CreateMesh(meshName,currentPath/"assets/models"/meshName);
+        uint32_t textureID = resourceManager->CreateTexture(textureName,currentPath/"assets/textures"/textureName);
+
+        float x = gridX + 0.5f;
+        float z = gridZ + 0.5f;
+        glm::vec3 position (x, 0, z);
+        sceneManager->AddObject(*scene,position, meshID, textureID);
+        std::cout<<"[SUCCESS] Added Object at"<< x <<","<< z<<std::endl;
+    }
+    else
+    {
+        std::cout<<"[ERROR] There are no available meshes"<<std::endl;
+    }
+    
+    
+    
+}
 
 
 void Editor::EndFrame()
@@ -135,6 +246,26 @@ void Editor::EndFrame()
     ImGui_ImplOpenGL3_RenderDrawData(drawData);
 }
 
+
+std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
+{
+    std::vector<std::string> files;
+
+
+    if(!std::filesystem::exists(directoryPath))
+    {
+        return files;
+    }
+    for(const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(directoryPath))
+    {
+        if(entry.is_regular_file())
+        {
+            files.push_back(entry.path().filename().string());
+        }
+    }
+    return files;
+
+}
 Editor::~Editor()
 {
     
