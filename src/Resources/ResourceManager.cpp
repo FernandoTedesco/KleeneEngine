@@ -20,6 +20,7 @@ uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::p
     
     newMesh->LoadOBJ(filePath);
     newMesh->SetupMesh();
+    meshNames.push_back(name);
     meshVector.push_back(newMesh);
     id = meshVector.size() - 1;
     meshMap[name]= id;
@@ -69,6 +70,7 @@ uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem
     uint32_t id;
     Texture* newTexture = new Texture();
     newTexture->LoadTexture(filePath);
+    textureNames.push_back(name);
     textureVector.push_back(newTexture);
     id = textureVector.size() - 1;
     textureMap[name] = id;

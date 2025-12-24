@@ -75,7 +75,7 @@ void Editor::DrawEditorUI()
         {
             std::cout<<"[INFO] Save button pressed, attempting to save scene..."<<std::endl;
             std::filesystem::path temp = answerSaveBuffer;
-            sceneManager->SaveScene(temp,*scene);
+            sceneManager->SaveScene(temp,*scene, resourceManager);
 
         }
         else
@@ -97,7 +97,7 @@ void Editor::DrawEditorUI()
         {
             std::cout<<"[INFO] Load button pressed, attempting to load scene..."<<std::endl;
             std::filesystem::path temp = answerLoadBuffer;
-            sceneManager->LoadScene(temp,*scene);
+            sceneManager->LoadScene(temp,*scene, resourceManager);
         }
         else
         {

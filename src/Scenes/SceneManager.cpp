@@ -6,7 +6,7 @@
 #include <iostream>
 #include "Resources/ResourceManager.h"
 
-bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene)
+bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene, ResourceManager* resourceManager)
 {
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     std::ifstream sceneStream(currentPath/"assets/scenes"/fileName, std::ios::binary);
@@ -28,7 +28,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene)
         {
             
             sceneStream.read(reinterpret_cast<char*>(&version), 2);
-            if(version == 0x0001)
+            if(version == 0x0002)
             {
                 
                 sceneStream.read(reinterpret_cast<char*>(&count),4);
@@ -38,10 +38,31 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene)
                 sceneStream.read(reinterpret_cast<char*>(targetScene.sceneScales.data()),count*sizeof(glm::vec3));
                 targetScene.sceneRotations.resize(count);
                 sceneStream.read(reinterpret_cast<char*>(targetScene.sceneRotations.data()),count*sizeof(glm::vec4));
-                targetScene.sceneMeshes.resize(count);
-                sceneStream.read(reinterpret_cast<char*>(targetScene.sceneMeshes.data()),count*sizeof(uint32_t));
-                targetScene.sceneTextures.resize(count);
-                sceneStream.read(reinterpret_cast<char*>(targetScene.sceneTextures.data()),count*sizeof(uint32_t));
+                
+                targetScene.sceneMeshes.clear();
+                targetScene.sceneTextures.clear();
+                std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+
+                for(uint32_t i = 0; i<count; i++)
+                {
+                    uint32_t nameSize;
+                    std::string meshName;
+                    std::string textureName;
+                    sceneStream.read(reinterpret_cast<char*>(&nameSize),sizeof(uint32_t));
+                    meshName.resize(nameSize);
+                    sceneStream.read(&meshName[0],nameSize);
+
+                    sceneStream.read(reinterpret_cast<char*>(&nameSize),sizeof(uint32_t));
+                    textureName.resize(nameSize);
+                    sceneStream.read(&textureName[0],nameSize);
+
+                    uint32_t MeshID = resourceManager->CreateMesh(meshName, currentPath/"assets/models"/meshName);
+                    uint32_t TextureID = resourceManager->CreateTexture(textureName, currentPath/"assets/textures"/textureName);
+
+                    targetScene.sceneMeshes.push_back(MeshID);
+                    targetScene.sceneTextures.push_back(TextureID);
+                }
+
                 std::cout<<"[SUCCESS] Scene "<< fileName << "loaded successfully!"<<std::endl;
                 return true;
             }   
@@ -60,7 +81,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene)
     }
 }
 
-bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene){
+bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene, ResourceManager* resourceManager){
 
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     std::ofstream sceneStream(currentPath/"assets/scenes"/fileName, std::ios::binary| std::ios::trunc);
@@ -74,7 +95,7 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene)
         uint16_t signature = 0x4B4C;
         sceneStream.write(reinterpret_cast<const char*>(&signature), sizeof(signature));
 
-        uint16_t version = 0x0001;
+        uint16_t version = 0x0002;
         sceneStream.write(reinterpret_cast<const char*>(&version), sizeof(version));
 
         uint32_t count = targetScene.scenePositions.size();
@@ -84,8 +105,26 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene)
         sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneScales.data()), count * sizeof(glm::vec3));
         sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneRotations.data()), count * sizeof(glm::vec4));
 
-        sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneMeshes.data()), count * sizeof(uint32_t));
-        sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneTextures.data()), count * sizeof(uint32_t));
+        for(uint32_t i = 0; i<count; i++)
+        {
+            uint32_t currentMeshID = targetScene.sceneMeshes[i];
+            std::string meshName = resourceManager->meshNames[targetScene.sceneMeshes[i]];
+            uint32_t meshNameSize = (uint32_t)meshName.size();
+
+            sceneStream.write(reinterpret_cast<const char*>(&meshNameSize),sizeof(uint32_t));
+            sceneStream.write(meshName.c_str(),meshNameSize);
+
+            uint32_t currentTextureID = targetScene.sceneTextures[i];
+            std::string textureName = resourceManager->textureNames[targetScene.sceneTextures[i]];
+            uint32_t textureNameSize = (uint32_t)textureName.size();
+
+            sceneStream.write(reinterpret_cast<const char*>(&textureNameSize),sizeof(uint32_t));
+            sceneStream.write(textureName.c_str(),textureNameSize);
+
+
+
+
+        }
         sceneStream.close();
         std::cout<<"[SUCCESS] File saved sucessfully as"<< fileName <<" !"<<std::endl;
         return true;

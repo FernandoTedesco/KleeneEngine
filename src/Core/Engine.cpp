@@ -28,7 +28,7 @@ Engine::Engine(){
     renderer = new Renderer();
     
     
-    sceneManager->LoadScene((currentPath/"assets/scenes/test.kleene"), *activeScene);
+    
     isRunning = true;
 }
 

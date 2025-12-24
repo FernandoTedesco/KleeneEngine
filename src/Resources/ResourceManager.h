@@ -14,7 +14,8 @@ class ResourceManager{
     Mesh* GetMesh(uint32_t id);
     Texture* GetTexture(uint32_t id);
     uint32_t CreateTexture(const std::string& name ,std::filesystem::path filePath);
-
+    std::vector<std::string>meshNames;
+    std::vector<std::string>textureNames;
     
     static std::filesystem::path FolderFinder(const std::string& foldername);
     private:
