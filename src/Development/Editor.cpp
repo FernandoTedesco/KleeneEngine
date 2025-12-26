@@ -11,6 +11,7 @@
 #include <psapi.h>
 #include <windows.h>
 #include <Resources/ResourceManager.h>
+#include "Core/Input.h"
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera, ResourceManager* resourceManager){
 
 
@@ -24,6 +25,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->sceneManager = sceneManager;
     this->camera = camera;
     this->resourceManager = resourceManager;
+    this->currentMode = EditorMode::PLACEMENT;
     editorGrid = new EditorGrid(50);
 
     this->listLoaded = false;
@@ -52,6 +54,7 @@ void Editor::BeginFrame()
 
 void Editor::DrawEditorUI()
 {
+    this->HandleInput();
     if(!listLoaded)
     {
         std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -118,6 +121,25 @@ void Editor::DrawEditorUI()
     ImGui::SameLine(0,20);
     ImGui::Text("FPS: %5.1f", fps);
     ImGui::SameLine(0,20);
+    std::string modeText = "UNKNOWN";
+    if(currentMode == EditorMode::SELECTION)
+    {
+        modeText = "SELECTION";
+    }
+    else if(currentMode == EditorMode::PLACEMENT)
+    {
+        modeText = "PLACEMENT";
+    }
+    else if(currentMode == EditorMode::RESIZE)
+    {
+        modeText = "RESIZE";
+    }
+    else if(currentMode == EditorMode::ROTATION)
+    {
+        modeText = "ROTATION";
+    }
+    ImGui::Text("Editor Mode: %s", modeText.c_str());
+    ImGui::SameLine(0,20);
     ImGui::Text("Frame Time: %6.3fms", frameTime);
     ImGui::SameLine(0,20);
     ImGui::Text("RAM Usage: %6.2fMB", ram);
@@ -133,7 +155,23 @@ void Editor::DrawEditorUI()
         ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
         if(ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
         {
-            this->PlaceObject(gridX, gridZ);
+            if(currentMode == EditorMode::SELECTION)
+            {
+            
+            }
+            if(currentMode == EditorMode::PLACEMENT)
+            {
+                this->PlaceObject(gridX, gridZ);
+            }
+            if(currentMode == EditorMode::RESIZE)
+            {
+                
+            }
+            if(currentMode == EditorMode::ROTATION)
+            {
+                
+            }
+            
         }
 
     }
@@ -224,12 +262,14 @@ void Editor::PlaceObject(int gridX, int gridZ)
         std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
         uint32_t meshID = resourceManager->CreateMesh(meshName,currentPath/"assets/models"/meshName);
         uint32_t textureID = resourceManager->CreateTexture(textureName,currentPath/"assets/textures"/textureName);
+        std::string materialName = "Mat_" + textureName;
+        uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
 
         float x = gridX + 0.5f;
         float z = gridZ + 0.5f;
         glm::vec3 position (x, 0, z);
-        sceneManager->AddObject(*scene,position, meshID, textureID);
-        std::cout<<"[SUCCESS] Added Object at"<< x <<","<< z<<std::endl;
+        sceneManager->AddObject(*scene,position, meshID, materialID);
+        std::cout<<"[SUCCESS] Added Object at "<< x <<","<< z<<std::endl;
     }
     else
     {
@@ -240,6 +280,30 @@ void Editor::PlaceObject(int gridX, int gridZ)
     
 }
 
+
+void Editor::HandleInput()
+{
+    if(Input::IsKeyPressed(Input::KEY_1))
+    {
+        currentMode = EditorMode::SELECTION;
+        std::cout<<"[INFO] Selection Mode Enabled"<<std::endl;
+    }
+    if(Input::IsKeyPressed(Input::KEY_2))
+    {
+        currentMode = EditorMode::PLACEMENT;
+        std::cout<<"[INFO] Placement Mode Enabled"<<std::endl;
+    }
+    if(Input::IsKeyPressed(Input::KEY_3))
+    {
+        currentMode = EditorMode::RESIZE;
+        std::cout<<"[INFO] Resize Mode Enabled"<<std::endl;
+    }
+    if(Input::IsKeyPressed(Input::KEY_4))
+    {
+        currentMode = EditorMode::ROTATION;
+        std::cout<<"[INFO] Rotation Mode Enabled"<<std::endl;
+    }
+}
 
 void Editor::EndFrame()
 {

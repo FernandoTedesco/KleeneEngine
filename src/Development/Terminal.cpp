@@ -149,8 +149,8 @@ void Terminal::Help()
 {
     std::cout<<"Command List:"<<std::endl;
     std::cout<<"/help"<< " - List all possible terminal commands"<<std::endl;
-    std::cout<<"/art"<< " - Print the terminal initial default message"<<std::endl;
-    std::cout<<"/changelog"<< " - prints out the latest build changes"<<std::endl;
+    std::cout<<"/art"<< " - Print the terminal default message"<<std::endl;
+    std::cout<<"/changelog"<< " - Prints out the latest build changes"<<std::endl;
     std::cout<<"/clear"<< " - Clear the terminal buffer"<<std::endl;
 }
 void Terminal::ExecuteConsoleCommand()

@@ -15,7 +15,11 @@ static std::map<Input::engineKeyCode, SDL_Scancode> KeyCodeMap
     {Input::D_KEY, SDL_SCANCODE_D},
     {Input::F1_KEY, SDL_SCANCODE_F1},
     {Input::F2_KEY, SDL_SCANCODE_F2},
-    {Input::F3_KEY, SDL_SCANCODE_F3}
+    {Input::F3_KEY, SDL_SCANCODE_F3},
+    {Input::KEY_1, SDL_SCANCODE_1},
+    {Input::KEY_2, SDL_SCANCODE_2},
+    {Input::KEY_3, SDL_SCANCODE_3},
+    {Input::KEY_4, SDL_SCANCODE_4}
 
 };
 bool Input::IsKeyDown(engineKeyCode key){

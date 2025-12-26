@@ -8,6 +8,15 @@ class SceneManager;
 class Camera;
 class EditorGrid;
 class ResourceManager;
+
+
+enum class EditorMode{
+    SELECTION = 1,
+    PLACEMENT = 2,
+    RESIZE = 3,
+    ROTATION = 4
+};
+
 class Editor{
 
     public:
@@ -15,6 +24,7 @@ class Editor{
     void BeginFrame();
     void DrawEditorUI();
     void EndFrame();
+    void HandleInput();
     void PlaceObject(int gridX, int gridZ);
     EditorGrid* GetGrid(){return editorGrid;}
     ~Editor();
@@ -26,6 +36,7 @@ class Editor{
 
     private:
     Window* window;
+    EditorMode currentMode;
     SceneManager* sceneManager;
     Scene* scene;
     Camera* camera;

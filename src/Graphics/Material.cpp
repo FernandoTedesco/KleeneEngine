@@ -5,8 +5,7 @@
 
 Material::Material()
 {
-    static Texture* defaultTexture = new Texture();
-    this->diffuseMap = defaultTexture;
+    this->diffuseMap = nullptr;
 }
 void Material::Use(Shader* shader)
 {

@@ -5,140 +5,139 @@
 #include "glm/glm.hpp"
 #include <iostream>
 #include "Resources/ResourceManager.h"
-
+#include "Scenes/GameObject.h"
+#include "Graphics/Material.h"
 bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene, ResourceManager* resourceManager)
 {
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    std::ifstream sceneStream(currentPath/"assets/scenes"/fileName, std::ios::binary);
+    std::filesystem::path fullPath = currentPath/"assets/scenes"/fileName;
+    std::ifstream sceneStream(fullPath, std::ios::binary);
 
 
+    if(!sceneStream)
+    {
+        std::cout<<"[ERROR] Failed to open file for loading:"<<fileName<<std::endl;
+        return false;
 
-    if(!sceneStream){
+    }
+    uint16_t signature, version;
+    uint32_t count;
 
-        std::cout<<"[ERROR] Could not create sceneStream"<<std::endl;
+    sceneStream.read(reinterpret_cast<char*>(&signature),sizeof(uint16_t));
+    if(signature != 0x4B4C) return false;
+    sceneStream.read(reinterpret_cast<char*>(&version),sizeof(uint16_t));
+    if(version!=0x0003)
+    {
+        std::cout<<"[ERROR] Version mismatch during file loading";
         return false;
     }
-    else{
-        uint16_t signature;
-        uint16_t version;
-        uint32_t count;
-        sceneStream.read(reinterpret_cast<char*>(&signature), 2);
-        
-        if(signature == 0x4B4C) 
-        {
-            
-            sceneStream.read(reinterpret_cast<char*>(&version), 2);
-            if(version == 0x0002)
-            {
-                
-                sceneStream.read(reinterpret_cast<char*>(&count),4);
-                targetScene.scenePositions.resize(count);
-                sceneStream.read(reinterpret_cast<char*>(targetScene.scenePositions.data()),count*sizeof(glm::vec3));
-                targetScene.sceneScales.resize(count);
-                sceneStream.read(reinterpret_cast<char*>(targetScene.sceneScales.data()),count*sizeof(glm::vec3));
-                targetScene.sceneRotations.resize(count);
-                sceneStream.read(reinterpret_cast<char*>(targetScene.sceneRotations.data()),count*sizeof(glm::vec4));
-                
-                targetScene.sceneMeshes.clear();
-                targetScene.sceneTextures.clear();
-                std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+    sceneStream.read(reinterpret_cast<char*>(&count),sizeof(uint32_t));
+    targetScene.gameObjects.clear();
+    targetScene.gameObjects.reserve(count);
+    std::filesystem::path modelsPath = currentPath / "assets/models";
+    std::filesystem::path texturesPath = currentPath / "assets/textures";
+    for(uint32_t i =0;i<count;i++)
+    {
+        GameObject newObject;
+        sceneStream.read(reinterpret_cast<char*>(&newObject.position),sizeof(glm::vec3));
+        sceneStream.read(reinterpret_cast<char*>(&newObject.scale),sizeof(glm::vec3));
+        sceneStream.read(reinterpret_cast<char*>(&newObject.rotation),sizeof(glm::vec4));
 
-                for(uint32_t i = 0; i<count; i++)
-                {
-                    uint32_t nameSize;
-                    std::string meshName;
-                    std::string textureName;
-                    sceneStream.read(reinterpret_cast<char*>(&nameSize),sizeof(uint32_t));
-                    meshName.resize(nameSize);
-                    sceneStream.read(&meshName[0],nameSize);
+        uint32_t stringLen;
+        std::string meshName;
+        sceneStream.read(reinterpret_cast<char*>(&stringLen),sizeof(uint32_t));
+        meshName.resize(stringLen);
+        sceneStream.read(&meshName[0],stringLen);
 
-                    sceneStream.read(reinterpret_cast<char*>(&nameSize),sizeof(uint32_t));
-                    textureName.resize(nameSize);
-                    sceneStream.read(&textureName[0],nameSize);
+        std::string textureName;
+        sceneStream.read(reinterpret_cast<char*>(&stringLen),sizeof(uint32_t));
+        textureName.resize(stringLen);
+        sceneStream.read(&textureName[0],stringLen);
 
-                    uint32_t MeshID = resourceManager->CreateMesh(meshName, currentPath/"assets/models"/meshName);
-                    uint32_t TextureID = resourceManager->CreateTexture(textureName, currentPath/"assets/textures"/textureName);
+        newObject.meshID = resourceManager->CreateMesh(meshName,modelsPath/meshName);
+        uint32_t textureID = resourceManager->CreateTexture(textureName,texturesPath/textureName);
+        std::string materialName = "Mat_"+ textureName;
+        newObject.materialID = resourceManager->CreateMaterial(materialName, textureID);
+        newObject.name = meshName;
+        newObject.isActive = true;
+        targetScene.gameObjects.push_back(newObject);
 
-                    targetScene.sceneMeshes.push_back(MeshID);
-                    targetScene.sceneTextures.push_back(TextureID);
-                }
-
-                std::cout<<"[SUCCESS] Scene "<< fileName << "loaded successfully!"<<std::endl;
-                return true;
-            }   
-            else
-            {
-                std::cout<<"[ERROR] Invalid file version"<<std::endl;
-
-                return false;
-            }
-        }
-        else
-        {
-            std::cout<<"[ERROR] Invalid file signature"<<std::endl;
-            return false;
-        }
     }
+    std::cout<<"[SUCESS] Scene loaded:"<< fileName<<std::endl;
+    return true;
+
 }
+
 
 bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene, ResourceManager* resourceManager){
 
+   
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    std::ofstream sceneStream(currentPath/"assets/scenes"/fileName, std::ios::binary| std::ios::trunc);
+    std::filesystem::path fullPath = currentPath/"assets/scenes"/fileName;
+
+    std::ofstream sceneStream(fullPath, std::ios::binary | std::ios::trunc);
     if(!sceneStream)
     {
-        std::cout<<"[ERROR] sceneStream failed to initialize"<<std::endl;
+        std::cout<<"[ERROR] Failed save file"<<fileName<<std::endl;
         return false;
+
     }
-    else
+    uint16_t signature = 0x4B4C;
+    uint16_t version = 0x0003;
+    uint32_t objectCount = (uint32_t)targetScene.gameObjects.size();
+
+    sceneStream.write(reinterpret_cast<const char*>(&signature),sizeof(uint16_t));
+    sceneStream.write(reinterpret_cast<const char*>(&version),sizeof(uint16_t));
+    sceneStream.write(reinterpret_cast<const char*>(&objectCount),sizeof(uint32_t));
+    for(size_t i = 0; i<targetScene.gameObjects.size();i++)
     {
-        uint16_t signature = 0x4B4C;
-        sceneStream.write(reinterpret_cast<const char*>(&signature), sizeof(signature));
+        const GameObject& currentObject = targetScene.gameObjects[i];
 
-        uint16_t version = 0x0002;
-        sceneStream.write(reinterpret_cast<const char*>(&version), sizeof(version));
+        sceneStream.write(reinterpret_cast<const char*>(&currentObject.position),sizeof(glm::vec3));
+        sceneStream.write(reinterpret_cast<const char*>(&currentObject.scale),sizeof(glm::vec3));
+        sceneStream.write(reinterpret_cast<const char*>(&currentObject.rotation),sizeof(glm::vec4));
 
-        uint32_t count = targetScene.scenePositions.size();
-        sceneStream.write(reinterpret_cast<const char*>(&count), sizeof(count));
+        std::string meshName = resourceManager->meshNames[currentObject.meshID];
+        uint32_t meshNameSize = (uint32_t)meshName.size();
+        sceneStream.write(reinterpret_cast<const char*>(&meshNameSize), sizeof(uint32_t));
+        sceneStream.write(meshName.c_str(),meshNameSize);
 
-        sceneStream.write(reinterpret_cast<const char*>(targetScene.scenePositions.data()), count * sizeof(glm::vec3));
-        sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneScales.data()), count * sizeof(glm::vec3));
-        sceneStream.write(reinterpret_cast<const char*>(targetScene.sceneRotations.data()), count * sizeof(glm::vec4));
-
-        for(uint32_t i = 0; i<count; i++)
+        std::string textureName = "Default.png";
+        Material* objectMaterial = resourceManager->GetMaterial(currentObject.materialID);
+        if(objectMaterial != nullptr && objectMaterial->diffuseMap != nullptr)
         {
-            uint32_t currentMeshID = targetScene.sceneMeshes[i];
-            std::string meshName = resourceManager->meshNames[targetScene.sceneMeshes[i]];
-            uint32_t meshNameSize = (uint32_t)meshName.size();
-
-            sceneStream.write(reinterpret_cast<const char*>(&meshNameSize),sizeof(uint32_t));
-            sceneStream.write(meshName.c_str(),meshNameSize);
-
-            uint32_t currentTextureID = targetScene.sceneTextures[i];
-            std::string textureName = resourceManager->textureNames[targetScene.sceneTextures[i]];
-            uint32_t textureNameSize = (uint32_t)textureName.size();
-
-            sceneStream.write(reinterpret_cast<const char*>(&textureNameSize),sizeof(uint32_t));
-            sceneStream.write(textureName.c_str(),textureNameSize);
-
-
-
-
+            for(size_t t = 0; t <resourceManager->textureNames.size(); t++)
+            {
+                if(resourceManager->GetTexture((uint32_t)t)==objectMaterial->diffuseMap)
+                {
+                    textureName = resourceManager->textureNames[t];
+                    break;
+                }
+            }
+            
         }
-        sceneStream.close();
-        std::cout<<"[SUCCESS] File saved sucessfully as"<< fileName <<" !"<<std::endl;
-        return true;
+        uint32_t textureNameSize = (uint32_t)textureName.size();
+        sceneStream.write(reinterpret_cast<const char*>(&textureNameSize),sizeof(uint32_t));
+        sceneStream.write(textureName.c_str(), textureNameSize);
+
     }
-    
+    sceneStream.close();
+    std::cout<<"[SUCCESS] Scene saved sucessfully: "<<fileName<<std::endl;
+    return true; 
     
 }   
 
 
-void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshIndex, uint32_t textureIndex)
+void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID, uint32_t materialID)
 {
-    targetScene.scenePositions.push_back(position);
-    targetScene.sceneScales.push_back(glm::vec3(1.0f,1.0f,1.0f));
-    targetScene.sceneRotations.push_back(glm::vec4(0.0f,0.0f,0.0f,1.0f));
-    targetScene.sceneMeshes.push_back(meshIndex);
-    targetScene.sceneTextures.push_back(textureIndex);
+    GameObject newObject;
+    newObject.position = position;
+    newObject.meshID = meshID;
+    newObject.materialID = materialID;
+    newObject.scale = glm::vec3(1.0f,1.0f,1.0f);
+    newObject.rotation = glm::vec4(0.0f,0.0f,0.0f, 1.0f);
+    newObject.isActive = true;
+    newObject.name = "Object_" + std::to_string(targetScene.gameObjects.size());
+    targetScene.gameObjects.push_back(newObject);
+
 }

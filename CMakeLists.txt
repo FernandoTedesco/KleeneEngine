@@ -12,7 +12,7 @@ set(KLEENE ${CMAKE_SOURCE_DIR}/src/Graphics/Shader.cpp ${CMAKE_SOURCE_DIR}/src/G
 ${CMAKE_SOURCE_DIR}/src/Resources/ResourceManager.cpp ${CMAKE_SOURCE_DIR}/src/Core/Camera.cpp ${CMAKE_SOURCE_DIR}/src/Core/Input.cpp 
 ${CMAKE_SOURCE_DIR}/src/Graphics/Texture.cpp ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/Core/Engine.cpp 
 ${CMAKE_SOURCE_DIR}/src/Scenes/SceneManager.cpp ${CMAKE_SOURCE_DIR}/src/Development/Editor.cpp ${CMAKE_SOURCE_DIR}/src/Graphics/Renderer.cpp
- ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp)
+ ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp ${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp ${CMAKE_SOURCE_DIR}/src/Graphics/Material.cpp)
 
 add_definitions(-DIMGUI_INPL_OPENGL_LOADER_GLAD)
 

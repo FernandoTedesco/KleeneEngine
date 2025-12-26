@@ -15,7 +15,11 @@ class Input{
         D_KEY,
         F1_KEY,
         F2_KEY,
-        F3_KEY
+        F3_KEY,
+        KEY_1,
+        KEY_2,
+        KEY_3,
+        KEY_4
 
     };
     

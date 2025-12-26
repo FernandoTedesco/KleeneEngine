@@ -11,6 +11,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include "Development/EditorGrid.h"
+#include "Graphics/Material.h"
+#include "Scenes/GameObject.h"
 Renderer::Renderer()
 {
     
@@ -29,28 +31,34 @@ void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *sh
     shader->SetMat4("projection",projectionMatrix);
     shader->SetMat4("view",viewMatrix);
     
-    for(uint16_t i=0;i<scene->scenePositions.size();i++)
+    for(GameObject& object : scene->gameObjects)
     {
-        Mesh* mesh = resourceManager->GetMesh(scene->sceneMeshes[i]);
-        Texture* texture = resourceManager->GetTexture(scene->sceneTextures[i]);
-        if(mesh != nullptr && texture != nullptr)
+        if(object.isActive)
         {
-            glm::mat4 modelMatrix(1.0f);
-            modelMatrix = glm::translate(modelMatrix, scene->scenePositions[i]);
-
-            glm::quat rotationQuat = glm::quat(scene->sceneRotations[i].w, scene->sceneRotations[i].x, scene->sceneRotations[i].y, scene->sceneRotations[i].z);
-            glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuat);
-            modelMatrix = modelMatrix * rotationMatrix;
-
-            modelMatrix = glm::scale(modelMatrix, scene->sceneScales[i]);
-            
-            shader->SetMat4("model",modelMatrix);
-            texture->Use(0);
-            shader->SetInt("material.diffuse", 0);
-            shader->SetVec3("material.color", glm::vec3(1.0f,1.0f,1.0f));
-            shader->SetVec2("material.tiling", glm::vec2(1.0f,1.0f));
-            mesh->Draw();
+            Mesh*mesh = resourceManager->GetMesh(object.meshID);
+            Material* material = resourceManager->GetMaterial(object.materialID);
+            if(mesh!= nullptr)
+            {
+                if(material!=nullptr)
+                {
+                    material->Use(shader);
+                }
+                else
+                {
+                    shader->SetVec3("material.color", glm::vec3(1.0f,0.0f,1.0f));
+                    shader->SetVec2("material.tiling", glm::vec2(1.0f,1.0f));
+                }
+                glm::mat4 modelMatrix(1.0f);
+                modelMatrix = glm::translate(modelMatrix,object.position);
+                glm::quat rotationQuat = glm::quat(object.rotation.w,object.rotation.x, object.rotation.y, object.rotation.z);
+                glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuat);
+                modelMatrix = modelMatrix *rotationMatrix;
+                modelMatrix = glm::scale(modelMatrix, object.scale);
+                shader->SetMat4("model", modelMatrix);
+                mesh->Draw();
+            }
         }
+        
     }
     if(editorGrid != nullptr)
     {
