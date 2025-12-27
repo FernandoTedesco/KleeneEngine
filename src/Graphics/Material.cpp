@@ -15,5 +15,4 @@ void Material::Use(Shader* shader)
     diffuseMap->Use(0);
     shader->SetInt("material.diffuse", 0);
 
-    
 }
