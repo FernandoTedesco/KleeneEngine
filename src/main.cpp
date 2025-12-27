@@ -1,11 +1,10 @@
 #include "Core/Engine.h"
 
-int main(int argc, char* argv[]){
+int main(int argc, char* argv[])
+{
 
-   Engine kleeneEngine;
-   kleeneEngine.Run();
-   
+    Engine kleeneEngine;
+    kleeneEngine.Run();
 
-  return 0;
-  
+    return 0;
 }

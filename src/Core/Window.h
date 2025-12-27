@@ -1,8 +1,9 @@
 #pragma once
 #include <SDL.h>
 
-class Window{
-    public:
+class Window
+{
+public:
     Window();
     ~Window();
     int GetWidth();
@@ -11,11 +12,8 @@ class Window{
     bool ProcessEvents();
     SDL_Window* GetWindow();
     SDL_GLContext GetglContext();
-    private:
+
+private:
     SDL_Window* window;
     SDL_GLContext glContext;
-    
-
-
 };
-

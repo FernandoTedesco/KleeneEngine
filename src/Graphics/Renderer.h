@@ -7,11 +7,8 @@ class Window;
 class EditorGrid;
 class Renderer
 {
-    public:
+public:
     Renderer();
-    void Render(Scene *scene, ResourceManager *resourceManager, Shader *shader, Camera *camera, Window* window, EditorGrid* editorGrid);
-
-
-
-
+    void Render(Scene* scene, ResourceManager* resourceManager, Shader* shader, Camera* camera,
+		Window* window, EditorGrid* editorGrid);
 };

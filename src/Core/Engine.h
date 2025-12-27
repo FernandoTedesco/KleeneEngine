@@ -8,17 +8,17 @@ class Shader;
 class Terminal;
 class Editor;
 class SceneManager;
-class Engine{
+class Engine
+{
 
-    public:
+public:
     Engine();
     ~Engine();
-    void SetScene(Scene*newScene);
+    void SetScene(Scene* newScene);
 
     void Run();
-    
-    private:
-    
+
+private:
     void Update();
 
     Window* window;
@@ -31,5 +31,4 @@ class Engine{
     Editor* editor;
     SceneManager* sceneManager;
     bool isRunning;
-
 };

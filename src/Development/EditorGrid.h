@@ -7,14 +7,12 @@ class Camera;
 
 class EditorGrid
 {
-    public:
+public:
     EditorGrid(int size);
-    void EditorGridDraw(Camera *camera,float screenWidth, float screenHeight);
+    void EditorGridDraw(Camera* camera, float screenWidth, float screenHeight);
     ~EditorGrid();
 
-    
-
-    private:
+private:
     unsigned int VAO;
     unsigned int VBO;
     Shader* shader;

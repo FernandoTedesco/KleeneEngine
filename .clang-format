@@ -1,0 +1,17 @@
+Language: Cpp
+Standard: Latest
+IndentWidth: 4
+ColumnLimit: 100
+UseTab: Always
+AllowShortFunctionsOnASingleLine: None
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterControlStatement: true
+  AfterNamespace: false
+  BeforeElse: false
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+SortIncludes: false
+AccessModifierOffset: -4

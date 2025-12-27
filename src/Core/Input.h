@@ -1,28 +1,28 @@
 #pragma once
 #include <map>
 #include "SDL.h"
-class Input{
+class Input
+{
 
-    public:
-
+public:
     Input() = delete;
 
-    //Keyboard
-    enum engineKeyCode{
-        W_KEY,
-        S_KEY,
-        A_KEY,
-        D_KEY,
-        F1_KEY,
-        F2_KEY,
-        F3_KEY,
-        KEY_1,
-        KEY_2,
-        KEY_3,
-        KEY_4
+    // Keyboard
+    enum engineKeyCode {
+	W_KEY,
+	S_KEY,
+	A_KEY,
+	D_KEY,
+	F1_KEY,
+	F2_KEY,
+	F3_KEY,
+	KEY_1,
+	KEY_2,
+	KEY_3,
+	KEY_4
 
     };
-    
+
     static bool IsKeyDown(engineKeyCode key);
     static bool IsKeyPressed(engineKeyCode key);
     static void UpdateLastState();
@@ -34,7 +34,7 @@ class Input{
     static void UpdateMouseScroll(float y);
     static void ResetMouseDelta();
 
-    private:
+private:
     static Uint8 lastFrameKeys[SDL_NUM_SCANCODES];
     static const Uint8* keyboardStateIndex;
     static float mouseX;
@@ -43,7 +43,4 @@ class Input{
 
     static float mouseDeltaX;
     static float mouseDeltaY;
-    
-
-
 };

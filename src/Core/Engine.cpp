@@ -10,13 +10,14 @@
 #include <filesystem>
 #include "Development/Terminal.h"
 #include "Development/Editor.h"
-Engine::Engine(){ 
+Engine::Engine()
+{
 
     terminal = new Terminal();
     terminal->WriteArt();
     terminal->ChangeLog();
     window = new Window();
-    
+
     camera = new Camera();
     resourceManager = new ResourceManager();
     sceneManager = new SceneManager();
@@ -24,68 +25,60 @@ Engine::Engine(){
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager);
 
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    shader = new Shader((currentPath/"assets/shaders/core.vert").string(), (currentPath/"assets/shaders/core.frag").string());
+    shader = new Shader((currentPath / "assets/shaders/core.vert").string(),
+			(currentPath / "assets/shaders/core.frag").string());
     renderer = new Renderer();
-    
-    
-    
+
     isRunning = true;
 }
-
-
 
 void Engine::Update()
 {
     camera->ProcessInput();
 }
 
-void Engine::Run(){
+void Engine::Run()
+{
     unsigned int count;
-    while(isRunning){
+    while (isRunning)
+    {
 
-        isRunning = window->ProcessEvents();
-        editor->BeginFrame();
-        editor->DrawEditorUI();
-        
-        this->Update();
-        count = terminal->UpdateConsoleInput();
-        while(count>0)
-        {
-            terminal->ProcessConsoleInput();
-            count--;
-        }
-        
+	isRunning = window->ProcessEvents();
+	editor->BeginFrame();
+	editor->DrawEditorUI();
 
-        renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
-        editor->EndFrame();
+	this->Update();
+	count = terminal->UpdateConsoleInput();
+	while (count > 0)
+	{
+	    terminal->ProcessConsoleInput();
+	    count--;
+	}
 
-        
-        Input::UpdateLastState();
-        Input::ResetMouseDelta();
-        window->SwapBuffers();
+	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
+	editor->EndFrame();
+
+	Input::UpdateLastState();
+	Input::ResetMouseDelta();
+	window->SwapBuffers();
     }
-    
-
-    
-
 }
 
-void Engine::SetScene(Scene*newScene){
-    
-    if(activeScene != nullptr)
+void Engine::SetScene(Scene* newScene)
+{
+
+    if (activeScene != nullptr)
     {
-        delete activeScene;
-        activeScene = newScene;
-    }
-    else
+	delete activeScene;
+	activeScene = newScene;
+    } else
     {
-        activeScene = newScene;
+	activeScene = newScene;
     }
-    
-           
 }
 
-Engine::~Engine(){
+Engine::~Engine()
+{
 
     delete editor;
     delete camera;
@@ -96,7 +89,4 @@ Engine::~Engine(){
     delete renderer;
     delete window;
     delete terminal;
-
-
 }
-

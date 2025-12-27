@@ -12,14 +12,15 @@
 #include <windows.h>
 #include <Resources/ResourceManager.h>
 #include "Core/Input.h"
-Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera, ResourceManager* resourceManager){
-
+Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
+	       ResourceManager* resourceManager)
+{
 
     ImGui::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(window->GetWindow(), window->GetglContext());
     ImGui_ImplOpenGL3_Init("#version 330");
-    memset(answerSaveBuffer,0,sizeof(answerSaveBuffer));
-    memset(answerLoadBuffer,0,sizeof(answerLoadBuffer));
+    memset(answerSaveBuffer, 0, sizeof(answerSaveBuffer));
+    memset(answerLoadBuffer, 0, sizeof(answerLoadBuffer));
     this->window = window;
     this->scene = scene;
     this->sceneManager = sceneManager;
@@ -31,19 +32,17 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->listLoaded = false;
     this->selectedMeshIndex = 0;
     this->selectedTextureIndex = 0;
-
 }
 
 static float GetRAMUsage()
 {
     PROCESS_MEMORY_COUNTERS_EX pmc;
-    if(GetProcessMemoryInfo(GetCurrentProcess(),(PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+    if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
     {
-        return static_cast<float>(pmc.WorkingSetSize)/(1024.0f * 1024.0f);
+	return static_cast<float>(pmc.WorkingSetSize) / (1024.0f * 1024.0f);
     }
     return 0.0f;
 }
-
 
 void Editor::BeginFrame()
 {
@@ -55,253 +54,241 @@ void Editor::BeginFrame()
 void Editor::DrawEditorUI()
 {
     this->HandleInput();
-    if(!listLoaded)
+    if (!listLoaded)
     {
-        std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-  
-        availableMeshes = ScanDirectory(currentPath/"assets/models");
-        availableTextures = ScanDirectory(currentPath/"assets/textures");
+	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
 
-        listLoaded = true;
+	availableMeshes = ScanDirectory(currentPath / "assets/models");
+	availableTextures = ScanDirectory(currentPath / "assets/textures");
+
+	listLoaded = true;
     }
-    ImGui::SetNextWindowPos(ImVec2(0,0));
-    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window->GetWidth()),80.0f));
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166/255.0f, 166/255.0f, 166/255.0f, 0.8f));
-    
-    ImGui::Begin("EditorUI",nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2(static_cast<float>(window->GetWidth()), 80.0f));
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166 / 255.0f, 166 / 255.0f, 166 / 255.0f, 0.8f));
+
+    ImGui::Begin("EditorUI", nullptr,
+		 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+		     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+		     ImGuiWindowFlags_NoCollapse);
     ImGui::SetNextItemWidth(150);
-    ImGui::InputText("###Filenamesave",answerSaveBuffer, sizeof(answerSaveBuffer));
+    ImGui::InputText("###Filenamesave", answerSaveBuffer, sizeof(answerSaveBuffer));
     ImGui::SameLine();
-    if(ImGui::Button("Save Scene"))
+    if (ImGui::Button("Save Scene"))
     {
-        if(answerSaveBuffer[0] != '\0')
-        {
-            std::cout<<"[INFO] Save button pressed, attempting to save scene..."<<std::endl;
-            std::filesystem::path temp = answerSaveBuffer;
-            sceneManager->SaveScene(temp,*scene, resourceManager);
+	if (answerSaveBuffer[0] != '\0')
+	{
+	    std::cout << "[INFO] Save button pressed, attempting to save scene..." << std::endl;
+	    std::filesystem::path temp = answerSaveBuffer;
+	    sceneManager->SaveScene(temp, *scene, resourceManager);
 
-        }
-        else
-        {
-            std::cout<<"[ERROR] Cannot use an empty buffer"<<std::endl;
-        }
-        
+	} else
+	{
+	    std::cout << "[ERROR] Cannot use an empty buffer" << std::endl;
+	}
     }
-     ImGui::PopStyleColor(1);
-     ImGui::SameLine();
-     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166/255.0f, 166/255.0f, 166/255.0f, 0.8f));
+    ImGui::PopStyleColor(1);
+    ImGui::SameLine();
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(166 / 255.0f, 166 / 255.0f, 166 / 255.0f, 0.8f));
 
     ImGui::SetNextItemWidth(150);
-    ImGui::InputText("###Filenameload",answerLoadBuffer, sizeof(answerLoadBuffer));
+    ImGui::InputText("###Filenameload", answerLoadBuffer, sizeof(answerLoadBuffer));
     ImGui::SameLine();
-    if(ImGui::Button("Load Scene"))
+    if (ImGui::Button("Load Scene"))
     {
-        if(answerLoadBuffer[0] != '\0')
-        {
-            std::cout<<"[INFO] Load button pressed, attempting to load scene..."<<std::endl;
-            std::filesystem::path temp = answerLoadBuffer;
-            sceneManager->LoadScene(temp,*scene, resourceManager);
-        }
-        else
-        {
-            std::cout<<"[ERROR] Cannot use an empty buffer"<<std::endl;
-        }
-        
+	if (answerLoadBuffer[0] != '\0')
+	{
+	    std::cout << "[INFO] Load button pressed, attempting to load scene..." << std::endl;
+	    std::filesystem::path temp = answerLoadBuffer;
+	    sceneManager->LoadScene(temp, *scene, resourceManager);
+	} else
+	{
+	    std::cout << "[ERROR] Cannot use an empty buffer" << std::endl;
+	}
     }
-    
+
     ImGui::PopStyleColor(1);
     ImGui::NewLine();
     float fps = ImGui::GetIO().Framerate;
-    float frameTime = 1000.0f/fps;
+    float frameTime = 1000.0f / fps;
     float ram = GetRAMUsage();
 
-    ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,camera->GetCameraPos().y,camera->GetCameraPos().z);
-    ImGui::SameLine(0,20);
-    ImGui::Text("Zoom level: %.1f", camera->GetCameraPos().y); //A bit useless as of right now but nice to have nonetheless
-    ImGui::SameLine(0,20);
+    ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,
+		camera->GetCameraPos().y, camera->GetCameraPos().z);
+    ImGui::SameLine(0, 20);
+    ImGui::Text(
+	"Zoom level: %.1f",
+	camera->GetCameraPos().y); // A bit useless as of right now but nice to have nonetheless
+    ImGui::SameLine(0, 20);
     ImGui::Text("FPS: %5.1f", fps);
-    ImGui::SameLine(0,20);
+    ImGui::SameLine(0, 20);
     std::string modeText = "UNKNOWN";
-    if(currentMode == EditorMode::SELECTION)
+    if (currentMode == EditorMode::SELECTION)
     {
-        modeText = "SELECTION";
-    }
-    else if(currentMode == EditorMode::PLACEMENT)
+	modeText = "SELECTION";
+    } else if (currentMode == EditorMode::PLACEMENT)
     {
-        modeText = "PLACEMENT";
-    }
-    else if(currentMode == EditorMode::RESIZE)
+	modeText = "PLACEMENT";
+    } else if (currentMode == EditorMode::RESIZE)
     {
-        modeText = "RESIZE";
-    }
-    else if(currentMode == EditorMode::ROTATION)
+	modeText = "RESIZE";
+    } else if (currentMode == EditorMode::ROTATION)
     {
-        modeText = "ROTATION";
+	modeText = "ROTATION";
     }
     ImGui::Text("Editor Mode: %s", modeText.c_str());
-    ImGui::SameLine(0,20);
+    ImGui::SameLine(0, 20);
     ImGui::Text("Frame Time: %6.3fms", frameTime);
-    ImGui::SameLine(0,20);
+    ImGui::SameLine(0, 20);
     ImGui::Text("RAM Usage: %6.2fMB", ram);
-    glm::vec3 rayDirection = camera->GetRayDirection(ImGui::GetIO().MousePos.x,ImGui::GetIO().MousePos.y, (float)window->GetWidth(),(float)window->GetHeight());
+    glm::vec3 rayDirection =
+	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
+				(float)window->GetWidth(), (float)window->GetHeight());
     glm::vec3 rayOrigin = camera->GetCameraPos();
-    if(rayDirection.y < 0.0f)
+    if (rayDirection.y < 0.0f)
     {
-        float distance = -rayOrigin.y/rayDirection.y;
-        glm::vec3 hitPoint = rayOrigin + (rayDirection * distance);
+	float distance = -rayOrigin.y / rayDirection.y;
+	glm::vec3 hitPoint = rayOrigin + (rayDirection * distance);
 
-        int gridX = static_cast<int>(std::floor(hitPoint.x));
-        int gridZ = static_cast<int>(std::floor(hitPoint.z));
-        ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
-        if(ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
-        {
-            if(currentMode == EditorMode::SELECTION)
-            {
-            
-            }
-            if(currentMode == EditorMode::PLACEMENT)
-            {
-                this->PlaceObject(gridX, gridZ);
-            }
-            if(currentMode == EditorMode::RESIZE)
-            {
-                
-            }
-            if(currentMode == EditorMode::ROTATION)
-            {
-                
-            }
-            
-        }
+	int gridX = static_cast<int>(std::floor(hitPoint.x));
+	int gridZ = static_cast<int>(std::floor(hitPoint.z));
+	ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
+	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+	{
+	    if (currentMode == EditorMode::SELECTION)
+	    {
+	    }
+	    if (currentMode == EditorMode::PLACEMENT)
+	    {
+		this->PlaceObject(gridX, gridZ);
+	    }
+	    if (currentMode == EditorMode::RESIZE)
+	    {
+	    }
+	    if (currentMode == EditorMode::ROTATION)
+	    {
+	    }
+	}
 
-    }
-    else
+    } else
     {
-        ImGui::Text("Grid Target: Sky");
+	ImGui::Text("Grid Target: Sky");
     }
     ImGui::End();
 
-    //Inspector
+    // Inspector
     float sidebarWidth = 100.0f;
     float windowWidth = (float)window->GetWidth();
     float windowHeight = (float)window->GetHeight();
-    
+
     ImGui::SetNextWindowPos(ImVec2(windowWidth - sidebarWidth, 80.0f));
     ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - 80.0f));
-    ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoScrollbar|ImGuiWindowFlags_NoMove|ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoCollapse);
+    ImGui::Begin("Inspector", nullptr,
+		 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar |
+		     ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+		     ImGuiWindowFlags_NoCollapse);
     ImGui::Text("Asset Browser");
     ImGui::Separator();
-    if(!availableMeshes.empty())
+    if (!availableMeshes.empty())
     {
-        if(selectedMeshIndex >= availableMeshes.size()) 
-        {
-            selectedMeshIndex = 0;
-        }
+	if (selectedMeshIndex >= availableMeshes.size())
+	{
+	    selectedMeshIndex = 0;
+	}
 
-        ImGui::Text("Mesh");
-        if(ImGui::BeginCombo("##mesh", availableMeshes[selectedMeshIndex].c_str()))
-        {
-            for(int i = 0; i<availableMeshes.size();i++)
-            {
-                bool isSelected = (selectedMeshIndex == i);
-                if(ImGui::Selectable(availableMeshes[i].c_str(),isSelected))
-                {
-                    selectedMeshIndex = i;
-                }
-                
-                if(isSelected) 
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
+	ImGui::Text("Mesh");
+	if (ImGui::BeginCombo("##mesh", availableMeshes[selectedMeshIndex].c_str()))
+	{
+	    for (int i = 0; i < availableMeshes.size(); i++)
+	    {
+		bool isSelected = (selectedMeshIndex == i);
+		if (ImGui::Selectable(availableMeshes[i].c_str(), isSelected))
+		{
+		    selectedMeshIndex = i;
+		}
 
-            }
-            ImGui::EndCombo();
-        }
-        
+		if (isSelected)
+		{
+		    ImGui::SetItemDefaultFocus();
+		}
+	    }
+	    ImGui::EndCombo();
+	}
     }
     ImGui::Dummy(ImVec2(0.0f, 10.0f));
-    if(!availableTextures.empty())
+    if (!availableTextures.empty())
     {
-        if(selectedTextureIndex >= availableTextures.size()) 
-        {
-            selectedTextureIndex = 0;
-        }
+	if (selectedTextureIndex >= availableTextures.size())
+	{
+	    selectedTextureIndex = 0;
+	}
 
-        ImGui::Text("Texture");
-        if(ImGui::BeginCombo("##texture", availableTextures[selectedTextureIndex].c_str()))
-        {
-            for(int i = 0; i<availableTextures.size();i++)
-            {
-                bool isSelected = (selectedTextureIndex == i);
-                if(ImGui::Selectable(availableTextures[i].c_str(),isSelected))
-                selectedTextureIndex = i;
-                if(isSelected) 
-                {
-                    ImGui::SetItemDefaultFocus();
-                }
-
-            }
-            ImGui::EndCombo();
-        }
-        
+	ImGui::Text("Texture");
+	if (ImGui::BeginCombo("##texture", availableTextures[selectedTextureIndex].c_str()))
+	{
+	    for (int i = 0; i < availableTextures.size(); i++)
+	    {
+		bool isSelected = (selectedTextureIndex == i);
+		if (ImGui::Selectable(availableTextures[i].c_str(), isSelected))
+		    selectedTextureIndex = i;
+		if (isSelected)
+		{
+		    ImGui::SetItemDefaultFocus();
+		}
+	    }
+	    ImGui::EndCombo();
+	}
     }
     ImGui::End();
-
-
-
-
 }
 
 void Editor::PlaceObject(int gridX, int gridZ)
 {
-    if(!availableMeshes.empty())
+    if (!availableMeshes.empty())
     {
-        std::string meshName = availableMeshes[selectedMeshIndex];
-        std::string textureName = availableTextures[selectedTextureIndex];
+	std::string meshName = availableMeshes[selectedMeshIndex];
+	std::string textureName = availableTextures[selectedTextureIndex];
 
-        std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-        uint32_t meshID = resourceManager->CreateMesh(meshName,currentPath/"assets/models"/meshName);
-        uint32_t textureID = resourceManager->CreateTexture(textureName,currentPath/"assets/textures"/textureName);
-        std::string materialName = "Mat_" + textureName;
-        uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
+	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+	uint32_t meshID =
+	    resourceManager->CreateMesh(meshName, currentPath / "assets/models" / meshName);
+	uint32_t textureID = resourceManager->CreateTexture(
+	    textureName, currentPath / "assets/textures" / textureName);
+	std::string materialName = "Mat_" + textureName;
+	uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
 
-        float x = gridX + 0.5f;
-        float z = gridZ + 0.5f;
-        glm::vec3 position (x, 0, z);
-        sceneManager->AddObject(*scene,position, meshID, materialID);
-        std::cout<<"[SUCCESS] Added Object at "<< x <<","<< z<<std::endl;
-    }
-    else
+	float x = gridX + 0.5f;
+	float z = gridZ + 0.5f;
+	glm::vec3 position(x, 0, z);
+	sceneManager->AddObject(*scene, position, meshID, materialID);
+	std::cout << "[SUCCESS] Added Object at " << x << "," << z << std::endl;
+    } else
     {
-        std::cout<<"[ERROR] There are no available meshes"<<std::endl;
+	std::cout << "[ERROR] There are no available meshes" << std::endl;
     }
-    
-    
-    
 }
-
 
 void Editor::HandleInput()
 {
-    if(Input::IsKeyPressed(Input::KEY_1))
+    if (Input::IsKeyPressed(Input::KEY_1))
     {
-        currentMode = EditorMode::SELECTION;
-        std::cout<<"[INFO] Selection Mode Enabled"<<std::endl;
+	currentMode = EditorMode::SELECTION;
+	std::cout << "[INFO] Selection Mode Enabled" << std::endl;
     }
-    if(Input::IsKeyPressed(Input::KEY_2))
+    if (Input::IsKeyPressed(Input::KEY_2))
     {
-        currentMode = EditorMode::PLACEMENT;
-        std::cout<<"[INFO] Placement Mode Enabled"<<std::endl;
+	currentMode = EditorMode::PLACEMENT;
+	std::cout << "[INFO] Placement Mode Enabled" << std::endl;
     }
-    if(Input::IsKeyPressed(Input::KEY_3))
+    if (Input::IsKeyPressed(Input::KEY_3))
     {
-        currentMode = EditorMode::RESIZE;
-        std::cout<<"[INFO] Resize Mode Enabled"<<std::endl;
+	currentMode = EditorMode::RESIZE;
+	std::cout << "[INFO] Resize Mode Enabled" << std::endl;
     }
-    if(Input::IsKeyPressed(Input::KEY_4))
+    if (Input::IsKeyPressed(Input::KEY_4))
     {
-        currentMode = EditorMode::ROTATION;
-        std::cout<<"[INFO] Rotation Mode Enabled"<<std::endl;
+	currentMode = EditorMode::ROTATION;
+	std::cout << "[INFO] Rotation Mode Enabled" << std::endl;
     }
 }
 
@@ -312,29 +299,27 @@ void Editor::EndFrame()
     ImGui_ImplOpenGL3_RenderDrawData(drawData);
 }
 
-
 std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
 {
     std::vector<std::string> files;
 
-
-    if(!std::filesystem::exists(directoryPath))
+    if (!std::filesystem::exists(directoryPath))
     {
-        return files;
+	return files;
     }
-    for(const std::filesystem::directory_entry& entry : std::filesystem::directory_iterator(directoryPath))
+    for (const std::filesystem::directory_entry& entry :
+	 std::filesystem::directory_iterator(directoryPath))
     {
-        if(entry.is_regular_file())
-        {
-            files.push_back(entry.path().filename().string());
-        }
+	if (entry.is_regular_file())
+	{
+	    files.push_back(entry.path().filename().string());
+	}
     }
     return files;
-
 }
 Editor::~Editor()
 {
-    
+
     ImGui_ImplSDL2_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();
     ImGui::DestroyContext();

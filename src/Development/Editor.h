@@ -9,32 +9,31 @@ class Camera;
 class EditorGrid;
 class ResourceManager;
 
+enum class EditorMode { SELECTION = 1, PLACEMENT = 2, RESIZE = 3, ROTATION = 4 };
 
-enum class EditorMode{
-    SELECTION = 1,
-    PLACEMENT = 2,
-    RESIZE = 3,
-    ROTATION = 4
-};
+class Editor
+{
 
-class Editor{
-
-    public:
-    Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera, ResourceManager* resourceManager);
+public:
+    Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
+	   ResourceManager* resourceManager);
     void BeginFrame();
     void DrawEditorUI();
     void EndFrame();
     void HandleInput();
     void PlaceObject(int gridX, int gridZ);
-    EditorGrid* GetGrid(){return editorGrid;}
+    EditorGrid* GetGrid()
+    {
+	return editorGrid;
+    }
     ~Editor();
     bool listLoaded;
-    std::vector<std::string>availableMeshes;
-    std::vector<std::string>availableTextures;
+    std::vector<std::string> availableMeshes;
+    std::vector<std::string> availableTextures;
     int selectedMeshIndex = 0;
     int selectedTextureIndex = 0;
 
-    private:
+private:
     Window* window;
     EditorMode currentMode;
     SceneManager* sceneManager;

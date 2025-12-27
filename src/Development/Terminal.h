@@ -1,8 +1,9 @@
 #include <string>
 
-class Terminal{
+class Terminal
+{
 
-    public:
+public:
     Terminal();
     void Clear();
     void WriteArt();
@@ -14,11 +15,9 @@ class Terminal{
     void ChangeLog();
     ~Terminal();
 
-    private:
+private:
     void* windowHandle;
     void* outputHandle;
-    void *inputHandle;
+    void* inputHandle;
     std::string commandBuffer;
-
-    
 };

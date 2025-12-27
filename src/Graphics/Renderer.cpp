@@ -15,55 +15,53 @@
 #include "Scenes/GameObject.h"
 Renderer::Renderer()
 {
-    
 }
 
-void Renderer::Render(Scene *scene, ResourceManager *resourceManager, Shader *shader, Camera *camera, Window* window, EditorGrid* editorGrid)
+void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* shader,
+		      Camera* camera, Window* window, EditorGrid* editorGrid)
 {
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader->Use();
     int windowHeight = window->GetHeight();
     int windowWidth = window->GetWidth();
-    glm::mat4 projectionMatrix = camera->GetProjectionMatrix(float(windowWidth), float(windowHeight));
+    glm::mat4 projectionMatrix =
+	camera->GetProjectionMatrix(float(windowWidth), float(windowHeight));
     glm::mat4 viewMatrix = camera->GetViewMatrix();
-    shader->SetMat4("projection",projectionMatrix);
-    shader->SetMat4("view",viewMatrix);
-    
-    for(GameObject& object : scene->gameObjects)
-    {
-        if(object.isActive)
-        {
-            Mesh*mesh = resourceManager->GetMesh(object.meshID);
-            Material* material = resourceManager->GetMaterial(object.materialID);
-            if(mesh!= nullptr)
-            {
-                if(material!=nullptr)
-                {
-                    material->Use(shader);
-                }
-                else
-                {
-                    shader->SetVec3("material.color", glm::vec3(1.0f,0.0f,1.0f));
-                    shader->SetVec2("material.tiling", glm::vec2(1.0f,1.0f));
-                }
-                glm::mat4 modelMatrix(1.0f);
-                modelMatrix = glm::translate(modelMatrix,object.position);
-                glm::quat rotationQuat = glm::quat(object.rotation.w,object.rotation.x, object.rotation.y, object.rotation.z);
-                glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuat);
-                modelMatrix = modelMatrix *rotationMatrix;
-                modelMatrix = glm::scale(modelMatrix, object.scale);
-                shader->SetMat4("model", modelMatrix);
-                mesh->Draw();
-            }
-        }
-        
-    }
-    if(editorGrid != nullptr)
-    {
-        editorGrid->EditorGridDraw(camera,(float)window->GetWidth(),(float)window->GetHeight());
-    }
-    
-}
+    shader->SetMat4("projection", projectionMatrix);
+    shader->SetMat4("view", viewMatrix);
 
+    for (GameObject& object : scene->gameObjects)
+    {
+	if (object.isActive)
+	{
+	    Mesh* mesh = resourceManager->GetMesh(object.meshID);
+	    Material* material = resourceManager->GetMaterial(object.materialID);
+	    if (mesh != nullptr)
+	    {
+		if (material != nullptr)
+		{
+		    material->Use(shader);
+		} else
+		{
+		    shader->SetVec3("material.color", glm::vec3(1.0f, 0.0f, 1.0f));
+		    shader->SetVec2("material.tiling", glm::vec2(1.0f, 1.0f));
+		}
+		glm::mat4 modelMatrix(1.0f);
+		modelMatrix = glm::translate(modelMatrix, object.position);
+		glm::quat rotationQuat = glm::quat(object.rotation.w, object.rotation.x,
+						   object.rotation.y, object.rotation.z);
+		glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuat);
+		modelMatrix = modelMatrix * rotationMatrix;
+		modelMatrix = glm::scale(modelMatrix, object.scale);
+		shader->SetMat4("model", modelMatrix);
+		mesh->Draw();
+	    }
+	}
+    }
+    if (editorGrid != nullptr)
+    {
+	editorGrid->EditorGridDraw(camera, (float)window->GetWidth(), (float)window->GetHeight());
+    }
+}

@@ -38,6 +38,18 @@ ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI})
 
+find_program(CLANG_FORMAT_EXE clang-format)
+if(CLANG_FORMAT_EXE)
+file(GLOB_RECURSE FORMAT_FILES
+${CMAKE_SOURCE_DIR}/src/*.cpp
+${CMAKE_SOURCE_DIR}/src/*.h
+${CMAKE_SOURCE_DIR}/src/*.hpp)
+add_custom_target(FORMAT_CODE COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${FORMAT_FILES})
+add_dependencies(KleeneRuntime FORMAT_CODE)
+endif()
+
+
+
 target_compile_definitions(KleeneRuntime PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
 target_include_directories(KleeneRuntime PRIVATE

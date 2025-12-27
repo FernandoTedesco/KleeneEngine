@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <string>
 
-struct GameObject{
+struct GameObject {
     std::string name;
     bool isActive;
     glm::vec3 position;
@@ -12,6 +12,4 @@ struct GameObject{
     uint32_t meshID;
     uint32_t materialID;
     GameObject();
-    
-
 };

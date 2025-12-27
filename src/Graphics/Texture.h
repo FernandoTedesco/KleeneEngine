@@ -1,17 +1,15 @@
 #pragma once
 #include <string>
 #include <filesystem>
-class Texture{
+class Texture
+{
 
-    public:
+public:
     Texture();
     ~Texture();
     bool LoadTexture(std::filesystem::path filepath);
     void Use(unsigned int slot);
 
-    private:
+private:
     unsigned int textureID;
-
-
-
 };
