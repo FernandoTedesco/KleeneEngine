@@ -1,15 +1,15 @@
-#include "ResourceManager.h"
 #include <filesystem>
+#include "iostream"
+#include "ResourceManager.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Texture.h"
-#include "StbImage/stb_image.h"
-#include "iostream"
 #include "Graphics/Material.h"
 
+//Module initializer
 ResourceManager::ResourceManager(){
-  std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-
 }
+
+//Creates a pointer to a mesh and stores in the class map and vectors
 uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::path filePath)
 {
   std::map<std::string, uint32_t>::iterator iterator;
@@ -35,43 +35,7 @@ uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::p
   
 }
 
-Mesh* ResourceManager::GetMesh(uint32_t id)
-{
-
-  if(id>=meshVector.size())
-  {
-    return nullptr;
-  }
-  else
-  {
-    return meshVector[id];
-  }
-}
-
-Material* ResourceManager::GetMaterial(uint32_t id)
-{
-  if(id>= materialVector.size())
-  {
-    return nullptr;
-  }
-  else
-  {
-    return materialVector[id];
-  }
-}
-Texture* ResourceManager::GetTexture(uint32_t id)
-{
-
-  if(id>=textureVector.size())
-  {
-    return nullptr;
-  }
-  else
-  {
-    return textureVector[id];
-  }
-}
-
+//Creates a pointer to a texture and stores in the class map and vectors, gives the id
 uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem::path filePath)
 {
   std::map<std::string,uint32_t>::iterator iterator;
@@ -93,31 +57,7 @@ uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem
   }
 }
 
-std::filesystem::path ResourceManager::FolderFinder(const std::string& foldername)
-{
-  std::filesystem::path currentPath;
-  currentPath = std::filesystem::current_path();
-  
-  while(true)
-  {
-    
-   if(std::filesystem::exists(currentPath/foldername))
-   {
-
-    return(currentPath);
-   }
-   else if (currentPath == currentPath.parent_path()){
-    std::cout<<"FolderFinder fail"<<std::endl;
-    return std::filesystem::path();
-   }
-   
-   else{
-    currentPath = currentPath.parent_path();
-   }
-     
- }
-}
-
+//Creates a pointer to a material and stores in the class map and vectors
 uint32_t ResourceManager::CreateMaterial(const std::string& name, uint32_t textureID)
 {
   std::map<std::string,uint32_t>::iterator iterator;
@@ -150,6 +90,76 @@ uint32_t ResourceManager::CreateMaterial(const std::string& name, uint32_t textu
     return iterator->second;
   }
 }
+
+//Given an id, gives the mesh stored in that specific index
+Mesh* ResourceManager::GetMesh(uint32_t id)
+{
+
+  if(id>=meshVector.size())
+  {
+    return nullptr;
+  }
+  else
+  {
+    return meshVector[id];
+  }
+}
+
+//Given an id, gives the texture stored in that specific index
+Texture* ResourceManager::GetTexture(uint32_t id)
+{
+
+  if(id>=textureVector.size())
+  {
+    return nullptr;
+  }
+  else
+  {
+    return textureVector[id];
+  }
+}
+
+//Given an id, gives the material stored in that specific index
+Material* ResourceManager::GetMaterial(uint32_t id)
+{
+  if(id>= materialVector.size())
+  {
+    return nullptr;
+  }
+  else
+  {
+    return materialVector[id];
+  }
+}
+
+
+//Auxiliary function, currently many modules depend on it to get the assets path
+std::filesystem::path ResourceManager::FolderFinder(const std::string& foldername)
+{
+  std::filesystem::path currentPath;
+  currentPath = std::filesystem::current_path();
+  
+  while(true)
+  {
+    
+   if(std::filesystem::exists(currentPath/foldername))
+   {
+
+    return(currentPath);
+   }
+   else if (currentPath == currentPath.parent_path()){
+    std::cout<<"FolderFinder fail"<<std::endl;
+    return std::filesystem::path();
+   }
+   
+   else{
+    currentPath = currentPath.parent_path();
+   }
+     
+ }
+}
+
+//Destroy and cleans the vectors and maps properly
 ResourceManager::~ResourceManager(){
   for(size_t i=0;i<meshVector.size();i++)
   {
