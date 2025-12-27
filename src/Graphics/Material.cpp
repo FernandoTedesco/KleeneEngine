@@ -5,8 +5,8 @@
 
 Material::Material()
 {
-    this->diffuseMap = nullptr;
 }
+//Visual parameters binding to shader
 void Material::Use(Shader* shader)
 {
     shader->SetVec3("material.color", colorTint);
@@ -16,5 +16,4 @@ void Material::Use(Shader* shader)
     shader->SetInt("material.diffuse", 0);
 
     
-   
 }
