@@ -31,7 +31,7 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
     glm::mat4 viewMatrix = camera->GetViewMatrix();
     shader->SetMat4("projection", projectionMatrix);
     shader->SetMat4("view", viewMatrix);
-	
+
     for (GameObject& object : scene->gameObjects)
     {
 	if (object.isActive)

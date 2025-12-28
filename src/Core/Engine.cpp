@@ -19,16 +19,15 @@ Engine::Engine()
     terminal->WriteArt();
     terminal->ChangeLog();
     window = new Window();
-
+    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+    shader = new Shader((currentPath / "assets/shaders/core.vert").string(),
+			(currentPath / "assets/shaders/core.frag").string());
     camera = new Camera();
     resourceManager = new ResourceManager();
     sceneManager = new SceneManager();
     activeScene = new Scene();
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
 
-    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    shader = new Shader((currentPath / "assets/shaders/core.vert").string(),
-			(currentPath / "assets/shaders/core.frag").string());
     renderer = new Renderer();
 
     isRunning = true;
@@ -58,6 +57,10 @@ void Engine::Run()
 	}
 
 	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
+	if (editor != nullptr)
+	{
+	    editor->RenderHighlight();
+	}
 	editor->EndFrame();
 
 	Input::UpdateLastState();

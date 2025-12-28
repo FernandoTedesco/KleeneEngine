@@ -23,6 +23,7 @@ public:
     void DrawEditorUI();
     void EndFrame();
     void HandleInput();
+    void RenderHighlight();
     void PlaceObject(int gridX, int gridZ);
     bool HasCollided(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 aabbMin,
 		     glm::vec3 aabbMax, float& outDistance);
@@ -50,6 +51,6 @@ private:
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
-    void RenderHighlight();
-    Shader* hightlightShader;
+
+    Shader* highlightShader;
 };

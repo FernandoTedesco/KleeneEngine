@@ -10,7 +10,7 @@
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
 #include "EditorGrid.h"
-
+#include <glm/gtc/matrix_transform.hpp>
 #include <Resources/ResourceManager.h>
 #include "Core/Input.h"
 #include <glm/glm.hpp>
@@ -32,7 +32,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->camera = camera;
     this->resourceManager = resourceManager;
     this->currentMode = EditorMode::PLACEMENT;
-    this->hightlightShader = hightlightShader;
+    this->highlightShader = hightlightShader;
     editorGrid = new EditorGrid(50);
 
     this->listLoaded = false;
@@ -452,13 +452,13 @@ std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path direc
     return files;
 }
 
-/*void Editor::RenderHighlight()
+void Editor::RenderHighlight()
 {
     if (this->selectedEntityIndex == -1 || this->selectedEntityIndex >= scene->gameObjects.size())
     {
 	return;
     }
-    if (!this->hightlightShader)
+    if (!this->highlightShader)
 	return;
     GameObject& object = scene->gameObjects[this->selectedEntityIndex];
     Mesh* mesh = resourceManager->GetMesh(object.meshID);
@@ -467,20 +467,35 @@ std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path direc
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2.0f);
     glDisable(GL_DEPTH_TEST);
-    this->hightlightShader->Use();
+    this->highlightShader->Use();
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, object.position);
     model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
     model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
     model = glm::rotate(model, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
     model = glm::scale(model, object.scale);
-    this->hightlightShader->SetMat4("model", model);
+    glm::mat4 view = this->camera->GetViewMatrix();
+    glm::mat4 projection =
+	this->camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
+    this->highlightShader->SetMat4("view", view);
+    this->highlightShader->SetMat4("projection", projection);
+    this->highlightShader->SetMat4("model", model);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    this->highlightShader->SetVec3("material.color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
+    mesh->Draw();
+    glDisable(GL_BLEND);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.0f);
+    glDisable(GL_DEPTH_TEST);
+
     mesh->Draw();
     glEnable(GL_DEPTH_TEST);
     glLineWidth(1.0f);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
-*/
+
 void DrawInspector()
 {
 }
