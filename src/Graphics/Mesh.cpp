@@ -1,6 +1,6 @@
-#include <vector>
 #include <glad/glad.h>
 #include "Mesh.h"
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <iostream>

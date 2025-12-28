@@ -4,6 +4,8 @@ project("KleeneEngine")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 17)
 
+
+
 set(SDL2_LIB "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2.lib")
 set(SDL2_MAIN_LIB "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2main.lib")
 set(SDL2_DLL "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2.dll")
@@ -34,6 +36,7 @@ ${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Editor.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
+${CMAKE_SOURCE_DIR}/src/Development/SystemMetrics.cpp
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI})

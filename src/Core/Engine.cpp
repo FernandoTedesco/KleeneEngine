@@ -1,3 +1,5 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "Engine.h"
 #include "Window.h"
 #include "Camera.h"
@@ -22,7 +24,7 @@ Engine::Engine()
     resourceManager = new ResourceManager();
     sceneManager = new SceneManager();
     activeScene = new Scene();
-    editor = new Editor(window, activeScene, sceneManager, camera, resourceManager);
+    editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
 
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath / "assets/shaders/core.vert").string(),

@@ -2,11 +2,13 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include "glm/glm.hpp"
 class Window;
 class Scene;
 class SceneManager;
 class Camera;
 class EditorGrid;
+class Shader;
 class ResourceManager;
 
 enum class EditorMode { SELECTION = 1, PLACEMENT = 2, RESIZE = 3, ROTATION = 4 };
@@ -16,12 +18,14 @@ class Editor
 
 public:
     Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
-	   ResourceManager* resourceManager);
+	   ResourceManager* resourceManager, Shader* hightlightShader);
     void BeginFrame();
     void DrawEditorUI();
     void EndFrame();
     void HandleInput();
     void PlaceObject(int gridX, int gridZ);
+    bool HasCollided(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 aabbMin,
+		     glm::vec3 aabbMax, float& outDistance);
     EditorGrid* GetGrid()
     {
 	return editorGrid;
@@ -41,7 +45,11 @@ private:
     Camera* camera;
     ResourceManager* resourceManager;
     EditorGrid* editorGrid;
+    int selectedEntityIndex = -1;
+    void DrawInspector();
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
+    void RenderHighlight();
+    Shader* hightlightShader;
 };

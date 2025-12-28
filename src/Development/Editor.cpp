@@ -1,19 +1,24 @@
+
+#include <glad/glad.h>
+#include "Core/Window.h"
 #include "Editor.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-#include "imgui_impl_opengl3_loader.h"
 #include "imgui_impl_sdl2.h"
-#include "Core/Window.h"
+#include "SystemMetrics.h"
 #include <iostream>
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
 #include "EditorGrid.h"
-#include <psapi.h>
-#include <windows.h>
+
 #include <Resources/ResourceManager.h>
 #include "Core/Input.h"
+#include <glm/glm.hpp>
+#include "Graphics/Mesh.h"
+#include "Graphics/Shader.h"
+// horrible godclass case, but im overlooking for now
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
-	       ResourceManager* resourceManager)
+	       ResourceManager* resourceManager, Shader* hightlightShader)
 {
 
     ImGui::CreateContext();
@@ -27,21 +32,12 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->camera = camera;
     this->resourceManager = resourceManager;
     this->currentMode = EditorMode::PLACEMENT;
+    this->hightlightShader = hightlightShader;
     editorGrid = new EditorGrid(50);
 
     this->listLoaded = false;
     this->selectedMeshIndex = 0;
     this->selectedTextureIndex = 0;
-}
-
-static float GetRAMUsage()
-{
-    PROCESS_MEMORY_COUNTERS_EX pmc;
-    if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
-    {
-	return static_cast<float>(pmc.WorkingSetSize) / (1024.0f * 1024.0f);
-    }
-    return 0.0f;
 }
 
 void Editor::BeginFrame()
@@ -111,7 +107,7 @@ void Editor::DrawEditorUI()
     ImGui::NewLine();
     float fps = ImGui::GetIO().Framerate;
     float frameTime = 1000.0f / fps;
-    float ram = GetRAMUsage();
+    float ram = SystemMetrics::GetRAMUsage();
 
     ImGui::Text("Camera position: %.2f, %.2f, %.2f", camera->GetCameraPos().x,
 		camera->GetCameraPos().y, camera->GetCameraPos().z);
@@ -145,6 +141,38 @@ void Editor::DrawEditorUI()
 	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
 				(float)window->GetWidth(), (float)window->GetHeight());
     glm::vec3 rayOrigin = camera->GetCameraPos();
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	if (currentMode == EditorMode::SELECTION)
+	{
+	    float closestDistance = FLT_MAX;
+	    int hitIndex = -1; // Empty click
+	    for (int i = 0; i < scene->gameObjects.size(); i++)
+	    {
+		glm::vec3 objectPosition = scene->gameObjects[i].position;
+		glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
+		glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
+		float distance = 0.0f;
+		if (HasCollided(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
+		{
+		    if (distance < closestDistance)
+		    {
+			closestDistance = distance;
+			hitIndex = i;
+		    }
+		}
+	    }
+	    if (hitIndex != -1)
+	    {
+		std::cout << "[INFO] Object " << hitIndex << " selected!" << std::endl;
+		this->selectedEntityIndex = hitIndex;
+	    } else
+	    {
+		std::cout << "[INFO] Empty click" << std::endl;
+	    }
+	}
+    }
+
     if (rayDirection.y < 0.0f)
     {
 	float distance = -rayOrigin.y / rayDirection.y;
@@ -155,9 +183,7 @@ void Editor::DrawEditorUI()
 	ImGui::Text("Grid Target: [%d,%d]", gridX, gridZ);
 	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
 	{
-	    if (currentMode == EditorMode::SELECTION)
-	    {
-	    }
+
 	    if (currentMode == EditorMode::PLACEMENT)
 	    {
 		this->PlaceObject(gridX, gridZ);
@@ -177,7 +203,7 @@ void Editor::DrawEditorUI()
     ImGui::End();
 
     // Inspector
-    float sidebarWidth = 100.0f;
+    float sidebarWidth = 200.0f;
     float windowWidth = (float)window->GetWidth();
     float windowHeight = (float)window->GetHeight();
 
@@ -238,8 +264,37 @@ void Editor::DrawEditorUI()
 	    }
 	    ImGui::EndCombo();
 	}
+	ImGui::Separator();
+	ImGui::Text("Properties Inspector");
+	if (this->selectedEntityIndex != -1 &&
+	    this->selectedEntityIndex < scene->gameObjects.size())
+	{
+	    // Entity info
+	    GameObject& selectedObject = scene->gameObjects[this->selectedEntityIndex];
+	    ImGui::Spacing();
+	    ImGui::Text("ID: %d", this->selectedEntityIndex);
+	    ImGui::Text("Transform");
+	    ImGui::DragFloat3("Position", &selectedObject.position[0], 0.1f);
+	    ImGui::DragFloat3("Scale", &selectedObject.scale[0], 0.05f);
+	    ImGui::DragFloat3("Rotation", &selectedObject.rotation[0], 1.0f);
+	    ImGui::Spacing();
+	    ImGui::Separator();
+	    // Material info
+	    Material* material = resourceManager->GetMaterial(selectedObject.materialID);
+	    if (material)
+	    {
+		ImGui::Text("Material ID: %d", selectedObject.materialID);
+	    }
+	    ImGui::Spacing();
+	    if (ImGui::Button("Delete Object", ImVec2(-1, 0)))
+	    {
+		sceneManager->DeleteObject(*scene, this->selectedEntityIndex);
+		selectedEntityIndex = -1;
+	    }
+	}
+
+	ImGui::End();
     }
-    ImGui::End();
 }
 
 void Editor::PlaceObject(int gridX, int gridZ)
@@ -299,6 +354,85 @@ void Editor::EndFrame()
     ImGui_ImplOpenGL3_RenderDrawData(drawData);
 }
 
+bool Editor::HasCollided(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 aabbMin,
+			 glm::vec3 aabbMax, float& outDistance)
+{
+    float tMin = 0.0f;
+    float tMax = 100000.0f;
+    glm::vec3 position = rayOrigin;
+    glm::vec3 direction = rayDirection;
+    if (glm::abs(direction.x) > 0.0001f)
+    {
+	float t1 = (aabbMin.x - position.x) / direction.x;
+	float t2 = (aabbMax.x - position.x) / direction.x;
+	if (t1 > t2)
+	{
+	    float temp = t1;
+	    t1 = t2;
+	    t2 = temp;
+	}
+	if (t1 > tMin)
+	    tMin = t1;
+	if (t2 < tMax)
+	    tMax = t2;
+	if (tMin > tMax)
+	    return false;
+	if (tMax < 0)
+	    return false;
+    } else
+    {
+	if (position.x < aabbMin.x || position.x > aabbMax.x)
+	    return false;
+    }
+    if (glm::abs(direction.y) > 0.0001f)
+    {
+	float t1 = (aabbMin.y - position.y) / direction.y;
+	float t2 = (aabbMax.y - position.y) / direction.y;
+	if (t1 > t2)
+	{
+	    float temp = t1;
+	    t1 = t2;
+	    t2 = temp;
+	}
+	if (t1 > tMin)
+	    tMin = t1;
+	if (t2 < tMax)
+	    tMax = t2;
+	if (tMin > tMax)
+	    return false;
+	if (tMax < 0)
+	    return false;
+    } else
+    {
+	if (position.y < aabbMin.y || position.y > aabbMax.y)
+	    return false;
+    }
+    if (glm::abs(direction.z) > 0.0001f)
+    {
+	float t1 = (aabbMin.z - position.z) / direction.z;
+	float t2 = (aabbMax.z - position.z) / direction.z;
+	if (t1 > t2)
+	{
+	    float temp = t1;
+	    t1 = t2;
+	    t2 = temp;
+	}
+	if (t1 > tMin)
+	    tMin = t1;
+	if (t2 < tMax)
+	    tMax = t2;
+	if (tMin > tMax)
+	    return false;
+	if (tMax < 0)
+	    return false;
+    } else
+    {
+	if (position.z < aabbMin.z || position.z > aabbMax.z)
+	    return false;
+    }
+    outDistance = tMin;
+    return true;
+}
 std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
 {
     std::vector<std::string> files;
@@ -316,6 +450,39 @@ std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path direc
 	}
     }
     return files;
+}
+
+/*void Editor::RenderHighlight()
+{
+    if (this->selectedEntityIndex == -1 || this->selectedEntityIndex >= scene->gameObjects.size())
+    {
+	return;
+    }
+    if (!this->hightlightShader)
+	return;
+    GameObject& object = scene->gameObjects[this->selectedEntityIndex];
+    Mesh* mesh = resourceManager->GetMesh(object.meshID);
+    if (!mesh)
+	return;
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.0f);
+    glDisable(GL_DEPTH_TEST);
+    this->hightlightShader->Use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, object.position);
+    model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
+    model = glm::scale(model, object.scale);
+    this->hightlightShader->SetMat4("model", model);
+    mesh->Draw();
+    glEnable(GL_DEPTH_TEST);
+    glLineWidth(1.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+*/
+void DrawInspector()
+{
 }
 Editor::~Editor()
 {

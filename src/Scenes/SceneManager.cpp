@@ -137,3 +137,15 @@ void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t me
     newObject.name = "Object_" + std::to_string(targetScene.gameObjects.size());
     targetScene.gameObjects.push_back(newObject);
 }
+
+void SceneManager::DeleteObject(Scene& scene, int objectIndex)
+{
+    if (objectIndex >= 0 && objectIndex < scene.gameObjects.size())
+    {
+	scene.gameObjects.erase(scene.gameObjects.begin() + objectIndex);
+	std::cout << "[INFO] Entity deleted" << std::endl;
+    } else
+    {
+	std::cout << "[ERROR] Could not delete entity" << std::endl;
+    }
+}
