@@ -65,10 +65,13 @@ private:
 
     void SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DrawInspector();
+    void DrawHierarchy(Window* window);
     void TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void ResizeModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void RotationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    void SetObjectTexture(int objectIndex, std::string textureName);
+    void DuplicateSelectedObject();
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);

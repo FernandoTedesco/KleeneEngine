@@ -62,6 +62,7 @@ void Editor::DrawEditorUI()
     this->DeletionModeUpdate(rayOrigin, rayDirection);
     this->ResizeModeUpdate(rayOrigin, rayDirection);
     this->RotationModeUpdate(rayOrigin, rayDirection);
+    this->DrawHierarchy(window);
     if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -254,6 +255,10 @@ void Editor::HandleInput()
 	currentMode = EditorMode::ROTATION;
 	std::cout << "[INFO] Rotation Mode Enabled" << std::endl;
     }
+    if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_D))
+    {
+	DuplicateSelectedObject();
+    }
 }
 
 void Editor::EndFrame()
@@ -406,11 +411,35 @@ void Editor::DrawInspector()
 	    ImGui::DragFloat3("Rotation", &selectedObject.rotation[0], 1.0f);
 	    ImGui::Spacing();
 	    ImGui::Separator();
+	    ImGui::Text("Material Settings");
+	    if (ImGui::BeginCombo("Texture", "Change Texture..."))
+	    {
+		for (int i = 0; i < availableTextures.size(); i++)
+		{
+		    bool isSelected = (selectedTextureIndex == i);
+		    if (ImGui::Selectable(availableTextures[i].c_str(), isSelected))
+		    {
+			SetObjectTexture(selectedEntityIndex, availableTextures[i]);
+		    }
+		    if (isSelected)
+		    {
+			ImGui::SetItemDefaultFocus();
+		    }
+		}
+		ImGui::EndCombo();
+		ImGui::Text("CurrentMaterial ID: %d", selectedObject.materialID);
+		ImGui::Spacing();
+	    }
 	    // Material info
 	    Material* material = resourceManager->GetMaterial(selectedObject.materialID);
 	    if (material)
 	    {
 		ImGui::Text("Material ID: %d", selectedObject.materialID);
+	    }
+	    ImGui::Spacing();
+	    if (ImGui::Button("Duplicate Object", ImVec2(-1, 0)))
+	    {
+		DuplicateSelectedObject();
 	    }
 	    ImGui::Spacing();
 	    if (ImGui::Button("Delete Object", ImVec2(-1, 0)))
@@ -538,6 +567,7 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	this->selectedEntityIndex = hitIndex;
     } else
     {
+	this->selectedEntityIndex = -1;
 	std::cout << "[INFO] Empty click" << std::endl;
     }
 }
@@ -765,6 +795,76 @@ void Editor::RotationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
     }
 }
 
+void Editor::DrawHierarchy(Window* window)
+{
+    float sidebarWidth = 200.0f;
+    float windowHeight = (float)window->GetHeight();
+    ImGui::SetNextWindowPos(ImVec2(0, 80.0));
+    ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - 80.0f));
+    ImGui::Begin("Hierarchy", nullptr,
+		 ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+		     ImGuiWindowFlags_NoCollapse);
+    ImGui::Text("Scene Hierarchy");
+    ImGui::Separator();
+
+    for (int i = 0; i < scene->gameObjects.size(); i++)
+    {
+	GameObject& object = scene->gameObjects[i];
+	std::string label = object.name.empty() ? "Object " + std::to_string(i) : object.name;
+	label += "##" + std::to_string(i);
+	bool isSelected = (selectedEntityIndex == i);
+	if (ImGui::Selectable(label.c_str(), isSelected))
+	{
+	    selectedEntityIndex = i;
+	}
+	if (isSelected)
+	{
+	    ImGui::SetItemDefaultFocus();
+	}
+    }
+    ImGui::End();
+}
+void Editor::DuplicateSelectedObject()
+{
+    if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
+    {
+	return;
+    }
+    GameObject originalCopy = scene->gameObjects[selectedEntityIndex];
+    GameObject& original = scene->gameObjects[selectedEntityIndex];
+    sceneManager->AddObject(*scene, originalCopy.position, originalCopy.meshID,
+			    originalCopy.materialID);
+    GameObject& clone = scene->gameObjects.back();
+    clone.rotation = originalCopy.rotation;
+    clone.scale = originalCopy.scale;
+    if (!original.name.empty())
+    {
+	clone.name = originalCopy.name + " (Clone)";
+    } else
+    {
+	clone.name = "Object (Clone)";
+	selectedEntityIndex = scene->gameObjects.size() - 1;
+	std::cout << "[INFO] Object Duplicated successfully with ID: " << selectedEntityIndex
+		  << std::endl;
+    }
+}
+
+void Editor::SetObjectTexture(int objectIndex, std::string textureName)
+{
+    if (objectIndex == -1 || objectIndex >= scene->gameObjects.size())
+	return;
+    GameObject& object = scene->gameObjects[objectIndex];
+    std::filesystem::path texturePath =
+	ResourceManager::FolderFinder("assets") / "assets/textures" / textureName;
+    uint32_t textureID = resourceManager->CreateTexture(textureName, texturePath);
+
+    std::string materialName = "Mat_" + textureName;
+    uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
+
+    object.materialID = materialID;
+    std::cout << "[INFO] Changed Object " << objectIndex << " texture to:" << textureID
+	      << std::endl;
+}
 Editor::~Editor()
 {
 
