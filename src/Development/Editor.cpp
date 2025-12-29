@@ -61,6 +61,7 @@ void Editor::DrawEditorUI()
     this->TranslationModeUpdate(rayOrigin, rayDirection);
     this->DeletionModeUpdate(rayOrigin, rayDirection);
     this->ResizeModeUpdate(rayOrigin, rayDirection);
+    this->RotationModeUpdate(rayOrigin, rayDirection);
     if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -665,6 +666,102 @@ void Editor::DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	    sceneManager->DeleteObject(*scene, hitIndex);
 	    selectedEntityIndex = -1;
 	}
+    }
+}
+
+void Editor::RotationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
+{
+    if (currentMode != EditorMode::ROTATION)
+    {
+	return;
+    }
+
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	if (selectedEntityIndex != -1)
+	{
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object.position, 1.0f);
+	} else
+	{
+	    currentAxis = GizmoAxis::NONE;
+	}
+
+	if (currentAxis != GizmoAxis::NONE)
+	{
+	    isDragging = true;
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    draggingStartPosition = object.position;
+	    ImVec2 mousePosition = ImGui::GetMousePos();
+	    draggingStartMousePosition = glm::vec2(mousePosition.x, mousePosition.y);
+	    draggingStartRotation = object.rotation;
+
+	} else
+	{
+	    SelectObject(rayOrigin, rayDirection);
+	    if (selectedEntityIndex != -1)
+	    {
+		currentAxis = GizmoAxis::NONE;
+	    }
+	}
+    }
+
+    if (isDragging && ImGui::IsMouseDown(0))
+    {
+	if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
+	{
+	    isDragging = false;
+	    return;
+	}
+
+	GameObject& object = scene->gameObjects[selectedEntityIndex];
+	ImVec2 currentMouse = ImGui::GetMousePos();
+	float deltaX = currentMouse.x - draggingStartMousePosition.x;
+	float deltaY = currentMouse.y - draggingStartMousePosition.y;
+	float sensitivity = 0.5f;
+
+	glm::vec3 targetRotation = draggingStartRotation;
+
+	//yes its a bit confusing but i found it more intuitive to be this way in the map editor,
+	//will be changed in the future to be less messy to understand
+	if (currentAxis == GizmoAxis::X)
+	{
+	    targetRotation.z += deltaX * sensitivity;
+
+	} else if (currentAxis == GizmoAxis::Y)
+	{
+	    targetRotation.x += +deltaY * sensitivity;
+
+	} else if (currentAxis == GizmoAxis::Z)
+	{
+	    targetRotation.y += deltaX * sensitivity;
+	}
+
+	if (ImGui::GetIO().KeyCtrl)
+	{
+
+	    float angleStep = 15.0f;
+
+	    if (currentAxis == GizmoAxis::X)
+	    {
+		targetRotation.x = std::floor(targetRotation.x / angleStep) * angleStep;
+	    } else if (currentAxis == GizmoAxis::Y)
+	    {
+
+		targetRotation.y = std::floor(targetRotation.y / angleStep) * angleStep;
+	    } else if (currentAxis == GizmoAxis::Z)
+	    {
+		targetRotation.z = std::floor(targetRotation.z / angleStep) * angleStep;
+	    }
+	}
+	object.rotation.x = targetRotation.x;
+	object.rotation.y = targetRotation.y;
+	object.rotation.z = targetRotation.z;
+    }
+    if (ImGui::IsMouseReleased(0))
+    {
+	isDragging = false;
+	currentAxis = GizmoAxis::NONE;
     }
 }
 

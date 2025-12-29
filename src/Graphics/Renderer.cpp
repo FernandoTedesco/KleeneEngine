@@ -50,10 +50,14 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
 		}
 		glm::mat4 modelMatrix(1.0f);
 		modelMatrix = glm::translate(modelMatrix, object.position);
-		glm::quat rotationQuat = glm::quat(object.rotation.w, object.rotation.x,
-						   object.rotation.y, object.rotation.z);
-		glm::mat4 rotationMatrix = glm::mat4_cast(rotationQuat);
-		modelMatrix = modelMatrix * rotationMatrix;
+
+		modelMatrix =
+		    glm::rotate(modelMatrix, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
+		modelMatrix =
+		    glm::rotate(modelMatrix, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
+		modelMatrix =
+		    glm::rotate(modelMatrix, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
+
 		modelMatrix = glm::scale(modelMatrix, object.scale);
 		shader->SetMat4("model", modelMatrix);
 		mesh->Draw();
