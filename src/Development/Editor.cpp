@@ -722,8 +722,8 @@ void Editor::RotationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 
 	glm::vec3 targetRotation = draggingStartRotation;
 
-	//yes its a bit confusing but i found it more intuitive to be this way in the map editor,
-	//will be changed in the future to be less messy to understand
+	// yes its a bit confusing but i found it more intuitive to be this way in the map editor,
+	// will be changed in the future to be less messy to understand
 	if (currentAxis == GizmoAxis::X)
 	{
 	    targetRotation.z += deltaX * sensitivity;
@@ -741,17 +741,17 @@ void Editor::RotationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	{
 
 	    float angleStep = 15.0f;
-
+	    // confusion here too, but for now its overlooked
 	    if (currentAxis == GizmoAxis::X)
 	    {
-		targetRotation.x = std::floor(targetRotation.x / angleStep) * angleStep;
+		targetRotation.z = std::floor(targetRotation.z / angleStep) * angleStep;
 	    } else if (currentAxis == GizmoAxis::Y)
 	    {
 
-		targetRotation.y = std::floor(targetRotation.y / angleStep) * angleStep;
+		targetRotation.x = std::floor(targetRotation.x / angleStep) * angleStep;
 	    } else if (currentAxis == GizmoAxis::Z)
 	    {
-		targetRotation.z = std::floor(targetRotation.z / angleStep) * angleStep;
+		targetRotation.y = std::floor(targetRotation.y / angleStep) * angleStep;
 	    }
 	}
 	object.rotation.x = targetRotation.x;
