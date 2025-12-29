@@ -126,7 +126,7 @@ void Terminal::WriteArt()
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
     std::cout << "Terminal has initialized successfully!" << std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    std::cout << "Build 0.4 (InDev)" << std::endl;
+    std::cout << "Build 0.5 (InDev)" << std::endl;
     SetConsoleTextAttribute((HWND)outputHandle,
 			    FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
     std::cout << "================================================================================="

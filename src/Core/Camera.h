@@ -13,6 +13,8 @@ public:
     enum CameraMode { FREECAM, SCENE_EDITOR, GAME };
     void ChangeMode(CameraMode mode);
     glm::vec3 GetRayDirection(float mouseX, float mouseY, float screenWidth, float screenHeight);
+    void SetCameraPosition(glm::vec3 newPosition);
+    void SetCameraRotation(float newPitch, float newYaw);
 
 private:
     CameraMode cameraMode;

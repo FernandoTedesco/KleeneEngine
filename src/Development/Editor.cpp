@@ -18,6 +18,7 @@
 #include "Graphics/Shader.h"
 #include "Utils/Math.h"
 #include "Gizmo.h"
+#include "Graphics/Material.h"
 // horrible godclass case, but im overlooking for now
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
 	       ResourceManager* resourceManager, Shader* hightlightShader)
@@ -259,6 +260,10 @@ void Editor::HandleInput()
     {
 	DuplicateSelectedObject();
     }
+    if (!ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_F))
+    {
+	FocusOnSelectedObject();
+    }
 }
 
 void Editor::EndFrame()
@@ -411,7 +416,7 @@ void Editor::DrawInspector()
 	    ImGui::DragFloat3("Rotation", &selectedObject.rotation[0], 1.0f);
 	    ImGui::Spacing();
 	    ImGui::Separator();
-	    ImGui::Text("Material Settings");
+	    ImGui::Text("Texture Settings");
 	    if (ImGui::BeginCombo("Texture", "Change Texture..."))
 	    {
 		for (int i = 0; i < availableTextures.size(); i++)
@@ -427,16 +432,23 @@ void Editor::DrawInspector()
 		    }
 		}
 		ImGui::EndCombo();
+	    }
+
+	    Material* material = resourceManager->GetMaterial(selectedObject.materialID);
+	    if (material)
+	    {
+		ImGui::Spacing();
+		ImGui::Separator();
+		ImGui::Text("Material Properties");
+		ImGui::ColorEdit3("Color Tint", &material->colorTint[0]);
+		ImGui::DragFloat2("Tiling", &material->tiling[0], 0.05f);
+		ImGui::DragFloat2("UV Offset", &material->offset[0], 0.01f);
+
 		ImGui::Text("CurrentMaterial ID: %d", selectedObject.materialID);
 		ImGui::Spacing();
 	    }
 	    // Material info
-	    Material* material = resourceManager->GetMaterial(selectedObject.materialID);
-	    if (material)
-	    {
-		ImGui::Text("Material ID: %d", selectedObject.materialID);
-	    }
-	    ImGui::Spacing();
+
 	    if (ImGui::Button("Duplicate Object", ImVec2(-1, 0)))
 	    {
 		DuplicateSelectedObject();
@@ -831,13 +843,13 @@ void Editor::DuplicateSelectedObject()
 	return;
     }
     GameObject originalCopy = scene->gameObjects[selectedEntityIndex];
-    GameObject& original = scene->gameObjects[selectedEntityIndex];
+
     sceneManager->AddObject(*scene, originalCopy.position, originalCopy.meshID,
 			    originalCopy.materialID);
     GameObject& clone = scene->gameObjects.back();
     clone.rotation = originalCopy.rotation;
     clone.scale = originalCopy.scale;
-    if (!original.name.empty())
+    if (!originalCopy.name.empty())
     {
 	clone.name = originalCopy.name + " (Clone)";
     } else
@@ -865,6 +877,22 @@ void Editor::SetObjectTexture(int objectIndex, std::string textureName)
     std::cout << "[INFO] Changed Object " << objectIndex << " texture to:" << textureID
 	      << std::endl;
 }
+
+void Editor::FocusOnSelectedObject()
+{
+    if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
+    {
+	return;
+    }
+    GameObject& object = scene->gameObjects[selectedEntityIndex];
+    glm::vec3 focusOffset = glm::vec3(0.0f, 6.0f, 4.0f);
+    glm::vec3 newPosition = object.position + focusOffset;
+    camera->SetCameraPosition(newPosition);
+    camera->SetCameraRotation(-60.0f, -90.0f);
+
+    std::cout << "[INFO] Camera focused on object: " << selectedEntityIndex << std::endl;
+}
+
 Editor::~Editor()
 {
 

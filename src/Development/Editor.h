@@ -48,6 +48,7 @@ public:
     int selectedTextureIndex = 0;
 
 private:
+    void FocusOnSelectedObject();
     Window* window;
     EditorMode currentMode;
     SceneManager* sceneManager;

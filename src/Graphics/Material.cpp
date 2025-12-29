@@ -10,6 +10,7 @@ void Material::Use(Shader* shader)
 {
     shader->SetVec3("material.color", colorTint);
     shader->SetVec2("material.tiling", tiling);
+    shader->SetVec2("material.offset", offset);
     if (diffuseMap != nullptr)
 	diffuseMap->Use(0);
     shader->SetInt("material.diffuse", 0);

@@ -176,6 +176,22 @@ glm::vec3 Camera::GetRayDirection(float mouseX, float mouseY, float screenWidth,
     return rayWorld;
 }
 
+void Camera::SetCameraPosition(glm::vec3 newPosition)
+{
+    this->cameraPos = newPosition;
+}
+
+void Camera::SetCameraRotation(float newPitch, float newYaw)
+{
+    this->pitch = newPitch;
+    this->yaw = newYaw;
+    glm::vec3 newDirection;
+    newDirection.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+    newDirection.y = sin(glm::radians(pitch));
+    newDirection.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+    this->directionVector = glm::normalize(newDirection);
+    this->rightVector = glm::normalize(glm::cross(glm::vec3(0, 1, 0), this->directionVector));
+}
 glm::vec3 Camera::GetCameraPos() const
 {
     return cameraPos;
