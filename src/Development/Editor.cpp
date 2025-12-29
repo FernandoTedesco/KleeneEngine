@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl2.h"
-#include "SystemMetrics.h"
+#include "Utils/SystemMetrics.h"
 #include <iostream>
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
@@ -16,6 +16,8 @@
 #include <glm/glm.hpp>
 #include "Graphics/Mesh.h"
 #include "Graphics/Shader.h"
+#include "Utils/Math.h"
+#include "Gizmo.h"
 // horrible godclass case, but im overlooking for now
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
 	       ResourceManager* resourceManager, Shader* hightlightShader)
@@ -33,6 +35,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->resourceManager = resourceManager;
     this->currentMode = EditorMode::PLACEMENT;
     this->highlightShader = hightlightShader;
+    this->gizmo = new Gizmo();
     editorGrid = new EditorGrid(50);
 
     this->listLoaded = false;
@@ -50,6 +53,13 @@ void Editor::BeginFrame()
 void Editor::DrawEditorUI()
 {
     this->HandleInput();
+    glm::vec3 rayDirection =
+	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
+				(float)window->GetWidth(), (float)window->GetHeight());
+    glm::vec3 rayOrigin = camera->GetCameraPos();
+
+    this->TranslationModeUpdate(rayOrigin, rayDirection);
+
     if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -122,9 +132,15 @@ void Editor::DrawEditorUI()
     if (currentMode == EditorMode::SELECTION)
     {
 	modeText = "SELECTION";
+    } else if (currentMode == EditorMode::DELETION)
+    {
+	modeText = "DELETION";
     } else if (currentMode == EditorMode::PLACEMENT)
     {
 	modeText = "PLACEMENT";
+    } else if (currentMode == EditorMode::TRANSLATE)
+    {
+	modeText = "TRANSLATION";
     } else if (currentMode == EditorMode::RESIZE)
     {
 	modeText = "RESIZE";
@@ -132,44 +148,18 @@ void Editor::DrawEditorUI()
     {
 	modeText = "ROTATION";
     }
+
     ImGui::Text("Editor Mode: %s", modeText.c_str());
     ImGui::SameLine(0, 20);
     ImGui::Text("Frame Time: %6.3fms", frameTime);
     ImGui::SameLine(0, 20);
     ImGui::Text("RAM Usage: %6.2fMB", ram);
-    glm::vec3 rayDirection =
-	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
-				(float)window->GetWidth(), (float)window->GetHeight());
-    glm::vec3 rayOrigin = camera->GetCameraPos();
+
     if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
     {
 	if (currentMode == EditorMode::SELECTION)
 	{
-	    float closestDistance = FLT_MAX;
-	    int hitIndex = -1; // Empty click
-	    for (int i = 0; i < scene->gameObjects.size(); i++)
-	    {
-		glm::vec3 objectPosition = scene->gameObjects[i].position;
-		glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
-		glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
-		float distance = 0.0f;
-		if (HasCollided(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
-		{
-		    if (distance < closestDistance)
-		    {
-			closestDistance = distance;
-			hitIndex = i;
-		    }
-		}
-	    }
-	    if (hitIndex != -1)
-	    {
-		std::cout << "[INFO] Object " << hitIndex << " selected!" << std::endl;
-		this->selectedEntityIndex = hitIndex;
-	    } else
-	    {
-		std::cout << "[INFO] Empty click" << std::endl;
-	    }
+	    SelectObject(rayOrigin, rayDirection);
 	}
     }
 
@@ -201,7 +191,142 @@ void Editor::DrawEditorUI()
 	ImGui::Text("Grid Target: Sky");
     }
     ImGui::End();
+    this->DrawInspector();
+}
 
+void Editor::PlaceObject(int gridX, int gridZ)
+{
+    if (!availableMeshes.empty())
+    {
+	std::string meshName = availableMeshes[selectedMeshIndex];
+	std::string textureName = availableTextures[selectedTextureIndex];
+
+	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+	uint32_t meshID =
+	    resourceManager->CreateMesh(meshName, currentPath / "assets/models" / meshName);
+	uint32_t textureID = resourceManager->CreateTexture(
+	    textureName, currentPath / "assets/textures" / textureName);
+	std::string materialName = "Mat_" + textureName;
+	uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
+
+	float x = gridX + 0.5f;
+	float z = gridZ + 0.5f;
+	glm::vec3 position(x, 0, z);
+	sceneManager->AddObject(*scene, position, meshID, materialID);
+	std::cout << "[SUCCESS] Added Object at " << x << "," << z << std::endl;
+    } else
+    {
+	std::cout << "[ERROR] There are no available meshes" << std::endl;
+    }
+}
+
+void Editor::HandleInput()
+{
+    if (Input::IsKeyPressed(Input::KEY_1))
+    {
+	currentMode = EditorMode::SELECTION;
+	std::cout << "[INFO] Selection Mode Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_2))
+    {
+	currentMode = EditorMode::DELETION;
+	std::cout << "[INFO] Deletion Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_3))
+    {
+	currentMode = EditorMode::PLACEMENT;
+	std::cout << "[INFO] Placement Mode Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_4))
+    {
+	currentMode = EditorMode::TRANSLATE;
+	std::cout << "[INFO] Translation Mode Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_5))
+    {
+	currentMode = EditorMode::RESIZE;
+	std::cout << "[INFO] Resize Mode Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_6))
+    {
+	currentMode = EditorMode::ROTATION;
+	std::cout << "[INFO] Rotation Mode Enabled" << std::endl;
+    }
+}
+
+void Editor::EndFrame()
+{
+    ImGui::Render();
+    ImDrawData* drawData = ImGui::GetDrawData();
+    ImGui_ImplOpenGL3_RenderDrawData(drawData);
+}
+
+std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
+{
+    std::vector<std::string> files;
+
+    if (!std::filesystem::exists(directoryPath))
+    {
+	return files;
+    }
+    for (const std::filesystem::directory_entry& entry :
+	 std::filesystem::directory_iterator(directoryPath))
+    {
+	if (entry.is_regular_file())
+	{
+	    files.push_back(entry.path().filename().string());
+	}
+    }
+    return files;
+}
+
+void Editor::RenderHighlight()
+{
+    if (this->selectedEntityIndex == -1 || this->selectedEntityIndex >= scene->gameObjects.size())
+    {
+	return;
+    }
+    if (!this->highlightShader)
+	return;
+    GameObject& object = scene->gameObjects[this->selectedEntityIndex];
+    Mesh* mesh = resourceManager->GetMesh(object.meshID);
+    if (!mesh)
+	return;
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.0f);
+    glDisable(GL_DEPTH_TEST);
+    this->highlightShader->Use();
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, object.position);
+    model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
+    model = glm::rotate(model, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
+    model = glm::scale(model, object.scale);
+    glm::mat4 view = this->camera->GetViewMatrix();
+    glm::mat4 projection =
+	this->camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
+    this->highlightShader->SetMat4("view", view);
+    this->highlightShader->SetMat4("projection", projection);
+    this->highlightShader->SetMat4("model", model);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    this->highlightShader->SetVec3("material.color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
+    mesh->Draw();
+    glDisable(GL_BLEND);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glLineWidth(2.0f);
+    glDisable(GL_DEPTH_TEST);
+
+    mesh->Draw();
+    glEnable(GL_DEPTH_TEST);
+    glLineWidth(1.0f);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    gizmo->Draw(camera, object.position, highlightShader, this->window);
+}
+
+void Editor::DrawInspector()
+{
     // Inspector
     float sidebarWidth = 200.0f;
     float windowWidth = (float)window->GetWidth();
@@ -297,207 +422,80 @@ void Editor::DrawEditorUI()
     }
 }
 
-void Editor::PlaceObject(int gridX, int gridZ)
+void Editor::TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
-    if (!availableMeshes.empty())
-    {
-	std::string meshName = availableMeshes[selectedMeshIndex];
-	std::string textureName = availableTextures[selectedTextureIndex];
-
-	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-	uint32_t meshID =
-	    resourceManager->CreateMesh(meshName, currentPath / "assets/models" / meshName);
-	uint32_t textureID = resourceManager->CreateTexture(
-	    textureName, currentPath / "assets/textures" / textureName);
-	std::string materialName = "Mat_" + textureName;
-	uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
-
-	float x = gridX + 0.5f;
-	float z = gridZ + 0.5f;
-	glm::vec3 position(x, 0, z);
-	sceneManager->AddObject(*scene, position, meshID, materialID);
-	std::cout << "[SUCCESS] Added Object at " << x << "," << z << std::endl;
-    } else
-    {
-	std::cout << "[ERROR] There are no available meshes" << std::endl;
-    }
-}
-
-void Editor::HandleInput()
-{
-    if (Input::IsKeyPressed(Input::KEY_1))
-    {
-	currentMode = EditorMode::SELECTION;
-	std::cout << "[INFO] Selection Mode Enabled" << std::endl;
-    }
-    if (Input::IsKeyPressed(Input::KEY_2))
-    {
-	currentMode = EditorMode::PLACEMENT;
-	std::cout << "[INFO] Placement Mode Enabled" << std::endl;
-    }
-    if (Input::IsKeyPressed(Input::KEY_3))
-    {
-	currentMode = EditorMode::RESIZE;
-	std::cout << "[INFO] Resize Mode Enabled" << std::endl;
-    }
-    if (Input::IsKeyPressed(Input::KEY_4))
-    {
-	currentMode = EditorMode::ROTATION;
-	std::cout << "[INFO] Rotation Mode Enabled" << std::endl;
-    }
-}
-
-void Editor::EndFrame()
-{
-    ImGui::Render();
-    ImDrawData* drawData = ImGui::GetDrawData();
-    ImGui_ImplOpenGL3_RenderDrawData(drawData);
-}
-
-bool Editor::HasCollided(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 aabbMin,
-			 glm::vec3 aabbMax, float& outDistance)
-{
-    float tMin = 0.0f;
-    float tMax = 100000.0f;
-    glm::vec3 position = rayOrigin;
-    glm::vec3 direction = rayDirection;
-    if (glm::abs(direction.x) > 0.0001f)
-    {
-	float t1 = (aabbMin.x - position.x) / direction.x;
-	float t2 = (aabbMax.x - position.x) / direction.x;
-	if (t1 > t2)
-	{
-	    float temp = t1;
-	    t1 = t2;
-	    t2 = temp;
-	}
-	if (t1 > tMin)
-	    tMin = t1;
-	if (t2 < tMax)
-	    tMax = t2;
-	if (tMin > tMax)
-	    return false;
-	if (tMax < 0)
-	    return false;
-    } else
-    {
-	if (position.x < aabbMin.x || position.x > aabbMax.x)
-	    return false;
-    }
-    if (glm::abs(direction.y) > 0.0001f)
-    {
-	float t1 = (aabbMin.y - position.y) / direction.y;
-	float t2 = (aabbMax.y - position.y) / direction.y;
-	if (t1 > t2)
-	{
-	    float temp = t1;
-	    t1 = t2;
-	    t2 = temp;
-	}
-	if (t1 > tMin)
-	    tMin = t1;
-	if (t2 < tMax)
-	    tMax = t2;
-	if (tMin > tMax)
-	    return false;
-	if (tMax < 0)
-	    return false;
-    } else
-    {
-	if (position.y < aabbMin.y || position.y > aabbMax.y)
-	    return false;
-    }
-    if (glm::abs(direction.z) > 0.0001f)
-    {
-	float t1 = (aabbMin.z - position.z) / direction.z;
-	float t2 = (aabbMax.z - position.z) / direction.z;
-	if (t1 > t2)
-	{
-	    float temp = t1;
-	    t1 = t2;
-	    t2 = temp;
-	}
-	if (t1 > tMin)
-	    tMin = t1;
-	if (t2 < tMax)
-	    tMax = t2;
-	if (tMin > tMax)
-	    return false;
-	if (tMax < 0)
-	    return false;
-    } else
-    {
-	if (position.z < aabbMin.z || position.z > aabbMax.z)
-	    return false;
-    }
-    outDistance = tMin;
-    return true;
-}
-std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
-{
-    std::vector<std::string> files;
-
-    if (!std::filesystem::exists(directoryPath))
-    {
-	return files;
-    }
-    for (const std::filesystem::directory_entry& entry :
-	 std::filesystem::directory_iterator(directoryPath))
-    {
-	if (entry.is_regular_file())
-	{
-	    files.push_back(entry.path().filename().string());
-	}
-    }
-    return files;
-}
-
-void Editor::RenderHighlight()
-{
-    if (this->selectedEntityIndex == -1 || this->selectedEntityIndex >= scene->gameObjects.size())
-    {
+    if (currentMode != EditorMode::TRANSLATE)
 	return;
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	SelectObject(rayOrigin, rayDirection);
+	if (selectedEntityIndex != -1 && selectedEntityIndex < scene->gameObjects.size())
+	{
+	    isDragging = true;
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    draggingStartPosition = object.position;
+	    ImVec2 mousePosition = ImGui::GetMousePos();
+	    draggingStartMousePosition = glm::vec2(mousePosition.x, mousePosition.y);
+	}
     }
-    if (!this->highlightShader)
-	return;
-    GameObject& object = scene->gameObjects[this->selectedEntityIndex];
-    Mesh* mesh = resourceManager->GetMesh(object.meshID);
-    if (!mesh)
-	return;
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(2.0f);
-    glDisable(GL_DEPTH_TEST);
-    this->highlightShader->Use();
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, object.position);
-    model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
-    model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
-    model = glm::rotate(model, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
-    model = glm::scale(model, object.scale);
-    glm::mat4 view = this->camera->GetViewMatrix();
-    glm::mat4 projection =
-	this->camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
-    this->highlightShader->SetMat4("view", view);
-    this->highlightShader->SetMat4("projection", projection);
-    this->highlightShader->SetMat4("model", model);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    this->highlightShader->SetVec3("material.color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
-    mesh->Draw();
-    glDisable(GL_BLEND);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glLineWidth(2.0f);
-    glDisable(GL_DEPTH_TEST);
+    if (isDragging && ImGui::IsMouseDown(0))
+    {
+	if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
+	{
+	    isDragging = false;
+	    return;
+	}
+	GameObject& object = scene->gameObjects[selectedEntityIndex];
+	ImVec2 currentMouse = ImGui::GetMousePos();
+	float deltaX = currentMouse.x - draggingStartMousePosition.x;
+	float deltaY = currentMouse.y - draggingStartMousePosition.y;
+	float sensitivity = 0.02f;
 
-    mesh->Draw();
-    glEnable(GL_DEPTH_TEST);
-    glLineWidth(1.0f);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glm::vec3 targetPosition = draggingStartPosition;
+	targetPosition.x += deltaX * sensitivity;
+	targetPosition.z += deltaY * sensitivity;
+	if (ImGui::GetIO().KeyCtrl) // should use proper input class later
+	{
+	    float gridSize = 1.0f;
+	    targetPosition.x = std::round(targetPosition.x / gridSize) * gridSize + 0.5;
+	    targetPosition.z = std::round(targetPosition.z / gridSize) * gridSize + 0.5;
+	}
+	object.position = targetPosition;
+    }
+    if (ImGui::IsMouseReleased(0))
+    {
+	isDragging = false;
+    }
 }
 
-void DrawInspector()
+void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
+
+    float closestDistance = FLT_MAX;
+    int hitIndex = -1; // Empty click
+    for (int i = 0; i < scene->gameObjects.size(); i++)
+    {
+	glm::vec3 objectPosition = scene->gameObjects[i].position;
+	glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
+	glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
+	float distance = 0.0f;
+	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
+	{
+	    if (distance < closestDistance)
+	    {
+		closestDistance = distance;
+		hitIndex = i;
+	    }
+	}
+    }
+    if (hitIndex != -1)
+    {
+	std::cout << "[INFO] Object " << hitIndex << " selected!" << std::endl;
+	this->selectedEntityIndex = hitIndex;
+    } else
+    {
+	std::cout << "[INFO] Empty click" << std::endl;
+    }
 }
 Editor::~Editor()
 {

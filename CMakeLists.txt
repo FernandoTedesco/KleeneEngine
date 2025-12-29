@@ -36,7 +36,9 @@ ${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Editor.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
-${CMAKE_SOURCE_DIR}/src/Development/SystemMetrics.cpp
+${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
+${CMAKE_SOURCE_DIR}/src/Utils/SystemMetrics.cpp
+${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI})

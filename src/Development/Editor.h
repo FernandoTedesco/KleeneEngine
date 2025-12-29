@@ -9,9 +9,17 @@ class SceneManager;
 class Camera;
 class EditorGrid;
 class Shader;
+class Gizmo;
 class ResourceManager;
 
-enum class EditorMode { SELECTION = 1, PLACEMENT = 2, RESIZE = 3, ROTATION = 4 };
+enum class EditorMode {
+    SELECTION = 1,
+    DELETION = 2,
+    PLACEMENT = 3,
+    TRANSLATE = 4,
+    RESIZE = 5,
+    ROTATION = 6
+};
 
 class Editor
 {
@@ -46,8 +54,14 @@ private:
     Camera* camera;
     ResourceManager* resourceManager;
     EditorGrid* editorGrid;
+    Gizmo* gizmo;
     int selectedEntityIndex = -1;
+    bool isDragging = false;
+    glm::vec3 draggingStartPosition;
+    glm::vec2 draggingStartMousePosition;
+    void SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DrawInspector();
+    void TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
