@@ -2,7 +2,7 @@
 #include <Windows.h>
 #include <stdio.h>
 #include <iostream>
-
+#include "Editor.h"
 static const char* signature =
     R"(                                                                                        
   ▄▄▄▄   ▄▄▄ ▄▄                             ▄▄▄▄▄▄▄                                     
@@ -136,7 +136,16 @@ void Terminal::WriteArt()
 
 void Terminal::ChangeLog()
 {
-    std::cout << "Changelog of build 0.4:" << std::endl;
+    std::cout << "Changelog of build 0.6:" << std::endl;
+    std::cout << "+QOL improvements in both terminal and editor (Integration)" << std::endl;
+    std::cout << "+Debug view modes (wireframe)" << std::endl;
+    std::cout << "+Entity Cloning" << std::endl;
+    std::cout << "+UV coordinate support" << std::endl;
+    std::cout << "+Editor material properties" << std::endl;
+    std::cout << "Fully working selection, deletion, translation and rotation modes" << std::endl;
+    std::cout << "+Gizmos with snap-grid" << std::endl;
+    std::cout << "+Camera focus bind (F)" << std::endl;
+    std::cout << "Hierarchy Panel" << std::endl;
 }
 
 void Terminal::Help()
@@ -146,6 +155,11 @@ void Terminal::Help()
     std::cout << "/art" << " - Print the terminal default message" << std::endl;
     std::cout << "/changelog" << " - Prints out the latest build changes" << std::endl;
     std::cout << "/clear" << " - Clear the terminal buffer" << std::endl;
+}
+
+void Terminal::SetEditorContext(Editor* editor)
+{
+    this->editorContext = editor;
 }
 void Terminal::ExecuteConsoleCommand()
 {
@@ -164,6 +178,22 @@ void Terminal::ExecuteConsoleCommand()
     if (commandBuffer == "/changelog")
     {
 	this->ChangeLog();
+    }
+    if (this->editorContext != nullptr)
+    {
+	if (commandBuffer == "/wireframe on")
+	{
+	    editorContext->debugWireframeMode = true;
+	    std::cout << "[CMD] Wireframe Enabled." << std::endl;
+	} else if (commandBuffer == "/wireframe off")
+	{
+	    editorContext->debugWireframeMode = false;
+	    std::cout << "[CMD] Wireframe Disabled." << std::endl;
+	} else if (commandBuffer == "/wireframe")
+	{
+	    editorContext->debugWireframeMode = !editorContext->debugWireframeMode;
+	    std::cout << "[CMD] Wireframe Toggled." << std::endl;
+	}
     }
 }
 Terminal::~Terminal()

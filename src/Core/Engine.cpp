@@ -27,7 +27,7 @@ Engine::Engine()
     sceneManager = new SceneManager();
     activeScene = new Scene();
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
-
+    terminal->SetEditorContext(editor);
     renderer = new Renderer();
 
     isRunning = true;
@@ -55,8 +55,16 @@ void Engine::Run()
 	    terminal->ProcessConsoleInput();
 	    count--;
 	}
+	if (editor->debugWireframeMode)
+	{
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	} else
+	{
+	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	}
 
 	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (editor != nullptr)
 	{
 	    editor->RenderHighlight();
