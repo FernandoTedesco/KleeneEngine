@@ -60,6 +60,7 @@ void Editor::DrawEditorUI()
 
     this->TranslationModeUpdate(rayOrigin, rayDirection);
     this->DeletionModeUpdate(rayOrigin, rayDirection);
+    this->ResizeModeUpdate(rayOrigin, rayDirection);
     if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -517,8 +518,9 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
     for (int i = 0; i < scene->gameObjects.size(); i++)
     {
 	glm::vec3 objectPosition = scene->gameObjects[i].position;
-	glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
-	glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
+	glm::vec3 halfSize = scene->gameObjects[i].scale * 0.5f;
+	glm::vec3 aabbMin = objectPosition - halfSize;
+	glm::vec3 aabbMax = objectPosition + halfSize;
 	float distance = 0.0f;
 	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
 	{
@@ -539,6 +541,98 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
     }
 }
 
+void Editor::ResizeModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
+{
+    if (currentMode != EditorMode::RESIZE)
+    {
+	return;
+    }
+
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	if (selectedEntityIndex != -1)
+	{
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object.position, 1.0f);
+	} else
+	{
+	    currentAxis = GizmoAxis::NONE;
+	}
+
+	if (currentAxis != GizmoAxis::NONE)
+	{
+	    isDragging = true;
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    draggingStartPosition = object.position;
+	    ImVec2 mousePosition = ImGui::GetMousePos();
+	    draggingStartMousePosition = glm::vec2(mousePosition.x, mousePosition.y);
+	    draggingStartScale = object.scale;
+
+	} else
+	{
+	    SelectObject(rayOrigin, rayDirection);
+	    if (selectedEntityIndex != -1)
+	    {
+		currentAxis = GizmoAxis::NONE;
+	    }
+	}
+    }
+
+    if (isDragging && ImGui::IsMouseDown(0))
+    {
+	if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
+	{
+	    isDragging = false;
+	    return;
+	}
+
+	GameObject& object = scene->gameObjects[selectedEntityIndex];
+	ImVec2 currentMouse = ImGui::GetMousePos();
+	float deltaX = currentMouse.x - draggingStartMousePosition.x;
+	float deltaY = currentMouse.y - draggingStartMousePosition.y;
+	float sensitivity = 0.02f;
+
+	glm::vec3 targetScale = draggingStartScale;
+	if (currentAxis == GizmoAxis::X)
+	{
+	    targetScale.x += deltaX * sensitivity;
+	} else if (currentAxis == GizmoAxis::Y)
+	{
+
+	    targetScale.y -= +deltaY * sensitivity;
+	} else if (currentAxis == GizmoAxis::Z)
+	{
+	    targetScale.z += deltaY * sensitivity;
+	}
+	targetScale.x = std::max(0.1f, targetScale.x);
+	targetScale.y = std::max(0.1f, targetScale.y);
+	targetScale.z = std::max(0.1f, targetScale.z);
+	if (ImGui::GetIO().KeyCtrl)
+	{
+
+	    float scaleStep = 0.5f;
+
+	    if (currentAxis == GizmoAxis::X)
+	    {
+		targetScale.x = std::floor(targetScale.x / scaleStep) * scaleStep;
+	    } else if (currentAxis == GizmoAxis::Y)
+	    {
+
+		targetScale.y = std::floor(targetScale.y / scaleStep) * scaleStep;
+	    } else if (currentAxis == GizmoAxis::Z)
+	    {
+		targetScale.z = std::floor(targetScale.z / scaleStep) * scaleStep;
+	    }
+	}
+	object.scale = targetScale;
+    }
+    if (ImGui::IsMouseReleased(0))
+    {
+	isDragging = false;
+	currentAxis = GizmoAxis::NONE;
+    }
+}
+
 void Editor::DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
     if (currentMode != EditorMode::DELETION)
@@ -551,8 +645,10 @@ void Editor::DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	for (int i = 0; i < scene->gameObjects.size(); i++)
 	{
 	    glm::vec3 objectPosition = scene->gameObjects[i].position;
-	    glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
-	    glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
+	    glm::vec3 halfSize = scene->gameObjects[i].scale * 0.5f;
+	    glm::vec3 aabbMin = objectPosition - halfSize;
+	    glm::vec3 aabbMax = objectPosition + halfSize;
+
 	    float distance = 0.0f;
 	    if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
 	    {

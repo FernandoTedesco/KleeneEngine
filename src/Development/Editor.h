@@ -60,10 +60,12 @@ private:
     bool isDragging = false;
     glm::vec3 draggingStartPosition;
     glm::vec2 draggingStartMousePosition;
+    glm::vec3 draggingStartScale;
     void SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DrawInspector();
     void TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    void ResizeModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
