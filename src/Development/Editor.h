@@ -1,8 +1,9 @@
-
+#pragma once
 #include <vector>
 #include <string>
 #include <filesystem>
 #include "glm/glm.hpp"
+#include "Gizmo.h"
 class Window;
 class Scene;
 class SceneManager;
@@ -62,9 +63,10 @@ private:
     void SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     void DrawInspector();
     void TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    void DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
     std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
-
+    GizmoAxis currentAxis = GizmoAxis::NONE;
     Shader* highlightShader;
 };

@@ -3,6 +3,7 @@
 #include <vector>
 #include "imgui.h"
 #include "Scenes/GameObject.h"
+#include "Utils/Math.h"
 Gizmo::Gizmo()
 {
     SetupGizmoGeometry();
@@ -77,5 +78,39 @@ void Gizmo::Translate(GameObject& gameObject, float sensitivity, bool snapEnable
     {
 	gameObject.position.x = std::round(gameObject.position.x / gridSize) * gridSize;
 	gameObject.position.z = std::round(gameObject.position.z / gridSize) * gridSize;
+    }
+}
+
+GizmoAxis Gizmo::CheckHover(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 objectPosition,
+			    float scale)
+{
+    // hitboxes
+    float thick = 0.3f * scale;
+    float len = 1.5f * scale; // width
+    float offset = 0.1f * scale;
+    glm::vec3 minX = objectPosition + glm::vec3(offset, -thick / 2, -thick / 2);
+    glm::vec3 maxX = objectPosition + glm::vec3(len, thick / 2, thick / 2);
+
+    glm::vec3 minY = objectPosition + glm::vec3(-thick / 2, offset, -thick / 2);
+    glm::vec3 maxY = objectPosition + glm::vec3(thick / 2, len, thick / 2);
+
+    glm::vec3 minZ = objectPosition + glm::vec3(-thick / 2, -thick / 2, offset);
+    glm::vec3 maxZ = objectPosition + glm::vec3(thick / 2, thick / 2, len);
+
+    float distance;
+    if (Math::RayAABBIntersection(rayOrigin, rayDirection, minX, maxX, distance))
+    {
+	return GizmoAxis::X;
+    }
+    if (Math::RayAABBIntersection(rayOrigin, rayDirection, minY, maxY, distance))
+    {
+	return GizmoAxis::Y;
+    }
+    if (Math::RayAABBIntersection(rayOrigin, rayDirection, minZ, maxZ, distance))
+    {
+	return GizmoAxis::Z;
+    } else
+    {
+	return GizmoAxis::NONE;
     }
 }

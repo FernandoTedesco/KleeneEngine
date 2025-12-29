@@ -15,6 +15,8 @@ public:
     Gizmo();
     ~Gizmo();
     void Draw(Camera* camera, glm::vec3 position, Shader* shader, Window* window);
+    GizmoAxis CheckHover(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 objectPosition,
+			 float scale);
     void Translate(GameObject& gameObject, float sensitivity, bool snapEnabled, float gridSize);
 
 private:

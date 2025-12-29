@@ -59,7 +59,7 @@ void Editor::DrawEditorUI()
     glm::vec3 rayOrigin = camera->GetCameraPos();
 
     this->TranslationModeUpdate(rayOrigin, rayDirection);
-
+    this->DeletionModeUpdate(rayOrigin, rayDirection);
     if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
@@ -425,19 +425,39 @@ void Editor::DrawInspector()
 void Editor::TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
     if (currentMode != EditorMode::TRANSLATE)
+    {
 	return;
+    }
+
     if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
     {
-	SelectObject(rayOrigin, rayDirection);
-	if (selectedEntityIndex != -1 && selectedEntityIndex < scene->gameObjects.size())
+	if (selectedEntityIndex != -1)
+	{
+	    GameObject& object = scene->gameObjects[selectedEntityIndex];
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object.position, 1.0f);
+	} else
+	{
+	    currentAxis = GizmoAxis::NONE;
+	}
+
+	if (currentAxis != GizmoAxis::NONE)
 	{
 	    isDragging = true;
 	    GameObject& object = scene->gameObjects[selectedEntityIndex];
 	    draggingStartPosition = object.position;
 	    ImVec2 mousePosition = ImGui::GetMousePos();
 	    draggingStartMousePosition = glm::vec2(mousePosition.x, mousePosition.y);
+
+	} else
+	{
+	    SelectObject(rayOrigin, rayDirection);
+	    if (selectedEntityIndex != -1)
+	    {
+		currentAxis = GizmoAxis::NONE;
+	    }
 	}
     }
+
     if (isDragging && ImGui::IsMouseDown(0))
     {
 	if (selectedEntityIndex == -1 || selectedEntityIndex >= scene->gameObjects.size())
@@ -445,6 +465,7 @@ void Editor::TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	    isDragging = false;
 	    return;
 	}
+
 	GameObject& object = scene->gameObjects[selectedEntityIndex];
 	ImVec2 currentMouse = ImGui::GetMousePos();
 	float deltaX = currentMouse.x - draggingStartMousePosition.x;
@@ -452,19 +473,39 @@ void Editor::TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	float sensitivity = 0.02f;
 
 	glm::vec3 targetPosition = draggingStartPosition;
-	targetPosition.x += deltaX * sensitivity;
-	targetPosition.z += deltaY * sensitivity;
-	if (ImGui::GetIO().KeyCtrl) // should use proper input class later
+	if (currentAxis == GizmoAxis::X)
+	{
+	    targetPosition.x += deltaX * sensitivity;
+	} else if (currentAxis == GizmoAxis::Y)
+	{
+
+	    targetPosition.y -= deltaY * sensitivity;
+	} else if (currentAxis == GizmoAxis::Z)
+	{
+	    targetPosition.z += deltaY * sensitivity;
+	}
+	if (ImGui::GetIO().KeyCtrl)
 	{
 	    float gridSize = 1.0f;
-	    targetPosition.x = std::round(targetPosition.x / gridSize) * gridSize + 0.5;
-	    targetPosition.z = std::round(targetPosition.z / gridSize) * gridSize + 0.5;
+	    float halfGrid = 0.5f;
+	    if (currentAxis == GizmoAxis::X)
+	    {
+		targetPosition.x = std::floor(targetPosition.x / gridSize) * gridSize + halfGrid;
+	    } else if (currentAxis == GizmoAxis::Y)
+	    {
+
+		targetPosition.y = std::floor(targetPosition.y / gridSize) * gridSize + halfGrid;
+	    } else if (currentAxis == GizmoAxis::Z)
+	    {
+		targetPosition.z = std::floor(targetPosition.z / gridSize) * gridSize + halfGrid;
+	    }
 	}
 	object.position = targetPosition;
     }
     if (ImGui::IsMouseReleased(0))
     {
 	isDragging = false;
+	currentAxis = GizmoAxis::NONE;
     }
 }
 
@@ -497,6 +538,40 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	std::cout << "[INFO] Empty click" << std::endl;
     }
 }
+
+void Editor::DeletionModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
+{
+    if (currentMode != EditorMode::DELETION)
+	return;
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	float closestDistance = FLT_MAX;
+	int hitIndex = -1;
+
+	for (int i = 0; i < scene->gameObjects.size(); i++)
+	{
+	    glm::vec3 objectPosition = scene->gameObjects[i].position;
+	    glm::vec3 aabbMin = objectPosition - glm::vec3(0.5f);
+	    glm::vec3 aabbMax = objectPosition + glm::vec3(0.5f);
+	    float distance = 0.0f;
+	    if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
+	    {
+		if (distance < closestDistance)
+		{
+		    closestDistance = distance;
+		    hitIndex = i;
+		}
+	    }
+	}
+	if (hitIndex != -1)
+	{
+	    std::cout << "[INFO] Deleted Object" << hitIndex << std::endl;
+	    sceneManager->DeleteObject(*scene, hitIndex);
+	    selectedEntityIndex = -1;
+	}
+    }
+}
+
 Editor::~Editor()
 {
 
