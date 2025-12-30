@@ -154,6 +154,8 @@ void Terminal::Help()
     std::cout << "/help" << " - List all possible terminal commands" << std::endl;
     std::cout << "/art" << " - Print the terminal default message" << std::endl;
     std::cout << "/changelog" << " - Prints out the latest build changes" << std::endl;
+    std::cout << "/wireframe (on/off)" << " - changes the entity rendering mode to wireframe"
+	      << std::endl;
     std::cout << "/clear" << " - Clear the terminal buffer" << std::endl;
 }
 

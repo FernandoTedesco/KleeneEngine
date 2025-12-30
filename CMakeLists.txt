@@ -17,6 +17,11 @@ ${CMAKE_SOURCE_DIR}/deps/ImGui/imgui_widgets.cpp
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends/imgui_impl_sdl2.cpp
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends/imgui_impl_opengl3.cpp
 )
+set(IMPLOT_DIR ${CMAKE_SOURCE_DIR}/deps/ImPlot)
+set(SOURCE_IMPLOT
+${CMAKE_SOURCE_DIR}/deps/ImPlot/implot.cpp
+${CMAKE_SOURCE_DIR}/deps/ImPlot/implot_items.cpp
+)
 
 set(SOURCE_ENGINE
 ${CMAKE_SOURCE_DIR}/src/main.cpp
@@ -41,7 +46,7 @@ ${CMAKE_SOURCE_DIR}/src/Utils/SystemMetrics.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 )
 
-add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI})
+add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})
 
 find_program(CLANG_FORMAT_EXE clang-format)
 if(CLANG_FORMAT_EXE)
@@ -63,6 +68,7 @@ ${CMAKE_SOURCE_DIR}/deps
 ${CMAKE_SOURCE_DIR}/deps/ImGui
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends
 ${CMAKE_SOURCE_DIR}/deps/SDL2/include
+${CMAKE_SOURCE_DIR}/deps/ImPlot
 )
 
 target_link_libraries(KleeneRuntime PRIVATE
