@@ -44,6 +44,7 @@ ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
+${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})

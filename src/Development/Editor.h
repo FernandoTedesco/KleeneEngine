@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 #include "Gizmo.h"
 #include "Utils/Telemetry.h"
+#include "Utils/MemoryTracker.h"
 class Window;
 class Scene;
 class SceneManager;
@@ -52,9 +53,15 @@ public:
 private:
     void DuplicateSelectedObject();
     void FocusOnSelectedObject();
-    void DrawTelemetryWindow();
+
     GpuTelemetry gpuTelemetry;
-    bool ShowTelemetry;
+    bool ShowTelemetry = false;
+    void DrawTelemetryWindow();
+
+    MemoryTracker memoryTracker;
+    bool ShowMemoryTracker = false;
+    void DrawMemoryWindow();
+
     Window* window;
     EditorMode currentMode;
     SceneManager* sceneManager;

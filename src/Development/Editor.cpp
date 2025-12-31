@@ -49,6 +49,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     ImGuiIO& io = ImGui::GetIO();
 
     gpuTelemetry.Init();
+    memoryTracker.Init();
 }
 
 void Editor::BeginFrame()
@@ -62,7 +63,7 @@ void Editor::DrawEditorUI()
 {
     float deltaTime = 1.0f / ImGui::GetIO().Framerate;
     gpuTelemetry.Update(deltaTime);
-
+    memoryTracker.Update(deltaTime);
     this->HandleInput();
     glm::vec3 rayDirection =
 	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
@@ -132,6 +133,11 @@ void Editor::DrawEditorUI()
     if (ImGui::Button("GPU Stats"))
     {
 	ShowTelemetry = !ShowTelemetry;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Memory"))
+    {
+	ShowMemoryTracker = !ShowMemoryTracker;
     }
     ImGui::NewLine();
     float fps = ImGui::GetIO().Framerate;
@@ -213,6 +219,10 @@ void Editor::DrawEditorUI()
     if (ShowTelemetry)
     {
 	DrawTelemetryWindow();
+    }
+    if (ShowMemoryTracker)
+    {
+	DrawMemoryWindow();
     }
     this->DrawInspector();
 }
@@ -356,6 +366,33 @@ void Editor::HandleInput()
     {
 	FocusOnSelectedObject();
     }
+}
+
+void Editor::DrawMemoryWindow()
+{
+    if (!ImGui::Begin("Memory Tracker", &ShowMemoryTracker))
+    {
+	ImGui::End();
+	return;
+    }
+    MemorySnapshot memory = memoryTracker.GetCurrentState();
+    ImGui::Text("Kleene Engine: %.1f MB", memory.processRAM);
+    ImGui::Text("System Total: %.1f MB/ %.0f MB", memory.totalRAM, memory.totalSystemRAM);
+    ImGui::Separator();
+    if (ImPlot::BeginPlot("##MemoryHistory", ImVec2(-1, 200)))
+    {
+	ImPlot::SetupAxes("Time", "MB", ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit);
+	ImPlot::SetupAxesLimits(0, MEMORY_HISTORY_SIZE, 0, memory.totalSystemRAM,
+				ImPlotCond_Always);
+	ImPlot::PlotLine("System Total", memoryTracker.GetTotalHistory(), MEMORY_HISTORY_SIZE, 1.0,
+			 0.0, 0, memoryTracker.GetHistoryIndex());
+	ImPlot::PushStyleColor(ImPlotCol_Line, ImVec4(0, 1, 0, 1));
+	ImPlot::PlotLine("Kleene Engine", memoryTracker.GetProcessHistory(), MEMORY_HISTORY_SIZE,
+			 1.0, 0.0, 0, memoryTracker.GetHistoryIndex());
+	ImPlot::PopStyleColor();
+	ImPlot::EndPlot();
+    }
+    ImGui::End();
 }
 
 void Editor::EndFrame()
