@@ -42,7 +42,7 @@ ${CMAKE_SOURCE_DIR}/src/Development/Editor.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
-${CMAKE_SOURCE_DIR}/src/Utils/SystemMetrics.cpp
+${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 )
 
@@ -65,6 +65,7 @@ target_compile_definitions(KleeneRuntime PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLAD)
 target_include_directories(KleeneRuntime PRIVATE
 ${CMAKE_SOURCE_DIR}/src
 ${CMAKE_SOURCE_DIR}/deps
+${CMAKE_SOURCE_DIR}/deps/Nvidia
 ${CMAKE_SOURCE_DIR}/deps/ImGui
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends
 ${CMAKE_SOURCE_DIR}/deps/SDL2/include

@@ -5,7 +5,7 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "imgui_impl_sdl2.h"
-#include "Utils/SystemMetrics.h"
+#include "Utils/Telemetry.h"
 #include <iostream>
 #include "Scenes/SceneManager.h"
 #include "Core/Camera.h"
@@ -19,12 +19,15 @@
 #include "Utils/Math.h"
 #include "Gizmo.h"
 #include "Graphics/Material.h"
-// horrible godclass case, but im overlooking for now
+#include "implot.h"
+// need more refactoring
+
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
 	       ResourceManager* resourceManager, Shader* hightlightShader)
 {
 
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(window->GetWindow(), window->GetglContext());
     ImGui_ImplOpenGL3_Init("#version 330");
     memset(answerSaveBuffer, 0, sizeof(answerSaveBuffer));
@@ -42,6 +45,10 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->listLoaded = false;
     this->selectedMeshIndex = 0;
     this->selectedTextureIndex = 0;
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    gpuTelemetry.Init();
 }
 
 void Editor::BeginFrame()
@@ -53,6 +60,9 @@ void Editor::BeginFrame()
 
 void Editor::DrawEditorUI()
 {
+    float deltaTime = 1.0f / ImGui::GetIO().Framerate;
+    gpuTelemetry.Update(deltaTime);
+
     this->HandleInput();
     glm::vec3 rayDirection =
 	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
@@ -118,6 +128,11 @@ void Editor::DrawEditorUI()
     }
 
     ImGui::PopStyleColor(1);
+    ImGui::SameLine();
+    if (ImGui::Button("GPU Stats"))
+    {
+	ShowTelemetry = !ShowTelemetry;
+    }
     ImGui::NewLine();
     float fps = ImGui::GetIO().Framerate;
     float frameTime = 1000.0f / fps;
@@ -195,9 +210,56 @@ void Editor::DrawEditorUI()
 	ImGui::Text("Grid Target: Sky");
     }
     ImGui::End();
+    if (ShowTelemetry)
+    {
+	DrawTelemetryWindow();
+    }
     this->DrawInspector();
 }
+void Editor::DrawTelemetryWindow()
+{
+    if (!ImGui::Begin("Hardware Telemetry", &ShowTelemetry))
+    {
+	ImGui::End();
+	return;
+    }
+    GpuSnapshot gpu = gpuTelemetry.GetCurrentState();
+    ImGui::TextColored(ImVec4(0, 1, 0, 1), "[NVIDIA GPU]");
+    ImGui::Separator();
+    ImGui::Columns(2, "stats_cols", false);
+    ImGui::Text("Temperature:");
+    ImGui::NextColumn();
+    ImGui::Text("%.0f C", gpu.temperature);
+    ImGui::NextColumn();
+    ImGui::Text("Core Load::");
+    ImGui::NextColumn();
+    ImGui::Text("%.1f %%", gpu.loadCore);
+    ImGui::NextColumn();
+    ImGui::Text("VRAM:");
+    ImGui::NextColumn();
+    ImGui::Text("%.1f %%", gpu.loadMemory);
+    ImGui::NextColumn();
+    ImGui::Text("Fan:");
+    ImGui::NextColumn();
+    ImGui::Text("%.0f %%", gpu.fanSpeed);
+    ImGui::NextColumn();
+    ImGui::Text("Power:");
+    ImGui::NextColumn();
+    ImGui::Text("%.1f W", gpu.powerWatts);
+    ImGui::NextColumn();
+    ImGui::Columns(1);
+    ImGui::Spacing();
+    if (ImPlot::BeginPlot("##Temperature", ImVec2(-1, 150)))
+    {
+	ImPlot::SetupAxes(nullptr, "C", ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit);
+	ImPlot::SetupAxesLimits(0, 600, 0, 100, ImPlotCond_Always);
 
+	ImPlot::PlotLine("Temperature", gpuTelemetry.GetTemperatureHistory(), HISTORY_SIZE, 1.0,
+			 0.0, 0, gpuTelemetry.GetHistoryIndex());
+	ImPlot::EndPlot();
+    }
+    ImGui::End();
+}
 void Editor::PlaceObject(int gridX, int gridZ)
 {
     if (!availableMeshes.empty())
@@ -898,6 +960,7 @@ Editor::~Editor()
 
     ImGui_ImplSDL2_Shutdown();
     ImGui_ImplOpenGL3_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
     delete this->editorGrid;
 }
