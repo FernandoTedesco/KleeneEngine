@@ -21,11 +21,27 @@ public:
     }
     const float* GetTemperatureHistory() const
     {
-	return TempHistory;
+	return TemperatureHistory;
+    }
+    const float* GetCoreLoadHistory() const
+    {
+	return CoreLoadHistory;
     }
     int GetHistoryIndex() const
     {
 	return HistoryOffset;
+    }
+    const float* GetVramHistory() const
+    {
+	return VramLoadHistory;
+    }
+    const float* GetFanHistory() const
+    {
+	return FanHistory;
+    }
+    const float* GetPowerHistory() const
+    {
+	return PowerHistory;
     }
 
 private:
@@ -33,8 +49,11 @@ private:
     GpuSnapshot CurrentState;
     float PollTimer = 0.0f;
     const float PollInterval = 0.5f;
-    float TempHistory[HISTORY_SIZE] = {0};
-    float LoadHistory[HISTORY_SIZE] = {0};
+    float TemperatureHistory[HISTORY_SIZE] = {0};
+    float CoreLoadHistory[HISTORY_SIZE] = {0};
+    float VramLoadHistory[HISTORY_SIZE] = {0};
+    float FanHistory[HISTORY_SIZE] = {0};
+    float PowerHistory[HISTORY_SIZE] = {0};
     int HistoryOffset = 0;
 };
 

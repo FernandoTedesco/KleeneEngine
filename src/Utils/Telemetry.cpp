@@ -123,7 +123,10 @@ void GpuTelemetry::PollHardware()
     {
 	CurrentState.powerWatts = power / 1000.0f;
     }
-    TempHistory[HistoryOffset] = CurrentState.temperature;
-    LoadHistory[HistoryOffset] = CurrentState.loadCore;
+    TemperatureHistory[HistoryOffset] = CurrentState.temperature;
+    CoreLoadHistory[HistoryOffset] = CurrentState.loadCore;
+    VramLoadHistory[HistoryOffset] = CurrentState.loadMemory;
+    FanHistory[HistoryOffset] = CurrentState.fanSpeed;
+    PowerHistory[HistoryOffset] = CurrentState.powerWatts;
     HistoryOffset = (HistoryOffset + 1) % HISTORY_SIZE;
 }

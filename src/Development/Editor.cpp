@@ -249,14 +249,44 @@ void Editor::DrawTelemetryWindow()
     ImGui::NextColumn();
     ImGui::Columns(1);
     ImGui::Spacing();
-    if (ImPlot::BeginPlot("##Temperature", ImVec2(-1, 150)))
+    const char* options[] = {"Temperature (C)", "Core Load (%)", "VRAM Load (%)", "Fan Speed (%)",
+			     "Power (W)"};
+    ImGui::Combo("Metric", &SelectedGraphMode, options, IM_ARRAYSIZE(options));
+    const float* dataToPlot = nullptr;
+    float yLimit = 100.0f;
+    switch (SelectedGraphMode)
     {
-	ImPlot::SetupAxes(nullptr, "C", ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit);
-	ImPlot::SetupAxesLimits(0, 600, 0, 100, ImPlotCond_Always);
-
-	ImPlot::PlotLine("Temperature", gpuTelemetry.GetTemperatureHistory(), HISTORY_SIZE, 1.0,
-			 0.0, 0, gpuTelemetry.GetHistoryIndex());
-	ImPlot::EndPlot();
+    case 0:
+	dataToPlot = gpuTelemetry.GetTemperatureHistory();
+	yLimit = 100.0f;
+	break;
+    case 1:
+	dataToPlot = gpuTelemetry.GetCoreLoadHistory();
+	yLimit = 100.0f;
+	break;
+    case 2:
+	dataToPlot = gpuTelemetry.GetVramHistory();
+	yLimit = 100.0f;
+	break;
+    case 3:
+	dataToPlot = gpuTelemetry.GetFanHistory();
+	yLimit = 100.0f;
+	break;
+    case 4:
+	dataToPlot = gpuTelemetry.GetTemperatureHistory();
+	yLimit = 400.0f;
+	break;
+    }
+    if (ImPlot::BeginPlot("##History", ImVec2(-1, 150)))
+    {
+	ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoLabel, ImPlotAxisFlags_AutoFit);
+	ImPlot::SetupAxesLimits(0, HISTORY_SIZE, 0, yLimit, ImPlotCond_Always);
+	if (dataToPlot)
+	{
+	    ImPlot::PlotLine("Data", dataToPlot, HISTORY_SIZE, 1.0, 0.0, 0,
+			     gpuTelemetry.GetHistoryIndex());
+	    ImPlot::EndPlot();
+	}
     }
     ImGui::End();
 }
