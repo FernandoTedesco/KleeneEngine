@@ -18,6 +18,7 @@ Engine::Engine()
     terminal = new Terminal();
     terminal->WriteArt();
     terminal->ChangeLog();
+    Terminal::Log(LOG_CORE, "Kleene Engine Initializing...");
     window = new Window();
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath / "assets/shaders/core.vert").string(),
@@ -31,6 +32,7 @@ Engine::Engine()
     renderer = new Renderer();
 
     isRunning = true;
+    Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }
 
 void Engine::Update()

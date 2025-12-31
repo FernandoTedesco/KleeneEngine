@@ -4,7 +4,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Input.h"
 #include <iostream>
-
+#include "Development/Terminal.h"
 Camera::Camera()
 {
 
@@ -16,7 +16,7 @@ Camera::Camera()
     upVector = glm::vec3(0, 1.0f, 0);
     yaw = -90;
     pitch = 0.0f;
-    std::cout << "[INIT] Camera instance successfully!" << std::endl;
+    Terminal::Log(LOG_CORE, "Camera System Initialized.");
 }
 
 glm::mat4 Camera::GetViewMatrix()
@@ -133,7 +133,7 @@ void Camera::ChangeMode(Camera::CameraMode mode)
 	upVector.z = 0;
 	Input::SetRelativeMouse(true);
 	this->cameraMode = FREECAM;
-
+	Terminal::Log(LOG_INFO, "Camera Mode switched to: FREECAM");
 	break;
     }
     case (SCENE_EDITOR): {
@@ -156,6 +156,7 @@ void Camera::ChangeMode(Camera::CameraMode mode)
 	rightVector = glm::normalize(glm::cross(upVector, directionVector));
 
 	this->cameraMode = SCENE_EDITOR;
+	Terminal::Log(LOG_INFO, "Camera Mode switched to: SCENE EDITOR");
 	break;
     }
     }

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <iostream>
 #include "Editor.h"
+unsigned int Terminal::ActiveFilters = LOG_ALL;
 static const char* signature =
     R"(                                                                                        
   ▄▄▄▄   ▄▄▄ ▄▄                             ▄▄▄▄▄▄▄                                     
@@ -103,6 +104,46 @@ void Terminal::ProcessConsoleInput()
 	}
     }
 }
+void Terminal::Log(LogCategory type, const std::string& message)
+{
+    if (!(ActiveFilters & type))
+    {
+	return;
+    }
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    std::string prefix = "";
+    WORD color = 0;
+    switch (type)
+    {
+    case LOG_INFO:
+	color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	prefix = "[INFO] ";
+	break;
+    case LOG_WARNING:
+	color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+	prefix = "[WARNING] ";
+	break;
+    case LOG_ERROR:
+	color = FOREGROUND_RED | FOREGROUND_INTENSITY;
+	prefix = "[ERROR] ";
+	break;
+    case LOG_RENDER:
+	color = FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	prefix = "[GFX] ";
+	break;
+    case LOG_CORE:
+	color = FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+	prefix = "[CORE] ";
+	break;
+    default:
+	color = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
+	prefix = "[LOG] ";
+	break;
+    }
+    SetConsoleTextAttribute(hConsole, color);
+    std::cout << prefix << message << std::endl;
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+}
 
 void Terminal::Clear()
 {
@@ -196,8 +237,33 @@ void Terminal::ExecuteConsoleCommand()
 	    editorContext->debugWireframeMode = !editorContext->debugWireframeMode;
 	    std::cout << "[CMD] Wireframe Toggled." << std::endl;
 	}
+
+	if (commandBuffer == "/log render")
+	{
+	    ActiveFilters ^= LOG_RENDER;
+	    Terminal::Log(LOG_INFO,
+			  (ActiveFilters & LOG_RENDER) ? "Render Logs: ON" : "Render Logs: OFF");
+	} else if (commandBuffer == "/log io")
+	{
+	    ActiveFilters ^= LOG_IO;
+	    Terminal::Log(LOG_INFO, (ActiveFilters & LOG_IO) ? "IO Logs: ON" : "IO Logs: OFF");
+	} else if (commandBuffer == "/log core")
+	{
+	    ActiveFilters ^= LOG_CORE;
+	    Terminal::Log(LOG_INFO,
+			  (ActiveFilters & LOG_CORE) ? "Core Logs: ON" : "Core Logs: OFF");
+	} else if (commandBuffer == "/log all")
+	{
+	    ActiveFilters = LOG_ALL;
+	    Terminal::Log(LOG_INFO, "Display ALL logs");
+	} else if (commandBuffer == "/log error")
+	{
+	    ActiveFilters = LOG_ERROR;
+	    Terminal::Log(LOG_ERROR, "Displaying ONLY errors");
+	}
     }
 }
+
 Terminal::~Terminal()
 {
     FreeConsole();

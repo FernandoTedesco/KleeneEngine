@@ -4,16 +4,17 @@
 #include <iostream>
 #include <exception>
 #include "Input.h"
+#include <string>
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
+#include "Development/Terminal.h"
 Window::Window()
 {
     // SDL initialization
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
-	std::cout << "ERROR::WINDOW::SDL_INIT_VIDEO_FAILED" << std::endl;
-	std::cout << "System Log:" << SDL_GetError() << std::endl;
-	std::cout << "Attempted to initialize SDL video event but failed" << std::endl;
+	Terminal::Log(LOG_ERROR, "Failed to initialize SDL video");
+	Terminal::Log(LOG_ERROR, std::string("Logs: ") + SDL_GetError());
 	throw std::runtime_error("FATAL: SDL video has failed to initialize");
     }
 
@@ -29,11 +30,11 @@ Window::Window()
     if (!this->window)
     {
 
-	std::cout << "ERROR::WINDOW::SDL_CREATE_WINDOW_FAILED" << std::endl;
-	std::cout << "System Log:" << SDL_GetError() << std::endl;
-	std::cout << "Attempted to create a SDL window instance but failed" << std::endl;
+	Terminal::Log(LOG_ERROR, "SDL window could not be created");
+	Terminal::Log(LOG_ERROR, std::string("Logs: ") + SDL_GetError());
 	throw std::runtime_error("FATAL: SDL window has failed to be created");
     }
+    Terminal::Log(LOG_CORE, "SDL window created sucessfully.");
 
     // SDL Context building and GLL Loader Check
     glContext = SDL_GL_CreateContext(this->window);
