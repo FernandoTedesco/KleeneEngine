@@ -13,6 +13,7 @@
 #include "Development/EditorGrid.h"
 #include "Graphics/Material.h"
 #include "Scenes/GameObject.h"
+#include <string>
 Renderer::Renderer()
 {
 }
@@ -24,6 +25,7 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     shader->Use();
+
     int windowHeight = window->GetHeight();
     int windowWidth = window->GetWidth();
     glm::mat4 projectionMatrix =
@@ -31,6 +33,28 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
     glm::mat4 viewMatrix = camera->GetViewMatrix();
     shader->SetMat4("projection", projectionMatrix);
     shader->SetMat4("view", viewMatrix);
+    shader->SetVec3("viewPos", camera->GetCameraPos());
+    unsigned int lightIndex = 0;
+    for (const Light& light : scene->lights)
+    {
+	std::string number = std::to_string(lightIndex);
+	shader->SetInt("lights[" + number + "].type", (int)light.type);
+	shader->SetVec3("lights[" + number + "].position", light.position);
+	shader->SetVec3("lights[" + number + "].direction", light.direction);
+	shader->SetVec3("lights[" + number + "].color", light.color);
+	shader->SetFloat("lights[" + number + "].intensity", light.intensity);
+
+	shader->SetFloat("lights[" + number + "].constant", light.constant);
+	shader->SetFloat("lights[" + number + "].linear", light.linear);
+	shader->SetFloat("lights[" + number + "].quadratic", light.quadratic);
+
+	shader->SetFloat("lights[" + number + "].cutOff", light.cutOff);
+	shader->SetFloat("lights[" + number + "].outerCutOff", light.outerCutOff);
+	lightIndex++;
+	if (lightIndex >= 16)
+	    break;
+    }
+    shader->SetInt("numLights", lightIndex);
 
     for (GameObject& object : scene->gameObjects)
     {
@@ -43,10 +67,14 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
 		if (material != nullptr)
 		{
 		    material->Use(shader);
+		    shader->SetFloat("material.specular", material->specular);
+		    shader->SetFloat("material.shininess", material->shininess);
 		} else
 		{
 		    shader->SetVec3("material.color", glm::vec3(1.0f, 0.0f, 1.0f));
 		    shader->SetVec2("material.tiling", glm::vec2(1.0f, 1.0f));
+		    shader->SetFloat("material.specular", 0.5f);
+		    shader->SetFloat("material.shininess", 32.0f);
 		}
 		glm::mat4 modelMatrix(1.0f);
 		modelMatrix = glm::translate(modelMatrix, object.position);

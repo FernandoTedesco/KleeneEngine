@@ -4,13 +4,16 @@ layout (location = 1) in vec2 aTexture;
 layout (location = 2) in vec3 aNormal;
 out vec2 textureCoordinate;
 out vec3 normalVector;
+out vec3 FragPos;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 void main(){
-gl_Position = projection * view * model * vec4(aPosition, 1.0);
-textureCoordinate = aTexture;
-normalVector = aNormal;
+    FragPos = vec3(model * vec4(aPosition, 1.0));
+    normalVector = mat3(transpose(inverse(model)))* aNormal;
+    textureCoordinate = aTexture;
+    gl_Position = projection * view *  vec4(FragPos,  1.0);
+
 }
 
 

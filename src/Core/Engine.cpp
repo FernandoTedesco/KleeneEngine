@@ -12,6 +12,7 @@
 #include <filesystem>
 #include "Development/Terminal.h"
 #include "Development/Editor.h"
+
 Engine::Engine()
 {
 
@@ -30,7 +31,7 @@ Engine::Engine()
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
     terminal->SetEditorContext(editor);
     renderer = new Renderer();
-
+    sceneManager->AddLight(*activeScene, glm::vec3(10.0f, 10.0f, 10.0f), LightType::Directional);
     isRunning = true;
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }

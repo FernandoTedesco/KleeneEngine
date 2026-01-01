@@ -2,6 +2,7 @@
 #include <vector>
 #include "glm/glm.hpp"
 #include "GameObject.h"
+#include "Graphics/Light.h"
 class Scene
 {
     friend class SceneLoader;
@@ -14,6 +15,7 @@ public:
     std::vector<uint32_t> sceneMeshes;
     std::vector<uint32_t> sceneTextures;
     std::vector<GameObject> gameObjects;
+    std::vector<Light> lights;
 
     ~Scene() {};
 };

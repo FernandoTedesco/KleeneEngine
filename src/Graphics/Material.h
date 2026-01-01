@@ -8,6 +8,8 @@ class Material
 public:
     Material();
     Texture* diffuseMap = nullptr;
+    float specular = 0.5f;
+    float shininess = 32.0f;
     glm::vec3 colorTint = glm::vec3(1.0f, 1.0f, 1.0f);
     glm::vec2 tiling = glm::vec2(1.0f, 1.0f);
     glm::vec2 offset = glm::vec2(0.0f, 0.0f);
