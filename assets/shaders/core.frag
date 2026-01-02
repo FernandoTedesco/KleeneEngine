@@ -35,7 +35,7 @@ uniform Light lights[MAX_LIGHTS];
 uniform int numLights;
 
 
-vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos)
+vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 albedo)
     {
         vec3 lightDirection;
         float attenuation = 1.0;
@@ -57,9 +57,9 @@ vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos)
             float epsilon = light.cutOff - light.outerCutOff;
             spotIntensity = clamp((theta - light.outerCutOff)/epsilon, 0.0, 1.0);
         }
-        vec3 ambient = 0.05 * light.color;
+        vec3 ambient = 0.05 * light.color * albedo;
         float diff = max(dot(normal,lightDirection),0.0);
-        vec3 diffuse = diff * light.color;
+        vec3 diffuse = diff * light.color * albedo;
         vec3 reflectDirection= reflect(-lightDirection, normal);
         float spec = pow(max(dot(viewDirection,reflectDirection), 0.0), material.shininess);
         vec3 specular = material.specular * spec *light.color;
@@ -76,16 +76,19 @@ vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos)
     }
 void main()
 {
+    vec2 tiledCoords = (textureCoordinate * material.tiling) + material.offset;
+    vec4 texColor = texture(material.diffuse,tiledCoords);
+    vec3 albedo = vec3(texColor) *material.color;
     vec3 norm = normalize(normalVector);
     vec3 viewDirection = normalize(viewPos - FragPos);
     vec3 result = vec3(0.0);
     for(int i = 0; i<numLights; i++)
     {
-        result += CalcLight(lights[i], norm, viewDirection, FragPos);
+        result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo);
     }
-    vec2 tiledCoords = (textureCoordinate *material.tiling) + material.offset;
-    vec4 texColor = texture(material.diffuse, tiledCoords);
-    FragColor = vec4(result, 1.0)*texColor * vec4(material.color, 1.0);
+    
+    
+    FragColor = vec4(result, 1.0);
     
 }
     

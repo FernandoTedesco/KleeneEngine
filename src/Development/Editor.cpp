@@ -471,7 +471,7 @@ void Editor::RenderHighlight()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    this->highlightShader->SetVec4("color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
+    this->highlightShader->SetVec4("color", glm::vec4(0.0f, 0.4f, 0.8f, 0.25f));
     mesh->Draw();
     glDisable(GL_BLEND);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
