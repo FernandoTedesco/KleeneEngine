@@ -1,4 +1,5 @@
 #pragma once
+#include "Graphics/FrameBuffer.h"
 class Camera;
 class Window;
 class ResourceManager;
@@ -20,7 +21,9 @@ public:
 
 private:
     void Update();
-
+    FrameBuffer* framebuffer;
+    Shader* screenShader;
+    unsigned int rectVAO, rectVBO;
     Window* window;
     Camera* camera;
     Shader* shader;

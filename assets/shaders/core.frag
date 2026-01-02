@@ -78,7 +78,7 @@ void main()
 {
     vec2 tiledCoords = (textureCoordinate * material.tiling) + material.offset;
     vec4 texColor = texture(material.diffuse,tiledCoords);
-    vec3 albedo = vec3(texColor) *material.color;
+    vec3 albedo = pow(vec3(texColor),vec3(2.2))*material.color;
     vec3 norm = normalize(normalVector);
     vec3 viewDirection = normalize(viewPos - FragPos);
     vec3 result = vec3(0.0);
@@ -87,7 +87,7 @@ void main()
         result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo);
     }
     
-    
+    result = pow(result,vec3(1.0/2.2));
     FragColor = vec4(result, 1.0);
     
 }

@@ -35,6 +35,7 @@ ${CMAKE_SOURCE_DIR}/src/Graphics/Mesh.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Texture.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Renderer.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Material.cpp
+${CMAKE_SOURCE_DIR}/src/Graphics/FrameBuffer.cpp
 ${CMAKE_SOURCE_DIR}/src/Resources/ResourceManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Scenes/SceneManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp
@@ -45,6 +46,7 @@ ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
+
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})
