@@ -7,12 +7,15 @@
 Gizmo::Gizmo()
 {
     SetupGizmoGeometry();
+    SetupLightIconGeometry();
 }
 
 Gizmo::~Gizmo()
 {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &lightVAO);
+    glDeleteBuffers(1, &lightVBO);
 }
 
 void Gizmo::SetupGizmoGeometry()
@@ -113,4 +116,46 @@ GizmoAxis Gizmo::CheckHover(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::ve
     {
 	return GizmoAxis::NONE;
     }
+}
+
+void Gizmo::DrawLightIcon(Camera* camera, glm::vec3 position, Shader* shader, Window* window)
+{
+    shader->Use();
+    glm::mat4 view = camera->GetViewMatrix();
+    glm::mat4 projection =
+	camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
+    shader->SetMat4("view", view);
+    shader->SetMat4("projection", projection);
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, position);
+    shader->SetMat4("model", model);
+    glDisable(GL_DEPTH_TEST);
+    glBindVertexArray(lightVAO);
+    glLineWidth(2.0f);
+    shader->SetVec3("material.color", glm::vec3(1.0f, 1.0f, 0.0f));
+    glDrawArrays(GL_LINES, 0, 24);
+    glBindVertexArray(0);
+    glLineWidth(1.0f);
+    glEnable(GL_DEPTH_TEST);
+}
+void Gizmo::SetupLightIconGeometry()
+{
+    float scale = 0.5f;
+    float vertices[] = {
+	0.0f,	scale,	0.0f, scale, 0.0f, 0.0f,   0.0f, scale,	 0.0f,	 -scale, 0.0f, 0.0f,
+	0.0f,	scale,	0.0f, 0.0f,  0.0f, scale,  0.0f, scale,	 0.0f,	 0.0f,	 0.0f, -scale,
+
+	0.0f,	-scale, 0.0f, scale, 0.0f, 0.0f,   0.0f, -scale, 0.0f,	 -scale, 0.0f, 0.0f,
+	0.0f,	-scale, 0.0f, 0.0f,  0.0f, scale,  0.0f, -scale, 0.0f,	 0.0f,	 0.0f, -scale,
+
+	scale,	0.0f,	0.0f, 0.0f,  0.0f, scale,  0.0f, 0.0f,	 scale,	 -scale, 0.0f, 0.0f,
+	-scale, 0.0f,	0.0f, 0.0f,  0.0f, -scale, 0.0f, 0.0f,	 -scale, scale,	 0.0f, 0.0f};
+    glGenVertexArrays(1, &lightVAO);
+    glGenBuffers(1, &lightVBO);
+    glBindVertexArray(lightVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, lightVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
 }

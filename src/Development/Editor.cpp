@@ -423,6 +423,19 @@ std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path direc
 
 void Editor::RenderHighlight()
 {
+    if (this->highlightShader)
+    {
+	this->highlightShader->Use();
+	for (const Light& light : scene->lights)
+	{
+	    gizmo->DrawLightIcon(camera, light.position, highlightShader, window);
+	}
+    }
+    if (selectedLightIndex != -1 && selectedLightIndex < scene->lights.size())
+    {
+	Light& light = scene->lights[selectedLightIndex];
+	gizmo->Draw(camera, light.position, highlightShader, window);
+    }
     if (this->selectedEntityIndex == -1 || this->selectedEntityIndex >= scene->gameObjects.size())
     {
 	return;
@@ -570,8 +583,10 @@ void Editor::DrawInspector()
 		ImGui::Separator();
 		ImGui::Text("Material Properties");
 		ImGui::ColorEdit3("Color Tint", &material->colorTint[0]);
-		ImGui::DragFloat2("Tiling", &material->tiling[0], 0.05f);
-		ImGui::DragFloat2("UV Offset", &material->offset[0], 0.01f);
+		ImGui::DragFloat("Tiling", &material->tiling[0], 0.05f);
+		ImGui::DragFloat("UV Offset", &material->offset[0], 0.01f);
+		ImGui::DragFloat("Specular Strenght", &material->specular, 0.05, 0.0f, 1.0f);
+		ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 2.0f, 256.0f);
 
 		ImGui::Text("CurrentMaterial ID: %d", selectedObject.materialID);
 		ImGui::Spacing();
@@ -685,7 +700,38 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
 
     float closestDistance = FLT_MAX;
-    int hitIndex = -1; // Empty click
+    int hitObjectIndex = -1; // Empty click
+    int hitLightIndex = -1;
+    for (int i = 0; i < scene->lights.size(); i++)
+    {
+	glm::vec3 position = scene->lights[i].position;
+	float iconSize = 0.5f;
+	glm::vec3 aabbMin = position - glm::vec3(iconSize);
+	glm::vec3 aabbMax = position + glm::vec3(iconSize);
+	float distance = 0.0f;
+	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
+	{
+	    if (distance < closestDistance)
+	    {
+		closestDistance = distance;
+		hitLightIndex = i;
+		hitObjectIndex = -1;
+	    }
+	}
+    }
+    if (hitLightIndex != -1)
+    {
+	selectedLightIndex = hitLightIndex;
+	selectedEntityIndex = -1;
+    } else if (hitObjectIndex != -1)
+    {
+	selectedEntityIndex = hitObjectIndex;
+	selectedLightIndex = -1;
+    } else
+    {
+	selectedEntityIndex = -1;
+	selectedLightIndex = -1;
+    }
     for (int i = 0; i < scene->gameObjects.size(); i++)
     {
 	glm::vec3 objectPosition = scene->gameObjects[i].position;
@@ -698,14 +744,14 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	    if (distance < closestDistance)
 	    {
 		closestDistance = distance;
-		hitIndex = i;
+		hitObjectIndex = i;
 	    }
 	}
     }
-    if (hitIndex != -1)
+    if (hitObjectIndex != -1)
     {
-	std::cout << "[INFO] Object " << hitIndex << " selected!" << std::endl;
-	this->selectedEntityIndex = hitIndex;
+	std::cout << "[INFO] Object " << hitObjectIndex << " selected!" << std::endl;
+	this->selectedEntityIndex = hitObjectIndex;
     } else
     {
 	this->selectedEntityIndex = -1;

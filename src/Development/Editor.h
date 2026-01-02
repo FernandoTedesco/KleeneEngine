@@ -71,6 +71,7 @@ private:
     EditorGrid* editorGrid;
     Gizmo* gizmo;
     int selectedEntityIndex = -1;
+    int selectedLightIndex = -1;
     bool isDragging = false;
     glm::vec3 draggingStartPosition;
     glm::vec2 draggingStartMousePosition;
