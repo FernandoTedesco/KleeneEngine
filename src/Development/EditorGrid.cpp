@@ -46,7 +46,11 @@ EditorGrid::EditorGrid(int size)
 void EditorGrid::EditorGridDraw(Camera* camera, float screenWidth, float screenHeight)
 {
     shader->Use();
+    shader->SetMat4("model", glm::mat4(1.0f));
+    shader->SetMat4("projection", camera->GetProjectionMatrix(screenWidth, screenHeight));
     shader->SetMat4("view", camera->GetViewMatrix());
+    shader->SetVec4("color", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
+
     shader->SetMat4("projection", camera->GetProjectionMatrix(screenWidth, screenHeight));
     glBindVertexArray(VAO);
     glDrawArrays(GL_LINES, 0, vertexCount);

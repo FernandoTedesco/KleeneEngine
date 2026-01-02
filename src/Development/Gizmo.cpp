@@ -56,11 +56,11 @@ void Gizmo::Draw(Camera* camera, glm::vec3 position, Shader* shader, Window* win
     glBindVertexArray(VAO);
     glLineWidth(4.0f);
 
-    shader->SetVec3("material.color", glm::vec3(0.0f, 0.0f, 1.0f));
+    shader->SetVec4("color", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
     glDrawArrays(GL_LINES, 0, 2);
-    shader->SetVec3("material.color", glm::vec3(0.0f, 1.0f, 0.0f));
+    shader->SetVec4("color", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
     glDrawArrays(GL_LINES, 2, 2);
-    shader->SetVec3("material.color", glm::vec3(1.0f, 0.0f, 0.0f));
+    shader->SetVec4("color", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
     glDrawArrays(GL_LINES, 4, 2);
 
     glBindVertexArray(0);
@@ -132,7 +132,7 @@ void Gizmo::DrawLightIcon(Camera* camera, glm::vec3 position, Shader* shader, Wi
     glDisable(GL_DEPTH_TEST);
     glBindVertexArray(lightVAO);
     glLineWidth(2.0f);
-    shader->SetVec3("material.color", glm::vec3(1.0f, 1.0f, 0.0f));
+    shader->SetVec4("color", glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
     glDrawArrays(GL_LINES, 0, 24);
     glBindVertexArray(0);
     glLineWidth(1.0f);

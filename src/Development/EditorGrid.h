@@ -10,6 +10,10 @@ class EditorGrid
 public:
     EditorGrid(int size);
     void EditorGridDraw(Camera* camera, float screenWidth, float screenHeight);
+    Shader* GetShader()
+    {
+	return shader;
+    }
     ~EditorGrid();
 
 private:

@@ -41,6 +41,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->highlightShader = hightlightShader;
     this->gizmo = new Gizmo();
     editorGrid = new EditorGrid(50);
+    this->highlightShader = editorGrid->GetShader();
 
     this->listLoaded = false;
     this->selectedMeshIndex = 0;
@@ -442,20 +443,25 @@ void Editor::RenderHighlight()
     }
     if (!this->highlightShader)
 	return;
+    this->highlightShader->Use();
     GameObject& object = scene->gameObjects[this->selectedEntityIndex];
     Mesh* mesh = resourceManager->GetMesh(object.meshID);
     if (!mesh)
 	return;
+    this->highlightShader->Use();
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2.0f);
-    glDisable(GL_DEPTH_TEST);
-    this->highlightShader->Use();
+
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, object.position);
     model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
     model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
     model = glm::rotate(model, glm::radians(object.rotation.z), glm::vec3(0, 0, 1));
-    model = glm::scale(model, object.scale);
+    model = glm::scale(model, object.scale * 1.01f);
     glm::mat4 view = this->camera->GetViewMatrix();
     glm::mat4 projection =
 	this->camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
@@ -465,17 +471,19 @@ void Editor::RenderHighlight()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    this->highlightShader->SetVec3("material.color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
+    this->highlightShader->SetVec4("color", glm::vec4(0.0f, 0.5f, 1.0f, 0.4f));
     mesh->Draw();
     glDisable(GL_BLEND);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glLineWidth(2.0f);
     glDisable(GL_DEPTH_TEST);
+    this->highlightShader->SetVec4("color", glm::vec4(0.6f, 0.8f, 1.0f, 1.0f));
 
     mesh->Draw();
     glEnable(GL_DEPTH_TEST);
     glLineWidth(1.0f);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glDisable(GL_CULL_FACE);
     gizmo->Draw(camera, object.position, highlightShader, this->window);
 }
 
