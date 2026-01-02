@@ -140,7 +140,7 @@ void Camera::ChangeMode(Camera::CameraMode mode)
 	cameraPos.y = 10;
 	Input::SetRelativeMouse(false);
 	// fixed pitch
-	pitch = -80.0f;
+	pitch = -60.0f;
 	yaw = -90.0f;
 	// Fixed vectors
 	// direction aka where the camera is looking

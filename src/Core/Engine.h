@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphics/FrameBuffer.h"
+#include "Graphics/Shadowmap.h"
 class Camera;
 class Window;
 class ResourceManager;
@@ -32,6 +33,8 @@ private:
     Scene* activeScene;
     Terminal* terminal;
     Editor* editor;
+    ShadowMap* shadowMap;
+    Shader* shadowShader;
     SceneManager* sceneManager;
     bool isRunning;
 };

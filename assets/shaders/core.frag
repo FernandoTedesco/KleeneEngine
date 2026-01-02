@@ -4,10 +4,12 @@ out vec4 FragColor;
 in vec2 textureCoordinate;
 in vec3 normalVector;
 in vec3 FragPos;
+in vec4 FragPosLightSpace;
+
 uniform vec3 objectColor;
 uniform sampler2D texture1;
-
 uniform vec3 viewPos;
+uniform sampler2D shadowMap;
 
 struct Material{
     sampler2D diffuse;
@@ -34,8 +36,30 @@ struct Light{
 uniform Light lights[MAX_LIGHTS];
 uniform int numLights;
 
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
+{
+    vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+    projCoords = projCoords * 0.5 + 0.5;
+    if(projCoords.z >1.0)
+    {
+        return 0.0;
+    }
+    float bias = max(0.005 * (1.0 - dot(normal, lightDir)), 0.0005);
+    float shadow = 0.0;
+    vec2 texelSize = 1.0/ textureSize(shadowMap, 0);
+    for(int x = -1; x <= 1;++x)
+    {
+        for(int y = -1; y<= 1; ++y)
+        {
+            float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x,y) * texelSize).r;
+            shadow += (projCoords.z - bias)>pcfDepth ? 1.0 : 0.0;
+        }
+    }
+    shadow /= 9.0f;
+    return shadow;
+}
 
-vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 albedo)
+vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 albedo, float shadow)
     {
         vec3 lightDirection;
         float attenuation = 1.0;
@@ -72,7 +96,7 @@ vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 
             diffuse *= attenuation * spotIntensity;
             specular *= attenuation * spotIntensity;
         }
-        return(ambient+diffuse+specular);
+        return(ambient+(1.0-shadow) * (diffuse+specular));
     }
 void main()
 {
@@ -84,7 +108,13 @@ void main()
     vec3 result = vec3(0.0);
     for(int i = 0; i<numLights; i++)
     {
-        result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo);
+        float shadow = 0.0;
+        if(lights[i].type == 0)
+        {
+            vec3 lightDir = normalize (-lights[i].direction);
+            shadow = ShadowCalculation(FragPosLightSpace, norm, lightDir);
+        }
+        result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo, shadow);
     }
     
     result = pow(result,vec3(1.0/2.2));

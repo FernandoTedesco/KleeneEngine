@@ -12,6 +12,7 @@
 #include <filesystem>
 #include "Development/Terminal.h"
 #include "Development/Editor.h"
+#include "Graphics/ShadowMap.h"
 
 Engine::Engine()
 {
@@ -31,10 +32,15 @@ Engine::Engine()
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
     terminal->SetEditorContext(editor);
     renderer = new Renderer();
-    sceneManager->AddLight(*activeScene, glm::vec3(10.0f, 10.0f, 10.0f), LightType::Directional);
+    sceneManager->AddLight(*activeScene, glm::vec3(-20.f, 30.0f, -20.0f), LightType::Directional);
     framebuffer = new FrameBuffer(window->GetWidth(), window->GetHeight());
     screenShader = new Shader((currentPath / "assets/shaders/screen.vert").string(),
 			      (currentPath / "assets/shaders/screen.frag").string());
+
+    shadowMap = new ShadowMap(2048, 2048);
+    shadowShader = new Shader((currentPath / "assets/shaders/shadowDepth.vert").string(),
+			      (currentPath / "assets/shaders/shadowDepth.frag").string());
+
     float quadVertices[] = {
 	-1.0f, 1.0f, 0.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, -1.0f, 1.0f, 0.0f,
 
@@ -76,10 +82,32 @@ void Engine::Run()
 	    count--;
 	}
 
+	glm::vec3 lightPosition = activeScene->lights[0].position;
+	glm::vec3 lightTarget(0.0f, 0.0f, 0.0f);
+	glm::vec3 lightDirection = glm::normalize(lightTarget - lightPosition);
+	activeScene->lights[0].direction = lightDirection;
+	glm::mat4 lightSpaceMatrix = shadowMap->GetLightSpaceMatrix(lightPosition, lightDirection);
+
+	shadowShader->Use();
+	shadowShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+	glEnable(GL_DEPTH_TEST);
+	shadowMap->Bind();
+
+	renderer->Render(activeScene, resourceManager, shadowShader, camera, window, nullptr);
+
+	shadowMap->Unbind(window->GetWidth(), window->GetHeight());
+
 	framebuffer->Bind();
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	shader->Use();
+	shader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, shadowMap->GetMapID());
+	shader->SetInt("shadowMap", 1);
+	glActiveTexture(GL_TEXTURE0);
 	if (editor->debugWireframeMode)
 	{
 	    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -94,6 +122,7 @@ void Engine::Run()
 	    editor->RenderHighlight();
 	}
 	framebuffer->Unbind();
+
 	glDisable(GL_DEPTH_TEST);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -137,4 +166,6 @@ Engine::~Engine()
     delete renderer;
     delete window;
     delete terminal;
+    delete shadowMap;
+    delete shadowShader;
 }
