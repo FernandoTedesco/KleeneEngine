@@ -32,12 +32,12 @@ Engine::Engine()
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
     terminal->SetEditorContext(editor);
     renderer = new Renderer();
-    sceneManager->AddLight(*activeScene, glm::vec3(-20.f, 30.0f, -20.0f), LightType::Directional);
+
     framebuffer = new FrameBuffer(window->GetWidth(), window->GetHeight());
     screenShader = new Shader((currentPath / "assets/shaders/screen.vert").string(),
 			      (currentPath / "assets/shaders/screen.frag").string());
 
-    shadowMap = new ShadowMap(2048, 2048);
+    shadowMap = new ShadowMap(4096, 4096);
     shadowShader = new Shader((currentPath / "assets/shaders/shadowDepth.vert").string(),
 			      (currentPath / "assets/shaders/shadowDepth.frag").string());
 
@@ -54,7 +54,7 @@ Engine::Engine()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
+    sceneManager->LoadScene("default.kleene", *activeScene, resourceManager);
     isRunning = true;
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }
@@ -82,19 +82,52 @@ void Engine::Run()
 	    count--;
 	}
 
-	glm::vec3 lightPosition = activeScene->lights[0].position;
-	glm::vec3 lightTarget(0.0f, 0.0f, 0.0f);
-	glm::vec3 lightDirection = glm::normalize(lightTarget - lightPosition);
-	activeScene->lights[0].direction = lightDirection;
+	activeScene->lights.clear();
+	for (GameObject& object : activeScene->gameObjects)
+	{
+	    if (object.isActive && object.hasLightComponent)
+	    {
+		Light renderLight;
+		renderLight.type = object.light.type;
+		renderLight.color = object.light.color;
+		renderLight.intensity = object.light.intensity;
+		renderLight.constant = object.light.constant;
+		renderLight.linear = object.light.linear;
+		renderLight.quadratic = object.light.quadratic;
+		renderLight.cutOff = glm::cos(glm::radians(object.light.cutOff));
+		renderLight.outerCutOff = glm::cos(glm::radians(object.light.outerCutOff));
+
+		renderLight.position = object.position;
+		float pitch = glm::radians(object.rotation.x);
+		float yaw = glm::radians(object.rotation.y);
+		glm::vec3 direction;
+
+		direction.x = -sin(yaw) * cos(pitch);
+		direction.y = sin(pitch);
+		direction.z = cos(yaw) * cos(pitch);
+		renderLight.direction = glm::normalize(direction);
+
+		activeScene->lights.push_back(renderLight);
+	    }
+	}
+	glm::vec3 lightPosition = glm::vec3(0.0f, 20.0f, 0.0f);
+	glm::vec3 lightDirection = glm::vec3(0.1, -1.0f, 0.1f);
+	if (!activeScene->lights.empty())
+	{
+	    lightDirection = activeScene->lights[0].direction;
+	    glm::vec3 gizmoPos = activeScene->lights[0].position;
+	    lightPosition = gizmoPos - (lightDirection * 40.0f);
+	    lightPosition = activeScene->lights[0].position;
+	}
 	glm::mat4 lightSpaceMatrix = shadowMap->GetLightSpaceMatrix(lightPosition, lightDirection);
 
 	shadowShader->Use();
 	shadowShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 	glEnable(GL_DEPTH_TEST);
 	shadowMap->Bind();
-
+	glCullFace(GL_FRONT);
 	renderer->Render(activeScene, resourceManager, shadowShader, camera, window, nullptr, true);
-
+	glCullFace(GL_BACK);
 	shadowMap->Unbind(window->GetWidth(), window->GetHeight());
 
 	framebuffer->Bind();

@@ -600,7 +600,43 @@ void Editor::DrawInspector()
 		ImGui::Spacing();
 	    }
 	    // Material info
-
+	    ImGui::Spacing();
+	    ImGui::Spacing();
+	    ImGui::Separator();
+	    ImGui::Text("Light Component");
+	    ImGui::Checkbox("Is Light Source", &selectedObject.hasLightComponent);
+	    if (selectedObject.hasLightComponent)
+	    {
+		ImGui::Indent();
+		const char* items[] = {"Directional", "Point", "Spot"};
+		int currentItem = (int)selectedObject.light.type;
+		if (ImGui::Combo("Light Type", &currentItem, items, IM_ARRAYSIZE(items)))
+		{
+		    selectedObject.light.type = (LightType)currentItem;
+		}
+		ImGui::ColorEdit3("Color", &selectedObject.light.color[0]);
+		ImGui::DragFloat("Intensity", &selectedObject.light.intensity, 0.1f, 0.0f, 100.0f);
+		if (selectedObject.light.type == LightType::Point ||
+		    selectedObject.light.type == LightType::Spot)
+		{
+		    ImGui::Text("Range");
+		    ImGui::DragFloat("Linear", &selectedObject.light.linear, 0.001f, 0.0f, 1.0f,
+				     "%.4f");
+		    ImGui::DragFloat("Quadratic", &selectedObject.light.quadratic, 0.001f, 0.0f,
+				     1.0f, "%.4f");
+		}
+		if (selectedObject.light.type == LightType::Spot)
+		{
+		    ImGui::Text("Spotlight Angles");
+		    ImGui::DragFloat("Inner CutOff", &selectedObject.light.cutOff, 0.5f, 0.0f,
+				     180.0f);
+		    ImGui::DragFloat("Outer CutOff", &selectedObject.light.outerCutOff, 0.5f, 0.0f,
+				     180.0f);
+		}
+		ImGui::Unindent();
+	    }
+	    ImGui::Spacing();
+	    ImGui::Separator();
 	    if (ImGui::Button("Duplicate Object", ImVec2(-1, 0)))
 	    {
 		DuplicateSelectedObject();
@@ -709,37 +745,7 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 
     float closestDistance = FLT_MAX;
     int hitObjectIndex = -1; // Empty click
-    int hitLightIndex = -1;
-    for (int i = 0; i < scene->lights.size(); i++)
-    {
-	glm::vec3 position = scene->lights[i].position;
-	float iconSize = 0.5f;
-	glm::vec3 aabbMin = position - glm::vec3(iconSize);
-	glm::vec3 aabbMax = position + glm::vec3(iconSize);
-	float distance = 0.0f;
-	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
-	{
-	    if (distance < closestDistance)
-	    {
-		closestDistance = distance;
-		hitLightIndex = i;
-		hitObjectIndex = -1;
-	    }
-	}
-    }
-    if (hitLightIndex != -1)
-    {
-	selectedLightIndex = hitLightIndex;
-	selectedEntityIndex = -1;
-    } else if (hitObjectIndex != -1)
-    {
-	selectedEntityIndex = hitObjectIndex;
-	selectedLightIndex = -1;
-    } else
-    {
-	selectedEntityIndex = -1;
-	selectedLightIndex = -1;
-    }
+
     for (int i = 0; i < scene->gameObjects.size(); i++)
     {
 	glm::vec3 objectPosition = scene->gameObjects[i].position;

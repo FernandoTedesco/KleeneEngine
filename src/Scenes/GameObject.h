@@ -1,7 +1,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <string>
-
+#include "Graphics/Light.h"
 struct GameObject {
     std::string name;
     bool isActive;
@@ -11,5 +11,7 @@ struct GameObject {
 
     uint32_t meshID;
     uint32_t materialID;
+    bool hasLightComponent = false;
+    LightComponent light;
     GameObject();
 };

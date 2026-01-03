@@ -8,6 +8,17 @@ enum LightType {
     Spot = 2
 };
 
+struct LightComponent {
+    LightType type = Directional;
+    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
+    float intensity = 1.0f;
+    float constant = 1.0f;
+    float linear = 0.09f;
+    float quadratic = 0.032f;
+    float cutOff = 12.5f;
+    float outerCutOff = 17.5f;
+};
+
 struct Light {
     LightType type = Directional;
 

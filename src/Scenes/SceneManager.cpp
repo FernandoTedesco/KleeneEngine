@@ -27,7 +27,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
     if (signature != 0x4B4C)
 	return false;
     sceneStream.read(reinterpret_cast<char*>(&version), sizeof(uint16_t));
-    if (version != 0x0004)
+    if (version != 0x0005)
     {
 	std::cout << "[ERROR] Version mismatch during file loading";
 	return false;
@@ -62,27 +62,21 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 	newObject.materialID = resourceManager->CreateMaterial(materialName, textureID);
 	newObject.name = meshName;
 	newObject.isActive = true;
+	bool hasLight = false;
+	sceneStream.read(reinterpret_cast<char*>(&hasLight), sizeof(bool));
+	newObject.hasLightComponent = hasLight;
+	if (hasLight)
+	{
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.type), sizeof(int));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.color), sizeof(glm::vec3));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.intensity), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.constant), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.linear), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.quadratic), sizeof(int));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.cutOff), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.outerCutOff), sizeof(float));
+	}
 	targetScene.gameObjects.push_back(newObject);
-    }
-    uint32_t lightCount = 0;
-    sceneStream.read(reinterpret_cast<char*>(&lightCount), sizeof(uint32_t));
-    targetScene.lights.clear();
-    targetScene.lights.reserve(lightCount);
-    for (uint32_t i = 0; i < lightCount; i++)
-    {
-	Light newLight;
-	sceneStream.read(reinterpret_cast<char*>(&newLight.type), sizeof(int));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.position), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.direction), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.color), sizeof(glm::vec3));
-
-	sceneStream.read(reinterpret_cast<char*>(&newLight.constant), sizeof(float));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.linear), sizeof(float));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.quadratic), sizeof(float));
-
-	sceneStream.read(reinterpret_cast<char*>(&newLight.cutOff), sizeof(float));
-	sceneStream.read(reinterpret_cast<char*>(&newLight.outerCutOff), sizeof(float));
-	targetScene.lights.push_back(newLight);
     }
 
     std::cout << "[SUCESS] Scene loaded:" << fileName << std::endl;
@@ -103,7 +97,7 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	return false;
     }
     uint16_t signature = 0x4B4C;
-    uint16_t version = 0x0004;
+    uint16_t version = 0x0005;
     uint32_t objectCount = (uint32_t)targetScene.gameObjects.size();
 
     sceneStream.write(reinterpret_cast<const char*>(&signature), sizeof(uint16_t));
@@ -140,23 +134,22 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	uint32_t textureNameSize = (uint32_t)textureName.size();
 	sceneStream.write(reinterpret_cast<const char*>(&textureNameSize), sizeof(uint32_t));
 	sceneStream.write(textureName.c_str(), textureNameSize);
+	sceneStream.write(reinterpret_cast<const char*>(&currentObject.hasLightComponent),
+			  sizeof(bool));
+	if (currentObject.hasLightComponent)
+	{
+	    const LightComponent& light = currentObject.light;
+	    sceneStream.write(reinterpret_cast<const char*>(&light.type), sizeof(int));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.color), sizeof(glm::vec3));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.intensity), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.constant), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.linear), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.quadratic), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.cutOff), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light.outerCutOff), sizeof(float));
+	}
     }
-    uint32_t lightCount = (uint32_t)targetScene.lights.size();
-    sceneStream.write(reinterpret_cast<const char*>(&lightCount), sizeof(uint32_t));
-    for (const Light& light : targetScene.lights)
-    {
-	sceneStream.write(reinterpret_cast<const char*>(&light.type), sizeof(int));
-	sceneStream.write(reinterpret_cast<const char*>(&light.position), sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&light.direction), sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&light.color), sizeof(glm::vec3));
 
-	sceneStream.write(reinterpret_cast<const char*>(&light.constant), sizeof(float));
-	sceneStream.write(reinterpret_cast<const char*>(&light.linear), sizeof(float));
-	sceneStream.write(reinterpret_cast<const char*>(&light.quadratic), sizeof(float));
-
-	sceneStream.write(reinterpret_cast<const char*>(&light.cutOff), sizeof(float));
-	sceneStream.write(reinterpret_cast<const char*>(&light.outerCutOff), sizeof(float));
-    }
     sceneStream.close();
     std::cout << "[SUCCESS] Scene saved sucessfully: " << fileName << std::endl;
     return true;
