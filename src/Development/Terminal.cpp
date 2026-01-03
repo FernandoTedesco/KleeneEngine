@@ -167,7 +167,7 @@ void Terminal::WriteArt()
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_BLUE | FOREGROUND_INTENSITY);
     std::cout << "Terminal has initialized successfully!" << std::endl;
     SetConsoleTextAttribute((HWND)outputHandle, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
-    std::cout << "Build 0.5 (InDev)" << std::endl;
+    std::cout << "Build 0.8 (InDev)" << std::endl;
     SetConsoleTextAttribute((HWND)outputHandle,
 			    FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
     std::cout << "================================================================================="
@@ -177,16 +177,15 @@ void Terminal::WriteArt()
 
 void Terminal::ChangeLog()
 {
-    std::cout << "Changelog of build 0.6:" << std::endl;
-    std::cout << "+QOL improvements in both terminal and editor (Integration)" << std::endl;
-    std::cout << "+Debug view modes (wireframe)" << std::endl;
-    std::cout << "+Entity Cloning" << std::endl;
-    std::cout << "+UV coordinate support" << std::endl;
-    std::cout << "+Editor material properties" << std::endl;
-    std::cout << "Fully working selection, deletion, translation and rotation modes" << std::endl;
-    std::cout << "+Gizmos with snap-grid" << std::endl;
-    std::cout << "+Camera focus bind (F)" << std::endl;
-    std::cout << "Hierarchy Panel" << std::endl;
+    std::cout << "Changelog of build 0.8:" << std::endl;
+    std::cout << "+Skybox rendering system" << std::endl;
+    std::cout << "+Shader Support for more than one lighting source" << std::endl;
+    std::cout << "+Unaffected by light gizmos" << std::endl;
+    std::cout << "+Ambient light control" << std::endl;
+    std::cout << "+Shadow Mapping" << std::endl;
+    std::cout << "Shadow Conditioning" << std::endl;
+    std::cout << "+Working Lighting system" << std::endl;
+    std::cout << "+Light attached to the game objects" << std::endl;
 }
 
 void Terminal::Help()

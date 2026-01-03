@@ -9,6 +9,10 @@ public:
     Shader(const char* vertexPath, const char* fragmentPath);
     Shader(const std::string& vertexPath, const std::string& fragmentPath);
     ~Shader();
+    unsigned int GetID() const
+    {
+	return programID;
+    }
     void Use();
     void SetVec3(const std::string& name, const glm::vec3& value);
     void SetVec4(const std::string& name, const glm::vec4& value);

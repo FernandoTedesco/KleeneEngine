@@ -25,14 +25,35 @@ Engine::Engine()
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     shader = new Shader((currentPath / "assets/shaders/core.vert").string(),
 			(currentPath / "assets/shaders/core.frag").string());
+
+    skyboxShader = new Shader((currentPath / "assets/shaders/skybox.vert").string(),
+			      (currentPath / "assets/shaders/skybox.frag").string());
+
     camera = new Camera();
+    activeScene = new Scene();
     resourceManager = new ResourceManager();
     sceneManager = new SceneManager();
-    activeScene = new Scene();
+
     editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
     terminal->SetEditorContext(editor);
     renderer = new Renderer();
 
+    if (activeScene->skybox == nullptr)
+    {
+	std::vector<std::string> faces = {(currentPath / "assets/textures/skybox.jpg").string(),
+					  (currentPath / "assets/textures/skybox.jpg").string(),
+					  (currentPath / "assets/textures/skybox.jpg").string(),
+					  (currentPath / "assets/textures/skybox.jpg").string(),
+					  (currentPath / "assets/textures/skybox.jpg").string(),
+					  (currentPath / "assets/textures/skybox.jpg").string()};
+	activeScene->skyboxPaths = faces;
+	activeScene->skybox = new Skybox(faces);
+	for (int i = 0; i < faces.size(); i++)
+	{
+	    Terminal::Log(LOG_INFO, "[DEBUG PATH] Face " + std::to_string(i) + ": " + faces[i]);
+	}
+	Terminal::Log(LOG_RENDER, "Default Skybox Created");
+    }
     framebuffer = new FrameBuffer(window->GetWidth(), window->GetHeight());
     screenShader = new Shader((currentPath / "assets/shaders/screen.vert").string(),
 			      (currentPath / "assets/shaders/screen.frag").string());
@@ -127,6 +148,7 @@ void Engine::Run()
 	shadowMap->Bind();
 	glCullFace(GL_FRONT);
 	renderer->Render(activeScene, resourceManager, shadowShader, camera, window, nullptr, true);
+
 	glCullFace(GL_BACK);
 	shadowMap->Unbind(window->GetWidth(), window->GetHeight());
 
@@ -134,6 +156,7 @@ void Engine::Run()
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	shader->Use();
 	shader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
@@ -150,6 +173,19 @@ void Engine::Run()
 	}
 	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid(),
 			 false);
+	if (activeScene->skybox != nullptr)
+	{
+	    glDepthFunc(GL_LEQUAL);
+	    skyboxShader->Use();
+
+	    glDisable(GL_CULL_FACE);
+	    glm::mat4 view = camera->GetViewMatrix();
+	    glm::mat4 projection =
+		camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight());
+	    activeScene->skybox->Draw(skyboxShader, view, projection);
+	    glEnable(GL_CULL_FACE);
+	    glDepthFunc(GL_LESS);
+	}
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (editor != nullptr)
 	{

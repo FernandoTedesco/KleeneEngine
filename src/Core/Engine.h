@@ -1,6 +1,7 @@
 #pragma once
 #include "Graphics/FrameBuffer.h"
 #include "Graphics/Shadowmap.h"
+#include "Graphics/Skybox.h"
 class Camera;
 class Window;
 class ResourceManager;
@@ -36,5 +37,6 @@ private:
     ShadowMap* shadowMap;
     Shader* shadowShader;
     SceneManager* sceneManager;
+    Shader* skyboxShader;
     bool isRunning;
 };

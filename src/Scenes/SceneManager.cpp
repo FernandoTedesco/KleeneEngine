@@ -72,13 +72,34 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.intensity), sizeof(float));
 	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.constant), sizeof(float));
 	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.linear), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.quadratic), sizeof(int));
+	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.quadratic), sizeof(float));
 	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.cutOff), sizeof(float));
 	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.outerCutOff), sizeof(float));
 	}
 	targetScene.gameObjects.push_back(newObject);
     }
 
+    bool hasSky = false;
+    sceneStream.read(reinterpret_cast<char*>(&hasSky), sizeof(bool));
+    if (hasSky)
+    {
+	targetScene.skyboxPaths.resize(6);
+	for (size_t i = 0; i < 6; i++)
+	{
+	    uint32_t len;
+	    sceneStream.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
+	    std::string tempFileName;
+	    tempFileName.resize(len);
+	    sceneStream.read(&tempFileName[0], len);
+	    std::filesystem::path finalPath = texturesPath / tempFileName;
+	    targetScene.skyboxPaths[i] = finalPath.string();
+	}
+    }
+    if (targetScene.skybox != nullptr)
+    {
+	delete targetScene.skybox;
+    }
+    targetScene.skybox = new Skybox(targetScene.skyboxPaths);
     std::cout << "[SUCESS] Scene loaded:" << fileName << std::endl;
     return true;
 }
@@ -149,7 +170,18 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	    sceneStream.write(reinterpret_cast<const char*>(&light.outerCutOff), sizeof(float));
 	}
     }
-
+    bool hasSky = (targetScene.skybox != nullptr);
+    sceneStream.write((char*)&hasSky, sizeof(bool));
+    if (hasSky)
+    {
+	for (size_t i = 0; i < targetScene.skyboxPaths.size(); i++)
+	{
+	    std::string& path = targetScene.skyboxPaths[i];
+	    uint32_t len = (uint32_t)path.size();
+	    sceneStream.write(reinterpret_cast<const char*>(&len), sizeof(uint32_t));
+	    sceneStream.write(path.c_str(), len);
+	}
+    }
     sceneStream.close();
     std::cout << "[SUCCESS] Scene saved sucessfully: " << fileName << std::endl;
     return true;
