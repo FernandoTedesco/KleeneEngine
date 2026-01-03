@@ -93,7 +93,7 @@ void Engine::Run()
 	glEnable(GL_DEPTH_TEST);
 	shadowMap->Bind();
 
-	renderer->Render(activeScene, resourceManager, shadowShader, camera, window, nullptr);
+	renderer->Render(activeScene, resourceManager, shadowShader, camera, window, nullptr, true);
 
 	shadowMap->Unbind(window->GetWidth(), window->GetHeight());
 
@@ -115,7 +115,8 @@ void Engine::Run()
 	{
 	    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid());
+	renderer->Render(activeScene, resourceManager, shader, camera, window, editor->GetGrid(),
+			 false);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (editor != nullptr)
 	{

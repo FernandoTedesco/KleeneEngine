@@ -10,5 +10,5 @@ class Renderer
 public:
     Renderer();
     void Render(Scene* scene, ResourceManager* resourceManager, Shader* shader, Camera* camera,
-		Window* window, EditorGrid* editorGrid);
+		Window* window, EditorGrid* editorGrid, bool isShadowPass = false);
 };
