@@ -241,6 +241,9 @@ void Engine::Run()
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
 	screenShader->SetInt("bloomBlur", 1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, framebuffer->GetDepthTextureID());
+	screenShader->SetInt("depthTexture", 2);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	editor->EndFrame();

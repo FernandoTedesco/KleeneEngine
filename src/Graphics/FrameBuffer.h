@@ -8,6 +8,10 @@ public:
     {
 	return brightTextureID;
     }
+    unsigned int GetDepthTextureID()
+    {
+	return depthTextureID;
+    }
     void Bind();
     void Unbind();
     void Resize(int width, int height);
@@ -19,6 +23,6 @@ public:
 private:
     unsigned int fbo;
     unsigned int textureID;
-    unsigned int rbo;
     unsigned int brightTextureID;
+    unsigned int depthTextureID;
 };
