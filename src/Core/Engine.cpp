@@ -40,12 +40,13 @@ Engine::Engine()
 
     if (activeScene->skybox == nullptr)
     {
-	std::vector<std::string> faces = {(currentPath / "assets/textures/skybox.jpg").string(),
-					  (currentPath / "assets/textures/skybox.jpg").string(),
-					  (currentPath / "assets/textures/skybox.jpg").string(),
-					  (currentPath / "assets/textures/skybox.jpg").string(),
-					  (currentPath / "assets/textures/skybox.jpg").string(),
-					  (currentPath / "assets/textures/skybox.jpg").string()};
+	std::vector<std::string> faces = {
+	    (currentPath / "assets/textures/skyboxright.bmp").string(),
+	    (currentPath / "assets/textures/skyboxleft.bmp").string(),
+	    (currentPath / "assets/textures/skyboxtop.bmp").string(),
+	    (currentPath / "assets/textures/skyboxbottom.bmp").string(),
+	    (currentPath / "assets/textures/skyboxfront.bmp").string(),
+	    (currentPath / "assets/textures/skyboxback.bmp").string()};
 	activeScene->skyboxPaths = faces;
 	activeScene->skybox = new Skybox(faces);
 	for (int i = 0; i < faces.size(); i++)
@@ -213,7 +214,7 @@ void Engine::Run()
 	framebuffer->Unbind();
 
 	bool horizontal = true, first_iteration = true;
-	unsigned int amount = 10; // blur intensity (need testing)
+	unsigned int amount = 10; // blur intensity (need testingg)
 	blurShader->Use();
 	for (unsigned int i = 0; i < amount; i++)
 	{
