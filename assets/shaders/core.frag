@@ -1,5 +1,6 @@
 #version 330 core
-out vec4 FragColor;
+layout (location = 0)out vec4 FragColor;
+layout (location = 1) out vec4 BrightColor;
 
 in vec2 textureCoordinate;
 in vec3 normalVector;
@@ -44,7 +45,7 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     {
         return 0.0;
     }
-    float bias = max(0.00005 * (1.0 - dot(normal, lightDir)), 0.000005);
+    float bias = max(0.00005 * (1.0 - dot(normal, lightDir)), 0.00005);
     float shadow = 0.0;
     vec2 texelSize = 1.0/ textureSize(shadowMap, 0);
     for(int x = -1; x <= 1;++x)
@@ -117,8 +118,12 @@ void main()
         result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo, shadow);
     }
     
-    result = pow(result,vec3(1.0/2.2));
+   
     FragColor = vec4(result, 1.0);
-    
+    float brightness = dot(result,vec3(0.2126,0.7152,0.0722));
+    if(brightness>1.0)
+        BrightColor = vec4(result, 1.0);
+    else
+        BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
 }
     

@@ -58,6 +58,25 @@ Engine::Engine()
     screenShader = new Shader((currentPath / "assets/shaders/screen.vert").string(),
 			      (currentPath / "assets/shaders/screen.frag").string());
 
+    blurShader = new Shader((currentPath / "assets/shaders/screen.vert").string(),
+			    (currentPath / "assets/shaders/blur.frag").string());
+
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongColorbuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+	glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+	glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, window->GetWidth(), window->GetHeight(), 0,
+		     GL_RGB, GL_FLOAT, NULL);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+			       pingpongColorbuffers[i], 0);
+    }
     shadowMap = new ShadowMap(4096, 4096);
     shadowShader = new Shader((currentPath / "assets/shaders/shadowDepth.vert").string(),
 			      (currentPath / "assets/shaders/shadowDepth.frag").string());
@@ -193,12 +212,34 @@ void Engine::Run()
 	}
 	framebuffer->Unbind();
 
+	bool horizontal = true, first_iteration = true;
+	unsigned int amount = 10; // blur intensity (need testing)
+	blurShader->Use();
+	for (unsigned int i = 0; i < amount; i++)
+	{
+	    glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+	    blurShader->SetInt("horizontal", horizontal);
+	    glActiveTexture(GL_TEXTURE0);
+	    glBindTexture(GL_TEXTURE_2D, first_iteration ? framebuffer->GetBrightTextureID()
+							 : pingpongColorbuffers[!horizontal]);
+	    glBindVertexArray(rectVAO);
+	    glDrawArrays(GL_TRIANGLES, 0, 6);
+	    horizontal = !horizontal;
+	    if (first_iteration)
+		first_iteration = false;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 	screenShader->Use();
 	glBindVertexArray(rectVAO);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, framebuffer->GetTextureID());
+	screenShader->SetInt("screenTexture", 0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+	screenShader->SetInt("bloomBlur", 1);
 	glDrawArrays(GL_TRIANGLES, 0, 6);
 
 	editor->EndFrame();

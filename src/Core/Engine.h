@@ -38,5 +38,8 @@ private:
     Shader* shadowShader;
     SceneManager* sceneManager;
     Shader* skyboxShader;
+    Shader* blurShader;
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongColorbuffers[2];
     bool isRunning;
 };

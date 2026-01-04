@@ -4,6 +4,10 @@ class FrameBuffer
 public:
     FrameBuffer(int width, int height);
     ~FrameBuffer();
+    unsigned int GetBrightTextureID()
+    {
+	return brightTextureID;
+    }
     void Bind();
     void Unbind();
     void Resize(int width, int height);
@@ -16,4 +20,5 @@ private:
     unsigned int fbo;
     unsigned int textureID;
     unsigned int rbo;
+    unsigned int brightTextureID;
 };
