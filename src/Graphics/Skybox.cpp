@@ -77,13 +77,13 @@ unsigned int Skybox::LoadCubemap(std::vector<std::string> faces)
     int width, height, nrChannels;
     for (unsigned int i = 0; i < faces.size(); i++)
     {
-	Terminal::Log(LOG_INFO, "Tentando carregar: " + faces[i]);
+	Terminal::Log(LOG_INFO, "Tried to Load: " + faces[i]);
 	unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 3);
 	if (data)
 	{
 	    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB,
 			 GL_UNSIGNED_BYTE, data);
-	    Terminal::Log(LOG_SUCCESS, "Face carregada na GPU. liberando RAM ");
+	    Terminal::Log(LOG_SUCCESS, "Face loaded, releasing RAM ");
 	    stbi_image_free(data);
 	} else
 	{

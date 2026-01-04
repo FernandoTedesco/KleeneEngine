@@ -24,8 +24,27 @@ void main()
     float fogEnd = 40.0;
     vec3 fogColor = vec3(0.05,0.05,0.08);
     float fogFactor = clamp((depthDist - fogStart)/(fogEnd - fogStart), 0.0,1.0);
-    hdrColor = mix(hdrColor,fogColor,fogFactor);
+    //hdrColor = mix(hdrColor,fogColor,fogFactor);
 
+    float blurIntensity=abs(TexCoords.y - 0.5)*2.0;
+    blurIntensity = smoothstep(0.4,0.8,blurIntensity);
+    if(false) //blurIntensity>0.0 DOF off for now
+    {
+        vec3 blurredColor = vec3(0.0);
+        float totalWeight = 0.0;
+        float spread = 0.004 * blurIntensity;
+        for(int x = -1; x <= 1; x++)
+        {
+            for(int y = -1;y<=1;y++)
+            {
+                vec2 offset = vec2(float(x),float(y))* spread;
+                blurredColor += texture(screenTexture, TexCoords + offset).rgb;
+                totalWeight += 1.0;
+            }
+        }
+        blurredColor /= totalWeight;
+        hdrColor = mix(hdrColor, blurredColor, blurIntensity);
+    }
     vec3 color = hdrColor;
     float a =2.51;
     float b= 0.03;

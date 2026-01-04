@@ -13,6 +13,7 @@
 #include "Development/Terminal.h"
 #include "Development/Editor.h"
 #include "Graphics/ShadowMap.h"
+#include "Graphics/ParticleManager.h"
 
 Engine::Engine()
 {
@@ -96,6 +97,17 @@ Engine::Engine()
     glEnableVertexAttribArray(1);
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
     sceneManager->LoadScene("default.kleene", *activeScene, resourceManager);
+    particleShader = new Shader((currentPath / "assets/shaders/particle.vert").string(),
+				(currentPath / "assets/shaders/particle.frag").string());
+
+    unsigned int particleTexID;
+    glGenTextures(1, &particleTexID);
+    glBindTexture(GL_TEXTURE_2D, particleTexID);
+    unsigned char whitePixel[] = {255, 255, 255, 255};
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    particleManager = new ParticleManager(particleShader, particleTexID, 5000);
     isRunning = true;
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }
@@ -116,6 +128,7 @@ void Engine::Run()
 	editor->DrawEditorUI();
 
 	this->Update();
+	particleManager->Update(0.016f, 2, glm::vec3(0.0f, 1.0f, 0.0f));
 	count = terminal->UpdateConsoleInput();
 	while (count > 0)
 	{
@@ -206,6 +219,14 @@ void Engine::Run()
 	    glEnable(GL_CULL_FACE);
 	    glDepthFunc(GL_LESS);
 	}
+	particleShader->Use();
+	particleShader->SetMat4("view", camera->GetViewMatrix());
+	particleShader->SetMat4(
+	    "projection",
+	    camera->GetProjectionMatrix((float)window->GetWidth(), (float)window->GetHeight()));
+	glDisable(GL_CULL_FACE);
+	particleManager->Draw();
+	glEnable(GL_CULL_FACE);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (editor != nullptr)
 	{
@@ -275,6 +296,8 @@ Engine::~Engine()
     delete framebuffer;
     delete screenShader;
     delete shader;
+    delete particleManager;
+    delete particleShader;
     delete resourceManager;
     delete activeScene;
     delete sceneManager;

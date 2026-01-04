@@ -38,6 +38,7 @@ ${CMAKE_SOURCE_DIR}/src/Graphics/Material.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/FrameBuffer.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/ShadowMap.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Skybox.cpp
+${CMAKE_SOURCE_DIR}/src/Graphics/ParticleManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Resources/ResourceManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Scenes/SceneManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp

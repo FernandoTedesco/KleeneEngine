@@ -2,6 +2,7 @@
 #include "Graphics/FrameBuffer.h"
 #include "Graphics/Shadowmap.h"
 #include "Graphics/Skybox.h"
+#include "Graphics/ParticleManager.h"
 class Camera;
 class Window;
 class ResourceManager;
@@ -39,6 +40,8 @@ private:
     SceneManager* sceneManager;
     Shader* skyboxShader;
     Shader* blurShader;
+    Shader* particleShader;
+    ParticleManager* particleManager;
     unsigned int pingpongFBO[2];
     unsigned int pingpongColorbuffers[2];
     bool isRunning;
