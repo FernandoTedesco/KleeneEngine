@@ -47,9 +47,9 @@ ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
-${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
-
+${CMAKE_SOURCE_DIR}/src/Utils/Math.h
+${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})
@@ -76,6 +76,7 @@ ${CMAKE_SOURCE_DIR}/deps/ImGui
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends
 ${CMAKE_SOURCE_DIR}/deps/SDL2/include
 ${CMAKE_SOURCE_DIR}/deps/ImPlot
+${CMAKE_SOURCE_DIR}/deps/Miniaudio
 )
 
 target_link_libraries(KleeneRuntime PRIVATE
