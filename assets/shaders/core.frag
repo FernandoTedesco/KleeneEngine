@@ -103,6 +103,10 @@ void main()
 {
     vec2 tiledCoords = (textureCoordinate * material.tiling) + material.offset;
     vec4 texColor = texture(material.diffuse,tiledCoords);
+    if(texColor.a <0.1)
+    {
+        discard;
+    }
     vec3 albedo = pow(vec3(texColor),vec3(2.2))*material.color;
     vec3 norm = normalize(normalVector);
     vec3 viewDirection = normalize(viewPos - FragPos);

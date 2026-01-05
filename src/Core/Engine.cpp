@@ -108,6 +108,22 @@ Engine::Engine()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     particleManager = new ParticleManager(particleShader, particleTexID, 5000);
+
+    std::string playerTextureName = "Mk1.png";
+    std::filesystem::path playerTexturePath = currentPath / "assets/textures" / playerTextureName;
+    uint32_t playerTextureID = resourceManager->CreateTexture(playerTextureName, playerTexturePath);
+    uint32_t playerMaterialID = resourceManager->CreateMaterial("Mat_Player", playerTextureID);
+    uint32_t quadMeshID = 0;
+    if (quadMeshID == 0)
+    {
+	quadMeshID = resourceManager->CreateMesh("quad", currentPath / "assets/models/quad.obj");
+    }
+    sceneManager->AddObject(*activeScene, glm::vec3(0, 1, 0), quadMeshID, playerMaterialID);
+    GameObject* playerObject = &activeScene->gameObjects.back();
+    playerObject->name = "Player";
+    playerObject->scale = glm::vec3(1.0f, 1.2f, 1.0f);
+    playerController = new PlayerController(playerObject, camera);
+
     isRunning = true;
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }
@@ -115,11 +131,24 @@ Engine::Engine()
 void Engine::Update()
 {
     camera->ProcessInput();
+    if (playerController)
+    {
+	playerController->Update(0.01f);
+	glm::vec3 target = playerController->GetPosition();
+	glm::vec3 cameraOffset = glm::vec3(0.0f, 8.0f, 5.0f);
+	glm::vec3 currentPosition = camera->GetCameraPos();
+	glm::vec3 desiredPosition = target + cameraOffset;
+	float smoothSpeed = 0.1f;
+	glm::vec3 smoothedPosition = glm::mix(currentPosition, desiredPosition, smoothSpeed);
+	camera->SetCameraPosition(smoothedPosition);
+	camera->SetCameraRotation(-58.0f, -90.0f);
+    }
 }
 
 void Engine::Run()
 {
     unsigned int count;
+
     while (isRunning)
     {
 

@@ -50,6 +50,7 @@ ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
+${CMAKE_SOURCE_DIR}/src/Gameplay/PlayerController.cpp
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})

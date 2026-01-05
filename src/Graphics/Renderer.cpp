@@ -62,6 +62,8 @@ void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* sh
 	}
 	shader->SetInt("numLights", lightIndex);
     }
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     for (GameObject& object : scene->gameObjects)
     {

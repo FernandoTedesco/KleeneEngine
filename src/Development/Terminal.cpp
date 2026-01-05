@@ -177,15 +177,11 @@ void Terminal::WriteArt()
 
 void Terminal::ChangeLog()
 {
-    std::cout << "Changelog of build 0.8:" << std::endl;
-    std::cout << "+Skybox rendering system" << std::endl;
-    std::cout << "+Shader Support for more than one lighting source" << std::endl;
-    std::cout << "+Unaffected by light gizmos" << std::endl;
-    std::cout << "+Ambient light control" << std::endl;
-    std::cout << "+Shadow Mapping" << std::endl;
-    std::cout << "Shadow Conditioning" << std::endl;
-    std::cout << "+Working Lighting system" << std::endl;
-    std::cout << "+Light attached to the game objects" << std::endl;
+    std::cout << "Changelog of build 0.9:" << std::endl;
+    std::cout << "+Fog & Depth effects, simple depth of field " << std::endl;
+    std::cout << "+Bloom & Color gradient" << std::endl;
+    std::cout << "+miniaudio.h integration" << std::endl;
+    std::cout << "+Particle System" << std::endl;
 }
 
 void Terminal::Help()
