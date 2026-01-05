@@ -21,7 +21,8 @@ public:
 	KEY_3,
 	KEY_4,
 	KEY_5,
-	KEY_6
+	KEY_6,
+	KEY_7
 
     };
 

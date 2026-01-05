@@ -135,6 +135,7 @@ void Engine::Update()
     glm::vec3 targetPos(0.0f);
     if (playerController)
     {
+
 	if (camera->GetCameraMode() == Camera::GAMEPLAY)
 	{
 	    playerController->Update(0.01f);

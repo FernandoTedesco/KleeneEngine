@@ -11,6 +11,8 @@ Mesh::Mesh()
     VAO = 0;
     VBO = 0;
     EBO = 0;
+    this->boundsMin = glm::vec3(-0.5f, -0.5f, -0.5f);
+    this->boundsMax = glm::vec3(0.5f, 0.5f, 0.5f);
 }
 
 void Mesh::SetupMesh()
@@ -53,7 +55,75 @@ void Mesh::Draw()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(this->indexes.size()), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
 }
+void Mesh::UpdateTileUVs(int tileIndex, glm::vec2 newUVs[4])
+{
+    int startIndex = tileIndex * 4;
+    if (startIndex < 0 || startIndex + 3 >= (int)this->vertices.size())
+	return;
+    this->vertices[startIndex + 0].textureCoordinates = newUVs[0];
+    this->vertices[startIndex + 1].textureCoordinates = newUVs[1];
+    this->vertices[startIndex + 2].textureCoordinates = newUVs[2];
+    this->vertices[startIndex + 3].textureCoordinates = newUVs[3];
+    glBindVertexArray(this->VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    GLintptr offset = startIndex * sizeof(Vertex);
+    GLsizeiptr size = 4 * sizeof(Vertex);
+    glBufferSubData(GL_ARRAY_BUFFER, offset, size, &this->vertices[startIndex]);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+}
+void Mesh::GenerateTerrain(int width, int depth)
+{
+    this->vertices.clear();
+    this->indexes.clear();
+    this->boundsMin = glm::vec3(0.0f);
+    this->boundsMax = glm::vec3((float)width, 0.0f, (float)depth);
+    int vertexCount = 0;
 
+    for (int z = 0; z < depth; z++)
+    {
+	for (int x = 0; x < width; x++)
+	{
+	    float x0 = (float)x;
+	    float z0 = (float)z;
+	    float x1 = (float)x + 1.0f;
+	    float z1 = (float)z + 1.0f;
+	    Vertex v0;
+	    v0.position = glm::vec3((float)x, 0.0f, (float)z);
+	    v0.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+	    v0.textureCoordinates = glm::vec2(0.0f, 0.0f);
+	    this->vertices.push_back(v0);
+
+	    Vertex v1;
+	    v1.position = glm::vec3(x0, 0.0f, z1);
+	    v1.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+	    v1.textureCoordinates = glm::vec2(0.0f, 1.0f);
+	    this->vertices.push_back(v1);
+
+	    Vertex v2;
+	    v2.position = glm::vec3(x1, 0.0f, z1);
+	    v2.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+	    v2.textureCoordinates = glm::vec2(1.0f, 1.0f);
+	    this->vertices.push_back(v2);
+
+	    Vertex v3;
+	    v3.position = glm::vec3(x1, 0.0f, z0);
+	    v3.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+	    v3.textureCoordinates = glm::vec2(1.0f, 0.0f);
+	    this->vertices.push_back(v3);
+
+	    this->indexes.push_back(vertexCount + 0);
+	    this->indexes.push_back(vertexCount + 1);
+	    this->indexes.push_back(vertexCount + 2);
+
+	    this->indexes.push_back(vertexCount + 0);
+	    this->indexes.push_back(vertexCount + 2);
+	    this->indexes.push_back(vertexCount + 3);
+
+	    vertexCount += 4;
+	}
+    }
+}
 bool Mesh::LoadOBJ(const std::filesystem::path filePath)
 {
 
@@ -117,6 +187,36 @@ bool Mesh::LoadOBJ(const std::filesystem::path filePath)
 		    this->vertices.push_back(vertex);
 		    this->indexes.push_back(this->vertices.size() - 1);
 		}
+	    }
+	}
+	this->boundsMin = glm::vec3(FLT_MAX);
+	this->boundsMax = glm::vec3(-FLT_MAX);
+	for (size_t i = 0; i < this->vertices.size(); i++)
+	{
+	    glm::vec3 currentPosition = this->vertices[i].position;
+	    if (currentPosition.x < this->boundsMin.x)
+	    {
+		this->boundsMin.x = currentPosition.x;
+	    }
+	    if (currentPosition.y < this->boundsMin.y)
+	    {
+		this->boundsMin.y = currentPosition.y;
+	    }
+	    if (currentPosition.z < this->boundsMin.z)
+	    {
+		this->boundsMin.z = currentPosition.z;
+	    }
+	    if (currentPosition.x > this->boundsMax.x)
+	    {
+		this->boundsMax.x = currentPosition.x;
+	    }
+	    if (currentPosition.y > this->boundsMax.y)
+	    {
+		this->boundsMax.y = currentPosition.y;
+	    }
+	    if (currentPosition.z > this->boundsMax.z)
+	    {
+		this->boundsMax.z = currentPosition.z;
 	    }
 	}
 

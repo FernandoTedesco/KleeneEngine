@@ -34,6 +34,21 @@ uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::p
     }
 }
 
+uint32_t ResourceManager::CreateMesh(const std::string& name)
+{
+    std::map<std::string, uint32_t>::iterator iterator;
+    iterator = meshMap.find(name);
+    if (iterator != meshMap.end())
+    {
+	return iterator->second;
+    }
+    Mesh* newMesh = new Mesh();
+    meshNames.push_back(name);
+    meshVector.push_back(newMesh);
+    uint32_t id = (uint32_t)meshVector.size() - 1;
+    meshMap[name] = id;
+    return id;
+}
 // Creates a pointer to a texture and stores in the class map and vectors, gives the id
 uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem::path filePath)
 {

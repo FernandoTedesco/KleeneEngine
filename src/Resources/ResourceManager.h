@@ -17,6 +17,7 @@ public:
 
     // Create new pointers for each major resource type
     uint32_t CreateMesh(const std::string& name, std::filesystem::path filePath);
+    uint32_t CreateMesh(const std::string& name);
     uint32_t CreateTexture(const std::string& name, std::filesystem::path filePath);
     uint32_t CreateMaterial(const std::string& name, uint32_t textureID);
 

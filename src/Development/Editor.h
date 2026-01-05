@@ -21,7 +21,8 @@ enum class EditorMode {
     PLACEMENT = 3,
     TRANSLATE = 4,
     RESIZE = 5,
-    ROTATION = 6
+    ROTATION = 6,
+    PAINT = 7
 };
 
 class Editor
@@ -35,6 +36,7 @@ public:
     void DrawEditorUI();
     void EndFrame();
     void HandleInput();
+    void CreateProceduralTerrain();
     void RenderHighlight();
     void PlaceObject(int gridX, int gridZ);
     bool HasCollided(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 aabbMin,
@@ -49,11 +51,15 @@ public:
     std::vector<std::string> availableTextures;
     int selectedMeshIndex = 0;
     int selectedTextureIndex = 0;
+    int atlasRows = 2;
+    int atlasCols = 2;
+    int selectedTileX = 0;
+    int selectedTileY = 0;
 
 private:
     void DuplicateSelectedObject();
     void FocusOnSelectedObject();
-
+    void HandleTerrainPaint(glm::vec3 rayOrigin, glm::vec3 rayDirection);
     GpuTelemetry gpuTelemetry;
     bool ShowTelemetry = false;
     void DrawTelemetryWindow();

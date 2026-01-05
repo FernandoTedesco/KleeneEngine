@@ -66,15 +66,44 @@ void Editor::DrawEditorUI()
     gpuTelemetry.Update(deltaTime);
     memoryTracker.Update(deltaTime);
     this->HandleInput();
-    glm::vec3 rayDirection =
-	camera->GetRayDirection(ImGui::GetIO().MousePos.x, ImGui::GetIO().MousePos.y,
-				(float)window->GetWidth(), (float)window->GetHeight());
+    float mouseX = ImGui::GetIO().MousePos.x;
+    float mouseY = ImGui::GetIO().MousePos.y;
+    float screenWidth = (float)window->GetWidth();
+    float screenHeight = (float)window->GetHeight();
+    glm::vec2 ndc;
+    ndc.x = (2.0f * mouseX) / screenWidth - 1.0f;
+    ndc.y = 1.0f - (2.0f * mouseY) / screenHeight;
+    glm::mat4 projection = camera->GetProjectionMatrix(screenWidth, screenHeight);
+    glm::mat4 view = camera->GetViewMatrix();
+    glm::mat4 invVP = glm::inverse(projection * view);
+    glm::vec4 screenPos = glm::vec4(ndc.x, ndc.y, 1.0f, 1.0f);
+    glm::vec4 worldPos = invVP * screenPos;
+    glm::vec3 worldPos3D = glm::vec3(worldPos) / worldPos.w;
     glm::vec3 rayOrigin = camera->GetCameraPos();
+    glm::vec3 rayDirection = glm::normalize(worldPos3D - rayOrigin);
 
     this->TranslationModeUpdate(rayOrigin, rayDirection);
     this->DeletionModeUpdate(rayOrigin, rayDirection);
     this->ResizeModeUpdate(rayOrigin, rayDirection);
     this->RotationModeUpdate(rayOrigin, rayDirection);
+    if (currentMode == EditorMode::PAINT)
+    {
+	ImGui::Begin("Tileset Atlas");
+	ImGui::Text("Atlas Configuration");
+	ImGui::InputInt("Rows", &atlasRows);
+	ImGui::InputInt("Cols", &atlasCols);
+	ImGui::Separator();
+	ImGui::Text("Tile selected");
+	ImGui::SliderInt("Tile X", &selectedTileX, 0, atlasCols - 1);
+	ImGui::SliderInt("Tile Y", &selectedTileY, 0, atlasRows - 1);
+	ImGui::End();
+
+	if (ImGui::IsMouseDown(0) && !ImGui::GetIO().WantCaptureMouse)
+	{
+	    this->HandleTerrainPaint(rayOrigin, rayDirection);
+	}
+    }
+
     this->DrawHierarchy(window);
     if (!listLoaded)
     {
@@ -140,6 +169,11 @@ void Editor::DrawEditorUI()
     {
 	ShowMemoryTracker = !ShowMemoryTracker;
     }
+    ImGui::SameLine();
+    if (ImGui::Button("Gen Terrain"))
+    {
+	CreateProceduralTerrain();
+    }
     ImGui::NewLine();
     float fps = ImGui::GetIO().Framerate;
     float frameTime = 1000.0f / fps;
@@ -173,6 +207,9 @@ void Editor::DrawEditorUI()
     } else if (currentMode == EditorMode::ROTATION)
     {
 	modeText = "ROTATION";
+    } else if (currentMode == EditorMode::PAINT)
+    {
+	modeText = "PAINT";
     }
 
     ImGui::Text("Editor Mode: %s", modeText.c_str());
@@ -358,6 +395,11 @@ void Editor::HandleInput()
     {
 	currentMode = EditorMode::ROTATION;
 	std::cout << "[INFO] Rotation Mode Enabled" << std::endl;
+    }
+    if (Input::IsKeyPressed(Input::KEY_7))
+    {
+	currentMode = EditorMode::PAINT;
+	std::cout << "[INFO] Paint Mode Enabled" << std::endl;
     }
     if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_D))
     {
@@ -739,7 +781,69 @@ void Editor::TranslationModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	currentAxis = GizmoAxis::NONE;
     }
 }
+void Editor::HandleTerrainPaint(glm::vec3 rayOrigin, glm::vec3 rayDirection)
+{
+    std::cout << "1" << std::endl;
+    if (selectedEntityIndex == -1)
+	return;
+    std::cout << "2" << std::endl;
+    GameObject& object = scene->gameObjects[selectedEntityIndex];
+    if (object.name.find("ProceduralMap") == std::string::npos)
+    {
+	return; // make flag later prob
+    }
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, object.position);
+    model = glm::rotate(model, glm::radians(object.rotation.x), glm::vec3(1, 0, 0));
+    model = glm::rotate(model, glm::radians(object.rotation.y), glm::vec3(0, 1, 0));
+    model = glm::scale(model, object.scale);
+    glm::mat4 invModel = glm::inverse(model);
+    glm::vec4 localOriginV4 = invModel * glm::vec4(rayOrigin, 1.0f);
+    glm::vec4 localDirectionV4 = invModel * glm::vec4(rayDirection, 0.0f);
+    glm::vec3 localRayOrigin = glm::vec3(localOriginV4);
+    glm::vec3 localRayDirection = glm::normalize(glm::vec3(localDirectionV4));
 
+    std::cout << "3" << std::endl;
+    if (std::abs(localRayDirection.y) < 0.0001f)
+	return;
+    float t = -localRayOrigin.y / localRayDirection.y;
+    if (t < 0.0f)
+	return;
+    glm::vec3 localHitPoint = localRayOrigin + (localRayDirection * t);
+    float localX = localHitPoint.x;
+    float localZ = localHitPoint.z;
+    Mesh* mesh = resourceManager->GetMesh(object.meshID);
+    if (!mesh)
+    {
+	return;
+    }
+
+    std::cout << "click" << localX << ", " << localZ << std::endl;
+    if (localX >= mesh->boundsMin.x && localX < mesh->boundsMax.x && localZ >= mesh->boundsMin.z &&
+	localZ < mesh->boundsMax.z)
+    {
+	int tileX = (int)localX;
+	int tileZ = (int)localZ;
+	int mapWidth = (int)mesh->boundsMax.x;
+	int tileIndex = tileZ * mapWidth + tileX;
+	std::cout << "801" << std::endl;
+	float stepX = 1.0f / (float)atlasCols;
+	float stepY = 1.0f / (float)atlasRows;
+	float u0 = selectedTileX * stepX;
+	float v0 = selectedTileY * stepY;
+	float u1 = u0 + stepX;
+	float v1 = v0 + stepY;
+	glm::vec2 newUVs[4];
+	newUVs[0] = glm::vec2(u0, v0);
+	newUVs[1] = glm::vec2(u0, v1);
+	newUVs[2] = glm::vec2(u1, v1);
+	newUVs[3] = glm::vec2(u1, v0);
+	std::cout << "Painting tile [" << tileX << "," << tileZ << "] Index:" << tileIndex
+		  << std::endl;
+
+	mesh->UpdateTileUVs(tileIndex, newUVs);
+    }
+}
 void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
 
@@ -748,10 +852,22 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 
     for (int i = 0; i < scene->gameObjects.size(); i++)
     {
+	GameObject& object = scene->gameObjects[i];
 	glm::vec3 objectPosition = scene->gameObjects[i].position;
-	glm::vec3 halfSize = scene->gameObjects[i].scale * 0.5f;
-	glm::vec3 aabbMin = objectPosition - halfSize;
-	glm::vec3 aabbMax = objectPosition + halfSize;
+	Mesh* mesh = resourceManager->GetMesh(object.meshID);
+	glm::vec3 aabbMin;
+	glm::vec3 aabbMax;
+	if (mesh)
+	{
+	    aabbMin = object.position + (mesh->boundsMin * object.scale);
+	    aabbMax = object.position + (mesh->boundsMax * object.scale);
+	} else
+	{
+	    glm::vec3 halfSize = object.scale * 0.5f;
+	    aabbMin = object.position - halfSize;
+	    aabbMax = object.position + halfSize;
+	}
+
 	float distance = 0.0f;
 	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
 	{
@@ -772,7 +888,26 @@ void Editor::SelectObject(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 	std::cout << "[INFO] Empty click" << std::endl;
     }
 }
+void Editor::CreateProceduralTerrain()
+{
+    std::string meshName = "ProceduralMap" + std::to_string(scene->gameObjects.size());
+    uint32_t meshID = resourceManager->CreateMesh(meshName);
+    Mesh* terrainMesh = resourceManager->GetMesh(meshID);
+    if (terrainMesh)
+    {
+	terrainMesh->GenerateTerrain(20, 20);
+	terrainMesh->SetupMesh();
+	std::cout << "terrain created: " << meshName << std::endl;
+	std::filesystem::path paths = ResourceManager::FolderFinder("assets");
+	std::string textureName = "atlas.png";
+	uint32_t textureID =
+	    resourceManager->CreateTexture(textureName, paths / "assets/textures" / textureName);
+	uint32_t materialID = resourceManager->CreateMaterial("Mat_Terrain", textureID);
 
+	sceneManager->AddObject(*scene, glm::vec3(0, 0, 0), meshID, materialID);
+	scene->gameObjects.back().name = meshName;
+    }
+}
 void Editor::ResizeModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 {
     if (currentMode != EditorMode::RESIZE)
@@ -782,6 +917,7 @@ void Editor::ResizeModeUpdate(glm::vec3 rayOrigin, glm::vec3 rayDirection)
 
     if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
     {
+
 	if (selectedEntityIndex != -1)
 	{
 	    GameObject& object = scene->gameObjects[selectedEntityIndex];
