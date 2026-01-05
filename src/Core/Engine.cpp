@@ -131,18 +131,18 @@ Engine::Engine()
 void Engine::Update()
 {
     camera->ProcessInput();
+
+    glm::vec3 targetPos(0.0f);
     if (playerController)
     {
-	playerController->Update(0.01f);
-	glm::vec3 target = playerController->GetPosition();
-	glm::vec3 cameraOffset = glm::vec3(0.0f, 8.0f, 5.0f);
-	glm::vec3 currentPosition = camera->GetCameraPos();
-	glm::vec3 desiredPosition = target + cameraOffset;
-	float smoothSpeed = 0.1f;
-	glm::vec3 smoothedPosition = glm::mix(currentPosition, desiredPosition, smoothSpeed);
-	camera->SetCameraPosition(smoothedPosition);
-	camera->SetCameraRotation(-58.0f, -90.0f);
+	if (camera->GetCameraMode() == Camera::GAMEPLAY)
+	{
+	    playerController->Update(0.01f);
+	}
+
+	targetPos = playerController->GetPosition();
     }
+    camera->CameraUpdate(0.01f, targetPos);
 }
 
 void Engine::Run()

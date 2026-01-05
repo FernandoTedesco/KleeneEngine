@@ -40,6 +40,8 @@ void Camera::ProcessInput()
 	this->ChangeMode(FREECAM);
     if (Input::IsKeyPressed(Input::F2_KEY))
 	this->ChangeMode(SCENE_EDITOR);
+    if (Input::IsKeyPressed(Input::F3_KEY))
+	this->ChangeMode(GAMEPLAY);
     float scroll = Input::GetMouseScroll();
     switch (cameraMode)
     {
@@ -112,9 +114,31 @@ void Camera::ProcessInput()
 	}
 	break;
     }
+    case (GAMEPLAY): {
+	break;
+    }
     }
 }
+void Camera::CameraUpdate(float dt, glm::vec3 targetPosition)
+{
+    switch (cameraMode)
+    {
+    case GAMEPLAY: {
+	glm::vec3 cameraOffset = glm::vec3(0.0f, 8.0f, 5.0f);
+	glm::vec3 desiredPosition = targetPosition + cameraOffset;
+	float smoothSpeed = 5.0f * dt;
+	glm::vec3 smoothedPosition = glm::mix(cameraPos, desiredPosition, smoothSpeed);
+	this->SetCameraPosition(smoothedPosition);
+	this->SetCameraRotation(-58.0f, -90.0f);
+    }
 
+    break;
+    case FREECAM:
+    case SCENE_EDITOR: {
+	break;
+    }
+    }
+}
 void Camera::ChangeMode(Camera::CameraMode mode)
 {
 
@@ -157,6 +181,13 @@ void Camera::ChangeMode(Camera::CameraMode mode)
 
 	this->cameraMode = SCENE_EDITOR;
 	Terminal::Log(LOG_INFO, "Camera Mode switched to: SCENE EDITOR");
+	break;
+    }
+    case (GAMEPLAY): {
+	Input::SetRelativeMouse(true);
+	this->cameraMode = GAMEPLAY;
+	Terminal::Log(LOG_INFO, "Camera Mode switched to: GAMEPLAY");
+
 	break;
     }
     }

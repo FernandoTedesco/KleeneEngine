@@ -7,10 +7,14 @@ public:
     Camera();
     void ProcessInput();
     glm::vec3 GetCameraPos() const;
-
     glm::mat4 GetViewMatrix();
+    void CameraUpdate(float dt, glm::vec3 targetPosition);
     glm::mat4 GetProjectionMatrix(float screenWidth, float screenHeight);
-    enum CameraMode { FREECAM, SCENE_EDITOR, GAME };
+    enum CameraMode { FREECAM, SCENE_EDITOR, GAMEPLAY };
+    CameraMode GetCameraMode()
+    {
+	return cameraMode;
+    }
     void ChangeMode(CameraMode mode);
     glm::vec3 GetRayDirection(float mouseX, float mouseY, float screenWidth, float screenHeight);
     void SetCameraPosition(glm::vec3 newPosition);

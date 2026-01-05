@@ -3,6 +3,7 @@
 PlayerController::PlayerController(GameObject* characterObject, Camera* gameCamera)
     : character(characterObject), camera(gameCamera)
 {
+    this->moveSpeed = 5.0f;
 }
 void PlayerController::Update(float dt)
 {
