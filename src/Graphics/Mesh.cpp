@@ -80,7 +80,7 @@ void Mesh::GenerateTerrain(int width, int depth)
     this->boundsMax = glm::vec3((float)width, 0.0f, (float)depth);
     int vertexCount = 0;
 
-    for (int z = 0; z < depth; z++)
+    for (int z = 0; z <= depth; z++)
     {
 	for (int x = 0; x < width; x++)
 	{

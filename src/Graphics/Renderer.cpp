@@ -12,7 +12,7 @@
 #include <glm/gtc/quaternion.hpp>
 #include "Development/EditorGrid.h"
 #include "Graphics/Material.h"
-#include "Scenes/GameObject.h"
+#include "Gameplay/GameObject.h"
 #include <string>
 Renderer::Renderer()
 {

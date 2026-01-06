@@ -2,7 +2,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 #include "imgui.h"
-#include "Scenes/GameObject.h"
+#include "Gameplay/GameObject.h"
 #include "Utils/Math.h"
 Gizmo::Gizmo()
 {

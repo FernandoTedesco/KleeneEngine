@@ -2,7 +2,7 @@
 #include <vector>
 #include "glm/glm.hpp"
 #include <string>
-#include "GameObject.h"
+#include "Gameplay/GameObject.h"
 #include "Graphics/Light.h"
 #include "Graphics/Skybox.h"
 class Scene

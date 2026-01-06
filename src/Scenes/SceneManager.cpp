@@ -5,7 +5,7 @@
 #include "glm/glm.hpp"
 #include <iostream>
 #include "Resources/ResourceManager.h"
-#include "Scenes/GameObject.h"
+#include "Gameplay/GameObject.h"
 #include "Graphics/Material.h"
 
 bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,

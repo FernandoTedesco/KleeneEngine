@@ -1,4 +1,4 @@
-#include "Scenes/GameObject.h"
+#include "GameObject.h"
 #include "glm/glm.hpp"
 GameObject::GameObject()
 {
