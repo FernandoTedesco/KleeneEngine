@@ -3,9 +3,9 @@
 #include <glm/glm.hpp>
 #include <string>
 #include <filesystem>
+
 class Mesh
 {
-
 public:
     Mesh();
     ~Mesh();

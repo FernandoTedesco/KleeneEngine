@@ -1,11 +1,12 @@
 #pragma once
 #include "Graphics/FrameBuffer.h"
-#include "Graphics/Shadowmap.h"
+#include "Graphics/ShadowMap.h"
 #include "Graphics/Skybox.h"
 #include "Graphics/ParticleManager.h"
-#include "Gameplay/PlayerController.h"
-class Camera;
-class Window;
+#include "Graphics/PostProcessManager.h"
+#include "Core/Window.h"
+#include "Core/Camera.h"
+
 class ResourceManager;
 class Scene;
 class Renderer;
@@ -13,38 +14,44 @@ class Shader;
 class Terminal;
 class Editor;
 class SceneManager;
+
 class Engine
 {
-
 public:
     Engine();
     ~Engine();
-    void SetScene(Scene* newScene);
 
     void Run();
+    void SetScene(Scene* newScene);
 
 private:
-    void Update();
-    FrameBuffer* framebuffer;
-    Shader* screenShader;
-    unsigned int rectVAO, rectVBO;
+    void Update(float dt);
+    void Render(float dt);
+
+    // Subsystems
     Window* window;
-    Camera* camera;
-    Shader* shader;
-    Renderer* renderer;
-    ResourceManager* resourceManager;
-    Scene* activeScene;
     Terminal* terminal;
     Editor* editor;
-    ShadowMap* shadowMap;
-    Shader* shadowShader;
+
+    // Managers
+    ResourceManager* resourceManager;
     SceneManager* sceneManager;
-    Shader* skyboxShader;
-    Shader* blurShader;
-    Shader* particleShader;
-    PlayerController* playerController;
+    PostProcessManager* postProcessManager;
+
+    // Render Pipeline
+    Renderer* renderer;
+    Camera* camera;
+    FrameBuffer* framebuffer;
+    ShadowMap* shadowMap;
     ParticleManager* particleManager;
-    unsigned int pingpongFBO[2];
-    unsigned int pingpongColorbuffers[2];
+
+    // State
+    Scene* activeScene;
     bool isRunning;
+
+    // Global shaders
+    Shader* shader;
+    Shader* shadowShader;
+    Shader* skyboxShader;
+    Shader* particleShader;
 };

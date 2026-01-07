@@ -1,4 +1,5 @@
 #include "PlayerController.h"
+#include "Scenes/GameObject.h"
 #include <cmath>
 PlayerController::PlayerController(GameObject* characterObject, Camera* gameCamera)
     : character(characterObject), camera(gameCamera)

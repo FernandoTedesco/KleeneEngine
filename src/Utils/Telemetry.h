@@ -59,4 +59,4 @@ private:
 
 namespace SystemMetrics {
 float GetRAMUsage();
-}
+};

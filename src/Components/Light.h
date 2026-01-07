@@ -1,35 +1,58 @@
 #pragma once
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include "Component.h"
+#include "Scenes/GameObject.h"
+#include <cmath>
 
-enum LightType {
+enum class LightType { Directional = 0, Point = 1, Spot = 2 };
 
-    Directional = 0,
-    Point = 1,
-    Spot = 2
-};
-
-struct LightComponent {
-    LightType type = Directional;
-    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-    float intensity = 1.0f;
-    float constant = 1.0f;
-    float linear = 0.09f;
-    float quadratic = 0.032f;
-    float cutOff = 12.5f;
-    float outerCutOff = 17.5f;
-};
-
-struct Light {
-    LightType type = Directional;
-
-    glm::vec3 position = glm::vec3(0.0f, 5.0f, 0.0f);
-    glm::vec3 direction = glm::vec3(0.0f, -1.0f, 0.0f);
-    glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);
-    float intensity = 1.0f;
-    // opengl 50 meters from the wiki formula
-    float constant = 1.0f;
-    float linear = 0.09f;
-    float quadratic = 0.032f;
-    float cutOff = glm::cos(glm::radians(12.5f));
-    float outerCutOff = glm::cos(glm::radians(17.5));
+class Light : public Component
+{
+public:
+    LightType type;
+    glm::vec3 color;
+    float intensity;
+    bool castsShadows;
+    float constant;
+    float linear;
+    float quadratic;
+    float cutOff;      // inside angle
+    float outerCutOff; // extern angle
+    Light()
+    {
+	type = LightType::Directional;
+	color = glm::vec3(1.0f);
+	intensity = 1.0f;
+	castsShadows = true;
+	constant = 1.0f;
+	linear = 0.9f;
+	quadratic = 0.032f;
+	cutOff = 12.5f;
+	outerCutOff = 17.5f;
+    }
+    glm::vec3 GetPosition() const
+    {
+	if (owner)
+	{
+	    return owner->position;
+	}
+	return glm::vec3(0.0f);
+    }
+    glm::vec3 GetDirection() const
+    {
+	if (owner)
+	{
+	    glm::vec3 rotation = owner->rotation;
+	    glm::vec3 direction;
+	    direction.x = cos(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	    direction.y = sin(glm::radians(rotation.x));
+	    direction.z = sin(glm::radians(rotation.y)) * cos(glm::radians(rotation.x));
+	    return glm::normalize(direction);
+	}
+	return glm::vec3(0.0f, -1.0f, 0.0f);
+    }
+    void Update(float dt) override
+    {
+    }
 };

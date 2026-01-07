@@ -35,13 +35,18 @@ ${CMAKE_SOURCE_DIR}/src/Graphics/Mesh.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Texture.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Renderer.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Material.cpp
+${CMAKE_SOURCE_DIR}/src/Graphics/PostProcessManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/FrameBuffer.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/ShadowMap.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Skybox.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/ParticleManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Resources/ResourceManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Scenes/SceneManager.cpp
+${CMAKE_SOURCE_DIR}/src/Scenes/Scene.cpp
+${CMAKE_SOURCE_DIR}/src/Scenes/GameObject.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Editor.cpp
+${CMAKE_SOURCE_DIR}/src/Development/EditorTools.cpp
+${CMAKE_SOURCE_DIR}/src/Development/GuiPanel.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
@@ -49,8 +54,8 @@ ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
-${CMAKE_SOURCE_DIR}/src/Gameplay/PlayerController.cpp
-${CMAKE_SOURCE_DIR}/src/Gameplay/GameObject.cpp
+${CMAKE_SOURCE_DIR}/src/Components/PlayerController.cpp
+
 )
 
 add_executable(KleeneRuntime ${SOURCE_ENGINE} ${SOURCE_IMGUI} ${SOURCE_IMPLOT})

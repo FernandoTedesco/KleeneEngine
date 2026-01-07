@@ -3,8 +3,9 @@
 #include "Scenes/Scene.h"
 #include "Core/Camera.h"
 #include "Core/Input.h"
+class GameObject;
 
-class PlayerController
+class PlayerController : public Component
 {
 public:
     PlayerController(GameObject* characterObject, Camera* gameCamera);

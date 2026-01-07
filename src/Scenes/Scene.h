@@ -1,32 +1,27 @@
 #pragma once
 #include <vector>
-#include "glm/glm.hpp"
 #include <string>
-#include "Gameplay/GameObject.h"
-#include "Graphics/Light.h"
+#include <algorithm>
+#include "GameObject.h"
 #include "Graphics/Skybox.h"
+#include "Graphics/ParticleManager.h"
 class Scene
 {
-    friend class SceneLoader;
+    friend class SceneManager;
 
 public:
-    Scene() : skybox(nullptr) {};
-    std::vector<glm::vec3> scenePositions;
-    std::vector<glm::vec3> sceneScales;
-    std::vector<glm::vec4> sceneRotations;
-    std::vector<uint32_t> sceneMeshes;
-    std::vector<uint32_t> sceneTextures;
-    std::vector<GameObject> gameObjects;
-    std::vector<Light> lights;
-    Skybox* skybox;
-    std::vector<std::string> skyboxPaths;
+    Scene();
+    ~Scene();
 
-    ~Scene()
-    {
-	if (skybox)
-	{
-	    delete skybox;
-	    skybox = nullptr;
-	}
-    };
+    ParticleManager* particleManager;
+
+    std::vector<GameObject*> gameObjects;
+    std::vector<GameObject*> pendingDestruction;
+
+    Skybox* skybox = nullptr;
+    std::vector<std::string> skyboxPaths;
+    void Update(float dt);
+    void Clear();
+    void RemoveGameObject(GameObject* gameObject);
+    GameObject* CreateGameObject(const std::string& name);
 };

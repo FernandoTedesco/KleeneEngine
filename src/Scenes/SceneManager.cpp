@@ -5,9 +5,13 @@
 #include "glm/glm.hpp"
 #include <iostream>
 #include "Resources/ResourceManager.h"
-#include "Gameplay/GameObject.h"
+#include "GameObject.h"
+#include "Components/MeshRenderer.h"
+#include "Components/Light.h"
 #include "Graphics/Material.h"
-
+#include "Development/Terminal.h"
+#include "Scene.h"
+#include "Graphics/Skybox.h"
 bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			     ResourceManager* resourceManager)
 {
@@ -17,7 +21,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 
     if (!sceneStream)
     {
-	std::cout << "[ERROR] Failed to open file for loading:" << fileName << std::endl;
+	Terminal::Log(LOG_ERROR, "Failed to open file for loading:") << fileName << std::endl;
 	return false;
     }
     uint16_t signature, version;
@@ -27,10 +31,9 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
     if (signature != 0x4B4C)
 	return false;
     sceneStream.read(reinterpret_cast<char*>(&version), sizeof(uint16_t));
-    if (version != 0x0005)
+    if (version != 0x0006)
     {
-	std::cout << "[ERROR] Version mismatch during file loading";
-	return false;
+	Terminal::Log(LOG_WARNING "Version mismatch detected, attempting to load anyway");
     }
     sceneStream.read(reinterpret_cast<char*>(&count), sizeof(uint32_t));
     targetScene.gameObjects.clear();
@@ -39,46 +42,60 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
     std::filesystem::path texturesPath = currentPath / "assets/textures";
     for (uint32_t i = 0; i < count; i++)
     {
-	GameObject newObject;
-	sceneStream.read(reinterpret_cast<char*>(&newObject.position), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&newObject.scale), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&newObject.rotation), sizeof(glm::vec4));
+	GameObject* newObject = targetScene.CreateGameObject("LoadedObject");
+	glm::vec3 position, scale;
+	glm::vec4 rotation;
+	sceneStream.read(reinterpret_cast<char*>(&position), sizeof(glm::vec3));
+	sceneStream.read(reinterpret_cast<char*>(&scale), sizeof(glm::vec3));
+	sceneStream.read(reinterpret_cast<char*>(&rotation), sizeof(glm::vec4));
 
-	uint32_t stringLen;
-	std::string meshName;
-	sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
-	meshName.resize(stringLen);
-	sceneStream.read(&meshName[0], stringLen);
+	newObject->SetPosition(position);
+	newObject->SetScale(scale);
+	newObject->SetRotation(rotation);
 
-	std::string textureName;
-	sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
-	textureName.resize(stringLen);
-	sceneStream.read(&textureName[0], stringLen);
+	bool hasMesh;
+	sceneStream.read(reinterpret_cast<char*>(&hasMesh), sizeof(bool));
 
-	newObject.meshID = resourceManager->CreateMesh(meshName, modelsPath / meshName);
-	uint32_t textureID =
-	    resourceManager->CreateTexture(textureName, texturesPath / textureName);
-	std::string materialName = "Mat_" + textureName;
-	newObject.materialID = resourceManager->CreateMaterial(materialName, textureID);
-	newObject.name = meshName;
-	newObject.isActive = true;
-	bool hasLight = false;
+	if (hasMesh)
+	{
+	    uint32_t stringLen;
+	    std::string meshName;
+	    sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
+	    meshName.resize(stringLen);
+	    sceneStream.read(&meshName[0], stringLen);
+
+	    std::string textureName;
+	    sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
+	    textureName.resize(stringLen);
+	    sceneStream.read(&textureName[0], stringLen);
+	    uint32_t meshID = resourceManager->CreateMesh(meshName, modelsPath / meshName);
+	    uint32_t textureID =
+		resourceManager->CreateTexture(textureName, texturesPath / textureName);
+	    std::string materialName = "Mat_" + textureName;
+	    uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
+
+	    MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
+	    meshRenderer->SetMesh(meshID);
+	    meshRenderer->SetMaterial(materialID);
+
+	    newObject->name = meshName;
+	}
+	bool hasLight;
 	sceneStream.read(reinterpret_cast<char*>(&hasLight), sizeof(bool));
-	newObject.hasLightComponent = hasLight;
+
 	if (hasLight)
 	{
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.type), sizeof(int));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.color), sizeof(glm::vec3));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.intensity), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.constant), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.linear), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.quadratic), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.cutOff), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&newObject.light.outerCutOff), sizeof(float));
+	    Light* light = newObject->AddComponent<Light>();
+	    sceneStream.read(reinterpret_cast<char*>(&light->type), sizeof(int));
+	    sceneStream.read(reinterpret_cast<char*>(&light->color), sizeof(glm::vec3));
+	    sceneStream.read(reinterpret_cast<char*>(&light->intensity), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&light->constant), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&light->linear), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&light->quadratic), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&light->cutOff), sizeof(float));
+	    sceneStream.read(reinterpret_cast<char*>(&light->outerCutOff), sizeof(float));
 	}
-	targetScene.gameObjects.push_back(newObject);
     }
-
     bool hasSky = false;
     sceneStream.read(reinterpret_cast<char*>(&hasSky), sizeof(bool));
     if (hasSky)
@@ -88,19 +105,12 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 	{
 	    uint32_t len;
 	    sceneStream.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
-	    std::string tempFileName;
-	    tempFileName.resize(len);
-	    sceneStream.read(&tempFileName[0], len);
-	    std::filesystem::path finalPath = texturesPath / tempFileName;
-	    targetScene.skyboxPaths[i] = finalPath.string();
+	    targetScene.skyBoxPaths[i].resize(len);
+	    sceneStream.read(&targetScene.skyboxPaths[i][0], len);
 	}
+	targetScene.skybox = new Skybox(targetScene.skyboxPaths);
     }
-    if (targetScene.skybox != nullptr)
-    {
-	delete targetScene.skybox;
-    }
-    targetScene.skybox = new Skybox(targetScene.skyboxPaths);
-    std::cout << "[SUCESS] Scene loaded:" << fileName << std::endl;
+    Terminal::Log(LOG_SUCCESS, "Scene loaded ") << fileName << std::endl;
     return true;
 }
 
@@ -114,11 +124,11 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
     std::ofstream sceneStream(fullPath, std::ios::binary | std::ios::trunc);
     if (!sceneStream)
     {
-	std::cout << "[ERROR] Failed save file" << fileName << std::endl;
+	std::cout << "[ERROR] Failed to save file" << fileName << std::endl;
 	return false;
     }
     uint16_t signature = 0x4B4C;
-    uint16_t version = 0x0005;
+    uint16_t version = 0x0006;
     uint32_t objectCount = (uint32_t)targetScene.gameObjects.size();
 
     sceneStream.write(reinterpret_cast<const char*>(&signature), sizeof(uint16_t));
@@ -127,47 +137,58 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
     for (size_t i = 0; i < targetScene.gameObjects.size(); i++)
     {
 	const GameObject& currentObject = targetScene.gameObjects[i];
+	glm::vec3 position = currentObject->GetPosition();
+	glm::vec3 scale = currentObject->GetScale();
+	glm::vec4 rotation = currentObject->GetRotation();
 
-	sceneStream.write(reinterpret_cast<const char*>(&currentObject.position),
-			  sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&currentObject.scale), sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&currentObject.rotation),
-			  sizeof(glm::vec4));
+	sceneStream.write(reinterpret_cast<const char*>(&position), sizeof(glm::vec3));
+	sceneStream.write(reinterpret_cast<const char*>(&scale), sizeof(glm::vec3));
+	sceneStream.write(reinterpret_cast<const char*>(&rotation), sizeof(glm::vec4));
 
-	std::string meshName = resourceManager->meshNames[currentObject.meshID];
-	uint32_t meshNameSize = (uint32_t)meshName.size();
-	sceneStream.write(reinterpret_cast<const char*>(&meshNameSize), sizeof(uint32_t));
-	sceneStream.write(meshName.c_str(), meshNameSize);
-
-	std::string textureName = "Default.png";
-	Material* objectMaterial = resourceManager->GetMaterial(currentObject.materialID);
-	if (objectMaterial != nullptr && objectMaterial->diffuseMap != nullptr)
+	MeshRenderer* meshRenderer = currentObject.GetComponent<MeshRenderer>();
+	bool hasMesh = (meshRenderer != nullptr);
+	sceneStream.write(reinterpret_cast<const char*>(&hasMesh), sizeof(bool));
+	if (hasMesh)
 	{
-	    for (size_t t = 0; t < resourceManager->textureNames.size(); t++)
+	    std::string meshName = "Unknow";
+	    if (meshRenderer->meshID < resourceManager->meshNames.size())
+		meshName = resourceManager->meshNames[meshRenderer->meshID];
+
+	    uint32_t meshNameSize = (uint32_t)meshName.size();
+	    sceneStream.write(reinterpret_cast<const char*>(&meshNameSize), sizeof(uint32_t));
+	    sceneStream.write(meshName.c_str(), meshNameSize);
+
+	    std::string textureName = "Default.png";
+	    Material* objectMaterial = resourceManager->GetMaterial(meshRenderer->materialID);
+	    if (objectMaterial != nullptr && objectMaterial->diffuseMap != nullptr)
 	    {
-		if (resourceManager->GetTexture((uint32_t)t) == objectMaterial->diffuseMap)
+		for (size_t t = 0; t < resourceManager->textureNames.size(); t++)
 		{
-		    textureName = resourceManager->textureNames[t];
-		    break;
+		    if (resourceManager->GetTexture((uint32_t)t) == objectMaterial->diffuseMap)
+		    {
+			textureName = resourceManager->textureNames[t];
+			break;
+		    }
 		}
 	    }
+
+	    uint32_t textureNameSize = (uint32_t)textureName.size();
+	    sceneStream.write(reinterpret_cast<const char*>(&textureNameSize), sizeof(uint32_t));
+	    sceneStream.write(textureName.c_str(), textureNameSize);
 	}
-	uint32_t textureNameSize = (uint32_t)textureName.size();
-	sceneStream.write(reinterpret_cast<const char*>(&textureNameSize), sizeof(uint32_t));
-	sceneStream.write(textureName.c_str(), textureNameSize);
-	sceneStream.write(reinterpret_cast<const char*>(&currentObject.hasLightComponent),
-			  sizeof(bool));
-	if (currentObject.hasLightComponent)
+	Light* light = currentObject->GetComponent<Light>();
+	bool hasLight = (light != nullptr);
+	sceneStream.write(reinterpret_cast<const char*>(&hasLight), sizeof(bool));
+	if (hasLight)
 	{
-	    const LightComponent& light = currentObject.light;
-	    sceneStream.write(reinterpret_cast<const char*>(&light.type), sizeof(int));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.color), sizeof(glm::vec3));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.intensity), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.constant), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.linear), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.quadratic), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.cutOff), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light.outerCutOff), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->type), sizeof(int));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->color), sizeof(glm::vec3));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->intensity), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->constant), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->linear), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->quadratic), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->cutOff), sizeof(float));
+	    sceneStream.write(reinterpret_cast<const char*>(&light->outerCutOff), sizeof(float));
 	}
     }
     bool hasSky = (targetScene.skybox != nullptr);
@@ -183,28 +204,11 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	}
     }
     sceneStream.close();
-    std::cout << "[SUCCESS] Scene saved sucessfully: " << fileName << std::endl;
+    Terminal::Log(LOG_SUCCESS, "Scene saved succesfully: ") << fileName << std::endl;
     return true;
 }
-void SceneManager::AddLight(Scene& targetScene, glm::vec3 position, LightType type)
-{
-    Light newLight;
-    newLight.type = type;
-    newLight.position = position;
-
-    newLight.color = glm::vec3(1.0f, 1.0f, 1.0f);
-    newLight.intensity = 1.0f;
-    newLight.direction = glm::vec3(0.0f, -1.0f, 0.0f);
-    newLight.constant = 1.0f;
-    newLight.linear = 0.09f;
-    newLight.quadratic = 0.032f;
-    newLight.cutOff = glm::cos(glm::radians(12.5));
-    newLight.outerCutOff = glm::cos(glm::radians(17.5));
-    targetScene.lights.push_back(newLight);
-    std::cout << "[INFO]Light Created at" << position.x << ", " << position.y << std::endl;
-}
-void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID,
-			     uint32_t materialID)
+GameObject* SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID,
+				    uint32_t materialID)
 {
     GameObject newObject;
     newObject.position = position;
@@ -215,16 +219,4 @@ void SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t me
     newObject.isActive = true;
     newObject.name = "Object_" + std::to_string(targetScene.gameObjects.size());
     targetScene.gameObjects.push_back(newObject);
-}
-
-void SceneManager::DeleteObject(Scene& scene, int objectIndex)
-{
-    if (objectIndex >= 0 && objectIndex < scene.gameObjects.size())
-    {
-	scene.gameObjects.erase(scene.gameObjects.begin() + objectIndex);
-	std::cout << "[INFO] Entity deleted" << std::endl;
-    } else
-    {
-	std::cout << "[ERROR] Could not delete entity" << std::endl;
-    }
 }

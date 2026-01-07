@@ -1,18 +1,18 @@
 #pragma once
+#include <string>
 #include <filesystem>
-#include "Scene.h"
-#include "Graphics/Light.h"
+#include "glm/glm.hpp"
+
+class Scene;
 class ResourceManager;
+class GameObject;
 class SceneManager
 {
-public: // could be static in the future
-    bool LoadScene(std::filesystem::path fileName, Scene& targetScene,
-		   ResourceManager* resourceManager);
-    bool SaveScene(std::filesystem::path fileName, Scene& targetScene,
-		   ResourceManager* resourceManager);
-    void AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID, uint32_t materialID);
-    void AddLight(Scene& targetScene, glm::vec3 position, LightType type);
-    void DeleteObject(Scene& targetScene, int objectIndex);
-
-private:
+public:
+    static bool SaveScene(std::filesystem::path fileName, Scene& targetScene,
+			  ResourceManager* resourceManager);
+    static bool LoadScene(std::filesystem::path fileName, Scene& targetScene,
+			  ResourceManager* resourceManager);
+    static GameObject* AddObject(Scene& targetScene, std::string name, uint32_t meshID,
+				 uint32_t materialID, glm::vec3 position);
 };
