@@ -50,8 +50,10 @@ ${CMAKE_SOURCE_DIR}/src/Development/GuiPanel.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Terminal.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/EditorGrid.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gizmo.cpp
+${CMAKE_SOURCE_DIR}/src/Development/Gui/ToolBar.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
+
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/PlayerController.cpp

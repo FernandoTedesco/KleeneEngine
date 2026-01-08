@@ -12,6 +12,7 @@
 #include "Development/Terminal.h"
 #include "Scene.h"
 #include "Graphics/Skybox.h"
+
 bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			     ResourceManager* resourceManager)
 {
@@ -21,7 +22,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 
     if (!sceneStream)
     {
-	Terminal::Log(LOG_ERROR, "Failed to open file for loading:") << fileName << std::endl;
+	Terminal::Log(LOG_ERROR, "Failed to open file for loading:");
 	return false;
     }
     uint16_t signature, version;
@@ -33,7 +34,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
     sceneStream.read(reinterpret_cast<char*>(&version), sizeof(uint16_t));
     if (version != 0x0006)
     {
-	Terminal::Log(LOG_WARNING "Version mismatch detected, attempting to load anyway");
+	Terminal::Log(LOG_WARNING, "Version mismatch detected, attempting to load anyway");
     }
     sceneStream.read(reinterpret_cast<char*>(&count), sizeof(uint32_t));
     targetScene.gameObjects.clear();
@@ -105,12 +106,12 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 	{
 	    uint32_t len;
 	    sceneStream.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
-	    targetScene.skyBoxPaths[i].resize(len);
+	    targetScene.skyboxPaths[i].resize(len);
 	    sceneStream.read(&targetScene.skyboxPaths[i][0], len);
 	}
 	targetScene.skybox = new Skybox(targetScene.skyboxPaths);
     }
-    Terminal::Log(LOG_SUCCESS, "Scene loaded ") << fileName << std::endl;
+    Terminal::Log(LOG_SUCCESS, "Scene loaded ");
     return true;
 }
 
@@ -136,16 +137,16 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
     sceneStream.write(reinterpret_cast<const char*>(&objectCount), sizeof(uint32_t));
     for (size_t i = 0; i < targetScene.gameObjects.size(); i++)
     {
-	const GameObject& currentObject = targetScene.gameObjects[i];
-	glm::vec3 position = currentObject->GetPosition();
-	glm::vec3 scale = currentObject->GetScale();
-	glm::vec4 rotation = currentObject->GetRotation();
+	GameObject* currentObject = targetScene.gameObjects[i];
+	glm::vec3 position = currentObject->position;
+	glm::vec3 scale = currentObject->scale;
+	glm::vec3 rotation = currentObject->rotation;
 
 	sceneStream.write(reinterpret_cast<const char*>(&position), sizeof(glm::vec3));
 	sceneStream.write(reinterpret_cast<const char*>(&scale), sizeof(glm::vec3));
 	sceneStream.write(reinterpret_cast<const char*>(&rotation), sizeof(glm::vec4));
 
-	MeshRenderer* meshRenderer = currentObject.GetComponent<MeshRenderer>();
+	MeshRenderer* meshRenderer = currentObject->GetComponent<MeshRenderer>();
 	bool hasMesh = (meshRenderer != nullptr);
 	sceneStream.write(reinterpret_cast<const char*>(&hasMesh), sizeof(bool));
 	if (hasMesh)
@@ -204,19 +205,21 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	}
     }
     sceneStream.close();
-    Terminal::Log(LOG_SUCCESS, "Scene saved succesfully: ") << fileName << std::endl;
+    Terminal::Log(LOG_SUCCESS, "Scene saved succesfully: ");
     return true;
 }
 GameObject* SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID,
 				    uint32_t materialID)
 {
-    GameObject newObject;
-    newObject.position = position;
-    newObject.meshID = meshID;
-    newObject.materialID = materialID;
-    newObject.scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    newObject.rotation = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    newObject.isActive = true;
-    newObject.name = "Object_" + std::to_string(targetScene.gameObjects.size());
+    GameObject* newObject = new GameObject();
+    newObject->position = position;
+    MeshRenderer* renderer = newObject->AddComponent<MeshRenderer>();
+    renderer->SetMesh(meshID);
+    renderer->SetMaterial(materialID);
+    newObject->scale = glm::vec3(1.0f, 1.0f, 1.0f);
+    newObject->rotation = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    newObject->isActive = true;
+    newObject->name = "Object_" + std::to_string(targetScene.gameObjects.size());
     targetScene.gameObjects.push_back(newObject);
+    return (newObject);
 }

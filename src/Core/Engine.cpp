@@ -37,21 +37,22 @@ Engine::Engine()
     window = new Window();
 
     // Graphic Management
-    renderer = new Renderer();
+    renderer = new Renderer(window);
 
     unsigned int particleTexID;
     glGenTextures(1, &particleTexID);
     glBindTexture(GL_TEXTURE_2D, particleTexID);
     unsigned char whitePixel[] = {255, 255, 255, 255};
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
-    particleManager = new ParticleManager(particleShader, particleTexID, 5000);
+    particleManager = new ParticleManager(renderer->GetParticleShader(), particleTexID, 5000);
 
     // Scene Management
     camera = new Camera();
     activeScene = new Scene();
+    activeScene->particleManager = particleManager;
     sceneManager = new SceneManager();
     resourceManager = new ResourceManager();
-    editor = new Editor(window, activeScene, sceneManager, camera, resourceManager, shader);
+    editor = new Editor(window, activeScene, sceneManager, camera, resourceManager);
     terminal->SetEditorContext(editor);
 
     isRunning = true;
@@ -91,7 +92,8 @@ void Engine::Run()
 	    count--;
 	}
 	this->Update(dt);
-	renderer->RenderFrame(activeScene, camera, window, editor, resourceManager);
+	renderer->RenderFrame(activeScene, resourceManager, renderer->GetMainShader(), camera,
+			      window, editor, true);
 	editor->EndFrame();
 	Input::UpdateLastState();
 	Input::ResetMouseDelta();
@@ -123,8 +125,4 @@ Engine::~Engine()
     delete resourceManager;
     delete camera;
     delete window;
-    delete shader;
-    delete shadowShader;
-    delete skyboxShader;
-    delete particleShader;
 }

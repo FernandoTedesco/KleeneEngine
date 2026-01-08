@@ -4,6 +4,7 @@
 #include "imgui_impl_opengl3.h"
 #include "Imgui_impl_sdl2.h"
 #include "Utils/Telemetry.h"
+#include "Utils/MemoryTracker.h"
 #include "implot.h"
 #include <iostream>
 #include "Core/Input.h"
@@ -12,26 +13,31 @@
 #include "Components/MeshRenderer.h"
 #include "Graphics/Mesh.h"
 #include "EditorTools.h"
-
+#include "EditorGrid.h"
+#include "Components/MeshRenderer.h"
+#include "Graphics/Material.h"
+#include "Gui/ToolBar.h"
+#include "Terminal.h"
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
-	       ResourceManager* resourceManager, Shader* hightlightShader)
+	       ResourceManager* resourceManager)
 {
     this->window = window;
     this->scene = scene;
     this->sceneManager = sceneManager;
     this->camera = camera;
     this->resourceManager = resourceManager;
-    this->highlightShader = highlightShader;
 
     this->gizmo = new Gizmo();
     this->editorGrid = new EditorGrid(50);
     this->currentMode = EditorMode::SELECTION;
     this->tools = new EditorTools();
+    this->toolBar = new ToolBar();
 
     ImGui::CreateContext();
     ImPlot::CreateContext();
     ImGui_ImplSDL2_InitForOpenGL(window->GetWindow(), window->GetglContext());
     ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
     this->listLoaded = false;
     this->selectedEntityIndex = -1;
@@ -48,7 +54,7 @@ Editor::~Editor()
     ImGui_ImplOpenGL3_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
-
+    delete this->toolBar;
     delete this->tools;
     delete this->editorGrid;
     delete this->gizmo;
@@ -64,23 +70,7 @@ void Editor::BeginFrame()
 void Editor::EndFrame()
 {
     ImGui::Render();
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDraw());
-}
-
-void Editor::DrawTopBar()
-{
-    ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2((float)window->GetWidth(), 80.0f));
-    ImGui::Begin("Toolbar, nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | "
-		 "ImGuiWindowFlags_NoMove");
-
-    static char saveBuffer[64] = "";
-    ImGui::InputText("File", saveBuffer, 64);
-    if (ImGui::Button("Save"))
-    {
-	sceneManager->SaveScene(saveBuffer, *scene, resourceManager);
-    }
-    ImGui::End();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void Editor::DrawEditorUI()
@@ -88,14 +78,34 @@ void Editor::DrawEditorUI()
     float dt = 1.0f / ImGui::GetIO().Framerate;
     gpuTelemetry.Update(dt);
     memoryTracker.Update(dt);
-    HandleInput();
 
+    auto onSaveAction = [&](const char* filename) {
+	std::string fullPath = filename;
+	if (fullPath.find(".Kleene") == std::string::npos)
+	{
+	    fullPath += ".Kleene";
+	}
+	this->sceneManager->SaveScene(fullPath, *this->scene, this->resourceManager);
+	Terminal::Log(LOG_SUCCESS, "Scene Saved: " + fullPath);
+    };
+    auto onLoadAction = [&](const char* filename) {
+	std::string fullPath = filename;
+	if (fullPath.find(".Kleene") == std::string::npos)
+	{
+	    fullPath += ".Kleene";
+	}
+	Terminal::Log(LOG_INFO, "Requesting load for: " + fullPath);
+	this->sceneManager->LoadScene(fullPath, *this->scene, this->resourceManager);
+	Terminal::Log(LOG_SUCCESS, "Scene Saved: " + fullPath);
+    };
+
+    toolBar->Draw((float)window->GetWidth(), onSaveAction, onLoadAction);
     // Asset loading
-    if (!listloaded)
+    if (!listLoaded)
     {
 	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
 	availableMeshes = ScanDirectory(currentPath / "assets/models");
-	abailableTextures = ScanDirectory(currentPath / "assets/textures");
+	availableTextures = ScanDirectory(currentPath / "assets/textures");
 	listLoaded = true;
     }
 
@@ -120,15 +130,15 @@ void Editor::DrawEditorUI()
 	tools->UpdateScale(scene, selectedEntityIndex, rayOrigin, rayDirection);
     } else if (currentMode == EditorMode::ROTATION)
     {
-	tools->UpdateRotation(rayOrigin, rayDirection);
+	tools->UpdateRotation(scene, selectedEntityIndex, rayOrigin, rayDirection);
     } else if (currentMode == EditorMode::DELETION)
     {
-	tools->DeleteObject()
+	tools->DeleteObject(scene, selectedEntityIndex, rayOrigin, rayDirection);
     } else if (currentMode == EditorMode::SELECTION)
     {
 	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
 	{
-	    int hit = tools->RayCastScene(scene, resourceManager, rayOrigin, rayDirection);
+	    int hit = tools->RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
 	    if (hit != -1)
 		selectedEntityIndex = hit;
 	}
@@ -137,11 +147,9 @@ void Editor::DrawEditorUI()
     GuiPanels::DrawHierarchy(scene, selectedEntityIndex);
     GuiPanels::DrawInspector(scene, selectedEntityIndex, resourceManager, availableMeshes,
 			     selectedMeshIndex, availableTextures, selectedTextureIndex);
-
-    DrawTopBar();
 }
 
-void Editor::RenderHighLight()
+void Editor::RenderHighlight(Shader* highlightShader)
 {
     if (highlightShader)
     {
@@ -150,7 +158,7 @@ void Editor::RenderHighLight()
 	{
 	    if (object->GetComponent<Light>())
 	    {
-		gizmo->DrawLightIcon(camera, object->GetPosition(), highlightShader, window);
+		gizmo->DrawLightIcon(camera, object->position, highlightShader, window);
 	    }
 	}
     }
@@ -169,7 +177,7 @@ void Editor::RenderHighLight()
 		highlightShader->SetMat4("model", model);
 	    }
 	}
-	gizmo->Draw(camera, object->GetPosition(), hightLightShader, window);
+	gizmo->Draw(camera, object->position, highlightShader, window);
     }
 }
 

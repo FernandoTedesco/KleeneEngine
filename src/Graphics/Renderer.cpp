@@ -52,8 +52,8 @@ Renderer::~Renderer()
     delete skyboxShader;
     delete particleShader;
 }
-void Renderer::Render(Scene* scene, ResourceManager* resourceManager, Shader* shader,
-		      Camera* camera, Window* window, Editor* editor, bool isShadowPass)
+void Renderer::RenderFrame(Scene* scene, ResourceManager* resourceManager, Shader* shader,
+			   Camera* camera, Window* window, Editor* editor, bool isShadowPass)
 {
     if (!scene)
 	return;
@@ -119,13 +119,13 @@ void Renderer::SetupLights(Scene* scene, Shader* shader)
 	if (!object->isActive)
 	    continue;
 
-	Light* light = object->GetComponent<Light>;
+	Light* light = object->GetComponent<Light>();
 	if (light)
 	{
 	    std::string number = std::to_string(lightIndex);
 	    shader->SetInt("lights[" + number + "].type", (int)light->type);
-	    shader->SetVec3("lights[" + number + "].position", light->GetPosition);
-	    shader->SetVec3("lights[" + number + "].direction", light->GetDirection);
+	    shader->SetVec3("lights[" + number + "].position", light->GetPosition());
+	    shader->SetVec3("lights[" + number + "].direction", light->GetDirection());
 	    shader->SetVec3("lights[" + number + "].color", light->color);
 	    shader->SetFloat("lights[" + number + "].intensity", light->intensity);
 
@@ -150,6 +150,7 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
 {
     frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
+    mainShader->Use();
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
@@ -157,13 +158,11 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
     mainShader->SetInt("shadowMap", 1);
     glActiveTexture(GL_TEXTURE0);
 
-    if (editor && editor->debugWireFrameMode)
+    if (editor && editor->debugWireframemode)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     else
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    mainShader->Use();
-    PrepareScene(camera, mainShader, window);
     SetupLights(scene, mainShader);
 
     for (GameObject* object : scene->gameObjects)
@@ -196,7 +195,7 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
 	scene->particleManager->Draw();
     }
     if (editor)
-	editor->RenderHighlight();
+	editor->RenderHighlight(mainShader);
     if (editor && editor->GetGrid())
 	editor->GetGrid()->EditorGridDraw(camera, (float)window->GetWidth(),
 					  (float)window->GetHeight());

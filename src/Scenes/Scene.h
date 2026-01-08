@@ -13,7 +13,7 @@ public:
     Scene();
     ~Scene();
 
-    ParticleManager* particleManager;
+    ParticleManager* particleManager = nullptr;
 
     std::vector<GameObject*> gameObjects;
     std::vector<GameObject*> pendingDestruction;

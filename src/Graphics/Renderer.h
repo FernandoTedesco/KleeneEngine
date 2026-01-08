@@ -19,8 +19,21 @@ class Renderer
 public:
     Renderer(Window* window);
     ~Renderer();
-    void Render(Scene* scene, ResourceManager* resourceManager, Shader* shader, Camera* camera,
-		Window* window, Editor* editor, bool isShadowPass = false);
+    Shader* GetMainShader() const
+    {
+	return mainShader;
+    }
+    Shader* GetParticleShader() const
+    {
+	return particleShader;
+    }
+    Shader* GetShadowShader() const
+    {
+	return shadowShader;
+    }
+
+    void RenderFrame(Scene* scene, ResourceManager* resourceManager, Shader* shader, Camera* camera,
+		     Window* window, Editor* editor, bool isShadowPass = false);
 
 private:
     ShadowMap* shadowMap;

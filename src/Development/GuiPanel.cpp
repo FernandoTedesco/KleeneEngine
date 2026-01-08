@@ -1,6 +1,11 @@
 #include "GuiPanel.h"
 #include <iostream>
 #include "Development/Terminal.h"
+#include <filesystem>
+#include "Components/Light.h"
+#include "Components/MeshRenderer.h"
+#include "Resources/ResourceManager.h"
+#include "Graphics/Material.h"
 
 void GuiPanels::DrawHierarchy(Scene* scene, int& selectedIndex)
 {
@@ -69,9 +74,9 @@ void GuiPanels::DrawTransform(GameObject* object)
 {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	glm::vec3 position = object->GetPosition();
-	glm::vec3 scale = object->GetScale();
-	glm::vec4 rotation = object->GetRotation();
+	glm::vec3 position = object->position;
+	glm::vec3 scale = object->scale;
+	glm::vec3 rotation = object->rotation;
 
 	if (ImGui::DragFloat3("Position", &position[0], 0.1f))
 	    object->SetPosition(position);
@@ -100,8 +105,7 @@ void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceMa
 	    bool comboOpen = ImGui::Combo(
 		"Mesh Asset", &meshIndex,
 		[](void* data, int index, const char** out_text) {
-		    std::vector < std::string : vector =
-			static_cast<std::vector<std::string> * vector>(data);
+		    auto* vec = static_cast<std::vector<std::string>*>(data);
 		    if (index < 0 || index >= (int)vec->size())
 			return false;
 		    *out_text = vec->at(index).c_str();

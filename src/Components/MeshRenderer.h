@@ -4,11 +4,15 @@
 class MeshRenderer : public Component
 {
 public:
+    glm::vec2 textureTiling = glm::vec2(1.0f, 1.0f);
+    glm::vec2 textureOffset = glm::vec2(0.0f, 0.0f);
+
     uint32_t meshID;
     uint32_t materialID;
     glm::vec3 colorTint;
     bool castShadows;
     bool receiveShadows;
+    bool isVisible;
     MeshRenderer()
     {
 	meshID = 0;

@@ -3,7 +3,9 @@
 #include <string>
 #include "EditorTools.h"
 #include "GuiPanel.h"
-
+#include <filesystem>
+#include "Utils/MemoryTracker.h"
+#include "Utils/Telemetry.h"
 class Window;
 class Scene;
 class SceneManager;
@@ -12,24 +14,27 @@ class EditorGrid;
 class Shader;
 class Gizmo;
 class ResourceManager;
+class ToolBar;
+
 class Editor
 {
 public:
     Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
-	   ResourceManager* resourceManager, Shader* highllightShader);
+	   ResourceManager* resourceManager);
     ~Editor();
     void BeginFrame();
     void EndFrame();
     void DrawEditorUI();
+
     EditorGrid* GetGrid()
     {
 	return editorGrid;
     }
-    void RenderHighlight();
-    bool debugWireFrameMode = false;
+    void RenderHighlight(Shader* highlightShader);
+    bool debugWireframemode = false;
 
 private:
-    void HandleInput();
+    void DrawTopBar();
     Window* window;
     Scene* scene;
     SceneManager* sceneManager;
@@ -38,9 +43,12 @@ private:
 
     EditorGrid* editorGrid;
     Gizmo* gizmo;
-    Shader* highlightShader;
     EditorTools* tools;
     EditorMode currentMode;
+
+    // GUI
+    ToolBar* toolBar;
+
     int selectedEntityIndex = -1;
     bool listLoaded = false;
 
@@ -58,5 +66,7 @@ private:
     char answerLoadBuffer[64];
     char answerSaveBuffer[64];
 
-    std::vector<std::string> ScanDirectory(const std::string& directoryPath);
+    MemoryTracker memoryTracker;
+    GpuTelemetry gpuTelemetry;
+    std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
 };

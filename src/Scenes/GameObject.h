@@ -39,7 +39,7 @@ public:
     {
 	for (Component* component : components)
 	{
-	    Template* target = dynamic_cast<T*>(component);
+	    Template* target = dynamic_cast<Template*>(component);
 	    if (target != nullptr)
 	    {
 		return target;

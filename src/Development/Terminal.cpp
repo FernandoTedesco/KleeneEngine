@@ -221,15 +221,15 @@ void Terminal::ExecuteConsoleCommand()
     {
 	if (commandBuffer == "/wireframe on")
 	{
-	    editorContext->debugWireframeMode = true;
+	    editorContext->debugWireframemode = true;
 	    std::cout << "[CMD] Wireframe Enabled." << std::endl;
 	} else if (commandBuffer == "/wireframe off")
 	{
-	    editorContext->debugWireframeMode = false;
+	    editorContext->debugWireframemode = false;
 	    std::cout << "[CMD] Wireframe Disabled." << std::endl;
 	} else if (commandBuffer == "/wireframe")
 	{
-	    editorContext->debugWireframeMode = !editorContext->debugWireframeMode;
+	    editorContext->debugWireframemode = !editorContext->debugWireframemode;
 	    std::cout << "[CMD] Wireframe Toggled." << std::endl;
 	}
 
