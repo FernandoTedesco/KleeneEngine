@@ -2,6 +2,7 @@
 #include <functional>
 #include <string>
 #include "imgui.h"
+#include "Development/EditorState.h"
 
 class ToolBar
 {
@@ -9,7 +10,7 @@ public:
     ToolBar() = default;
 
     void Draw(float windowWidth, std::function<void(const char*)> onSaveRequest,
-	      std::function<void(const char*)> onLoadRequest);
+	      std::function<void(const char*)> onLoadRequest, EditorState& state);
 
 private:
     char saveBuffer[64] = "File";

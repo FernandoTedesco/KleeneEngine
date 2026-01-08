@@ -1,8 +1,8 @@
-#include "Toolbar.h"
+#include "ToolBar.h"
 #include "Core/Window.h"
 
 void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveRequest,
-		   std::function<void(const char*)> onLoadRequest)
+		   std::function<void(const char*)> onLoadRequest, EditorState& state)
 {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2((float)windowWidth, 30.0f));
@@ -21,6 +21,12 @@ void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveReq
 		showSaveModal = true;
 	    if (ImGui::MenuItem("Load Scene..."))
 		showLoadModal = true;
+	    ImGui::EndMenu();
+	}
+	if (ImGui::BeginMenu("View"))
+	{
+	    ImGui::MenuItem("Hierarchy Panel", nullptr, &state.showHierarchy);
+	    ImGui::MenuItem("Inspector Panel", nullptr, &state.showInspector);
 	    ImGui::EndMenu();
 	}
 	ImGui::EndMenuBar();

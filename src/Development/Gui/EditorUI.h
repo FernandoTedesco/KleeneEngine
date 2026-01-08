@@ -5,8 +5,15 @@
 #include "InspectorPanel.h"
 #include "imgui.h"
 #include <functional>
+#include "Development/EditorState.h"
+
 class Scene;
 class ResourceManager;
+
+struct EditorLayoutState {
+    bool showHierarchy = true;
+    bool showInspector = true;
+};
 
 class EditorUI
 {
@@ -20,6 +27,10 @@ private:
     ToolBar* toolBar;
     HierarchyPanel* hierarchyPanel;
     InspectorPanel* inspectorPanel;
+
+    EditorState editorState;
+
+    EditorLayoutState layoutState;
 
     void BeginDockSpace();
     void EndDockSpace();
