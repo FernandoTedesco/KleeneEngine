@@ -1,42 +1,17 @@
-#include "GuiPanel.h"
-#include <iostream>
-#include "Development/Terminal.h"
-#include <filesystem>
-#include "Components/Light.h"
+#include "InspectorPanel.h"
 #include "Components/MeshRenderer.h"
-#include "Resources/ResourceManager.h"
+#include "Components/Light.h"
 #include "Graphics/Material.h"
+#include <iostream>
+#include <cstring>
 
-void GuiPanels::DrawHierarchy(Scene* scene, int& selectedIndex)
+void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManager* resourceManager)
 {
-    float windowHeight = ImGui::GetIO().DisplaySize.y;
-    ImGui::SetNextWindowPos(ImVec2(0, 80.0));
-    ImGui::SetNextWindowSize(ImVec2(250, windowHeight - 80.0f));
-
-    ImGui::Begin("Hierarchy", nullptr,
-		 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
-    ImGui::Text("Scene Hierarchy");
-    ImGui::Separator();
-    for (int i = 0; i < scene->gameObjects.size(); i++)
+    if (!listLoaded)
     {
-	GameObject* object = scene->gameObjects[i];
-	if (!object)
-	    continue;
-	std::string label = object->name.empty() ? "Object " + std::to_string(i) : object->name;
-	label += "##" + std::to_string(i);
-
-	bool isSelected = (selectedIndex == i);
-	if (ImGui::Selectable(label.c_str(), isSelected))
-	{
-	    selectedIndex = i;
-	}
+	RefreshAssetLists();
+	listLoaded = true;
     }
-    ImGui::End();
-}
-void GuiPanels::DrawInspector(Scene* scene, int& selectedIndex, ResourceManager* resourceManager,
-			      std::vector<std::string>& meshList, int& selectedMeshIndex,
-			      std::vector<std::string>& textureList, int& selectedTextureIndex)
-{
     float windowWidth = ImGui::GetIO().DisplaySize.x;
     float windowHeight = ImGui::GetIO().DisplaySize.y;
     float sidebarWidth = 300.0f;
@@ -44,24 +19,32 @@ void GuiPanels::DrawInspector(Scene* scene, int& selectedIndex, ResourceManager*
     ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - 80.0f));
 
     ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
-    if (selectedIndex >= 0 && selectedIndex < scene->gameObjects.size())
+    if (selectedEntityIndex >= 0 && selectedEntityIndex < scene->gameObjects.size())
     {
-	GameObject* object = scene->gameObjects[selectedIndex];
+	GameObject* object = scene->gameObjects[selectedEntityIndex];
 	if (object)
 	{
-	    ImGui::Text("ID: %d | Name: %s", selectedIndex, object->name.c_str());
+	    ImGui::Text("ID: %d", selectedEntityIndex);
+	    ImGui::SameLine();
+
+	    char nameBuffer[64];
+	    strncpy_s(nameBuffer, object->name.c_str(), sizeof(nameBuffer));
+	    nameBuffer[sizeof(nameBuffer) - 1] = 0;
+	    if (ImGui::InputText("Name", nameBuffer, 64))
+	    {
+		object->name = std::string(nameBuffer);
+	    }
 	    ImGui::Separator();
 
 	    DrawTransform(object);
-	    DrawMeshRenderer(object, resourceManager, meshList, selectedMeshIndex, textureList,
-			     selectedTextureIndex);
+	    DrawMeshRenderer(object, resourceManager);
 	    DrawLight(object);
 
 	    ImGui::Separator();
 	    if (ImGui::Button("Delete Object", ImVec2(-1, 0)))
 	    {
 		scene->RemoveGameObject(object);
-		selectedIndex = -1;
+		selectedEntityIndex = -1;
 	    }
 	}
     } else
@@ -70,7 +53,8 @@ void GuiPanels::DrawInspector(Scene* scene, int& selectedIndex, ResourceManager*
     }
     ImGui::End();
 }
-void GuiPanels::DrawTransform(GameObject* object)
+
+void InspectorPanel::DrawTransform(GameObject* object)
 {
     if (ImGui::CollapsingHeader("Transform", ImGuiTreeNodeFlags_DefaultOpen))
     {
@@ -87,9 +71,7 @@ void GuiPanels::DrawTransform(GameObject* object)
     }
 }
 
-void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceManager,
-				 std::vector<std::string>& meshList, int& meshIndex,
-				 std::vector<std::string>& textureList, int& textureIndex)
+void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resourceManager)
 {
     MeshRenderer* meshRenderer = object->GetComponent<MeshRenderer>();
     bool hasMesh = (meshRenderer != nullptr);
@@ -100,26 +82,30 @@ void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceMa
     }
     if (meshRenderer)
     {
-	if (!meshList.empty())
+	if (!availableMeshes.empty())
 	{
-	    bool comboOpen = ImGui::Combo(
-		"Mesh Asset", &meshIndex,
-		[](void* data, int index, const char** out_text) {
-		    auto* vec = static_cast<std::vector<std::string>*>(data);
-		    if (index < 0 || index >= (int)vec->size())
-			return false;
-		    *out_text = vec->at(index).c_str();
-		    return true;
-		},
-		&meshList, (int)meshList.size());
-	    if (comboOpen)
+	    if (ImGui::Combo(
+		    "Mesh Asset", &selectedMeshIndex,
+		    [](void* data, int index, const char** out_text) {
+			auto* vec = static_cast<std::vector<std::string>*>(data);
+			if (index < 0 || index >= vec->size())
+			    return false;
+			*out_text = vec->at(index).c_str();
+			return true;
+		    },
+		    &availableMeshes, (int)availableMeshes.size()))
 	    {
-		std::filesystem::path CurrentPath = ResourceManager::FolderFinder("assets");
-		std::filesystem::path path = CurrentPath / "assets/models" / meshList[meshIndex];
-		uint32_t newId = resourceManager->CreateMesh(meshList[meshIndex], path);
-		meshRenderer->SetMesh(newId);
-		object->name = meshList[meshIndex];
 	    }
+	    std::filesystem::path root = ResourceManager::FolderFinder("assets");
+	    std::filesystem::path path =
+		root / "assets/models" / availableMeshes[selectedMeshIndex];
+
+	    uint32_t newId =
+		resourceManager->CreateMesh(availableMeshes[selectedMeshIndex], path.string());
+	    ;
+	    meshRenderer->SetMesh(newId);
+	    if (object->name.empty() || object->name.find("Object") != std::string::npos)
+		object->name = availableMeshes[selectedMeshIndex];
 	}
 	Material* material = resourceManager->GetMaterial(meshRenderer->materialID);
 	if (material)
@@ -134,10 +120,10 @@ void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceMa
 	    ImGui::DragFloat("Specular", &material->specular, 0.05f, 0.0f, 1.0f);
 	    ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 2.0f, 256.0f);
 
-	    if (!textureList.empty())
+	    if (!availableTextures.empty())
 	    {
 		bool textureComboOpen = ImGui::Combo(
-		    "Diffuse Map", &textureIndex,
+		    "Diffuse Map", &selectedTextureIndex,
 		    [](void* data, int index, const char** out_text) {
 			std::vector<std::string>* vector =
 			    static_cast<std::vector<std::string>*>(data);
@@ -146,18 +132,18 @@ void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceMa
 			*out_text = vector->at(index).c_str();
 			return true;
 		    },
-		    &textureList, (int)textureList.size());
+		    &selectedTextureIndex, (int)availableTextures.size());
 
 		if (textureComboOpen)
 		{
 		    std::filesystem::path CurrentPath = ResourceManager::FolderFinder("assets");
 		    std::filesystem::path path =
-			CurrentPath / "assets/textures" / textureList[textureIndex];
-		    uint32_t newTextureId =
-			resourceManager->CreateTexture(textureList[textureIndex], path);
+			CurrentPath / "assets/textures" / availableTextures[selectedTextureIndex];
+		    uint32_t newTextureId = resourceManager->CreateTexture(
+			availableTextures[selectedTextureIndex], path);
 
-		    std::string newMatName =
-			"Mat_" + textureList[textureIndex] + "_" + std::to_string(rand());
+		    std::string newMatName = "Mat_" + availableTextures[selectedTextureIndex] +
+					     "_" + std::to_string(rand());
 		    uint32_t newMatId = resourceManager->CreateMaterial(newMatName, newTextureId);
 		    meshRenderer->SetMaterial(newMatId);
 		}
@@ -166,7 +152,7 @@ void GuiPanels::DrawMeshRenderer(GameObject* object, ResourceManager* resourceMa
     }
 }
 
-void GuiPanels::DrawLight(GameObject* object)
+void InspectorPanel::DrawLight(GameObject* object)
 {
     Light* light = object->GetComponent<Light>();
     bool hasLight = (light != nullptr);
@@ -198,4 +184,30 @@ void GuiPanels::DrawLight(GameObject* object)
 	    }
 	}
     }
+}
+
+std::vector<std::string> InspectorPanel::ScanDirectory(const std::filesystem::path& directoryPath)
+{
+    std::vector<std::string> files;
+
+    if (!std::filesystem::exists(directoryPath))
+    {
+	return files;
+    }
+    for (const std::filesystem::directory_entry& entry :
+	 std::filesystem::directory_iterator(directoryPath))
+    {
+	if (entry.is_regular_file())
+	{
+	    files.push_back(entry.path().filename().string());
+	}
+    }
+    return files;
+}
+
+void InspectorPanel::RefreshAssetLists()
+{
+    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
+    availableMeshes = ScanDirectory(currentPath / "assets/models");
+    availableTextures = ScanDirectory(currentPath / "assets/textures");
 }

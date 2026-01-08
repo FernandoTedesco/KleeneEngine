@@ -1,5 +1,4 @@
-#include "Editor.h"
-#include "GuiPanel.h"
+
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 #include "Imgui_impl_sdl2.h"
@@ -7,6 +6,7 @@
 #include "Utils/MemoryTracker.h"
 #include "implot.h"
 #include <iostream>
+#include "Editor.h"
 #include "Core/Input.h"
 #include "Utils/Math.h"
 #include "Scenes/SceneManager.h"
@@ -14,9 +14,11 @@
 #include "Graphics/Mesh.h"
 #include "EditorTools.h"
 #include "EditorGrid.h"
-#include "Components/MeshRenderer.h"
+
+#include "Components/Light.h"
 #include "Graphics/Material.h"
-#include "Gui/ToolBar.h"
+#include "Gui/EditorUI.h"
+
 #include "Terminal.h"
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
 	       ResourceManager* resourceManager)
@@ -30,8 +32,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->gizmo = new Gizmo();
     this->editorGrid = new EditorGrid(50);
     this->currentMode = EditorMode::SELECTION;
-    this->tools = new EditorTools();
-    this->toolBar = new ToolBar();
+    this->editorUI = new EditorUI();
 
     ImGui::CreateContext();
     ImPlot::CreateContext();
@@ -39,10 +40,7 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     ImGui_ImplOpenGL3_Init("#version 330");
     ImGui::GetStyle().Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-    this->listLoaded = false;
     this->selectedEntityIndex = -1;
-    this->selectedMeshIndex = 0;
-    this->selectedTextureIndex = 0;
 
     gpuTelemetry.Init();
     memoryTracker.Init();
@@ -54,7 +52,7 @@ Editor::~Editor()
     ImGui_ImplOpenGL3_Shutdown();
     ImPlot::DestroyContext();
     ImGui::DestroyContext();
-    delete this->toolBar;
+    delete this->editorUI;
     delete this->tools;
     delete this->editorGrid;
     delete this->gizmo;
@@ -99,15 +97,7 @@ void Editor::DrawEditorUI()
 	Terminal::Log(LOG_SUCCESS, "Scene Saved: " + fullPath);
     };
 
-    toolBar->Draw((float)window->GetWidth(), onSaveAction, onLoadAction);
-    // Asset loading
-    if (!listLoaded)
-    {
-	std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-	availableMeshes = ScanDirectory(currentPath / "assets/models");
-	availableTextures = ScanDirectory(currentPath / "assets/textures");
-	listLoaded = true;
-    }
+    editorUI->Render(scene, resourceManager, selectedEntityIndex, onSaveAction, onLoadAction);
 
     float mouseX = ImGui::GetIO().MousePos.x;
     float mouseY = ImGui::GetIO().MousePos.y;
@@ -143,10 +133,6 @@ void Editor::DrawEditorUI()
 		selectedEntityIndex = hit;
 	}
     }
-
-    GuiPanels::DrawHierarchy(scene, selectedEntityIndex);
-    GuiPanels::DrawInspector(scene, selectedEntityIndex, resourceManager, availableMeshes,
-			     selectedMeshIndex, availableTextures, selectedTextureIndex);
 }
 
 void Editor::RenderHighlight(Shader* highlightShader)
@@ -179,23 +165,4 @@ void Editor::RenderHighlight(Shader* highlightShader)
 	}
 	gizmo->Draw(camera, object->position, highlightShader, window);
     }
-}
-
-std::vector<std::string> Editor::ScanDirectory(const std::filesystem::path directoryPath)
-{
-    std::vector<std::string> files;
-
-    if (!std::filesystem::exists(directoryPath))
-    {
-	return files;
-    }
-    for (const std::filesystem::directory_entry& entry :
-	 std::filesystem::directory_iterator(directoryPath))
-    {
-	if (entry.is_regular_file())
-	{
-	    files.push_back(entry.path().filename().string());
-	}
-    }
-    return files;
 }

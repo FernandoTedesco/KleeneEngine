@@ -2,10 +2,10 @@
 #include <vector>
 #include <string>
 #include "EditorTools.h"
-#include "GuiPanel.h"
 #include <filesystem>
 #include "Utils/MemoryTracker.h"
 #include "Utils/Telemetry.h"
+
 class Window;
 class Scene;
 class SceneManager;
@@ -14,7 +14,7 @@ class EditorGrid;
 class Shader;
 class Gizmo;
 class ResourceManager;
-class ToolBar;
+class EditorUI;
 
 class Editor
 {
@@ -34,39 +34,29 @@ public:
     bool debugWireframemode = false;
 
 private:
-    void DrawTopBar();
+    // Core Pointers
     Window* window;
     Scene* scene;
     SceneManager* sceneManager;
     Camera* camera;
     ResourceManager* resourceManager;
 
+    // Editor Components
     EditorGrid* editorGrid;
     Gizmo* gizmo;
     EditorTools* tools;
     EditorMode currentMode;
 
-    // GUI
-    ToolBar* toolBar;
+    // GUI modules
+    EditorUI* editorUI;
 
     int selectedEntityIndex = -1;
-    bool listLoaded = false;
-
-    std::vector<std::string> availableMeshes;
-    std::vector<std::string> availableTextures;
-
-    int selectedMeshIndex = 0;
-    int selectedTextureIndex = 0;
 
     int atlasRows = 2;
     int atlasCols = 2;
     int selectedTileX = 0;
     int selectedTileY = 0;
 
-    char answerLoadBuffer[64];
-    char answerSaveBuffer[64];
-
     MemoryTracker memoryTracker;
     GpuTelemetry gpuTelemetry;
-    std::vector<std::string> ScanDirectory(const std::filesystem::path directoryPath);
 };
