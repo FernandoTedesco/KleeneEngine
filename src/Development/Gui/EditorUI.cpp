@@ -1,8 +1,10 @@
 #include "EditorUI.h"
 
-EditorUI::EditorUI()
+EditorUI::EditorUI(const EditorIcons& icons)
 {
     this->toolBar = new ToolBar();
+    this->toolBar->SetIcons(icons);
+
     this->hierarchyPanel = new HierarchyPanel();
     this->inspectorPanel = new InspectorPanel();
     this->editorState.showHierarchy = true;

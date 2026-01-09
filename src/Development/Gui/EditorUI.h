@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include <functional>
 #include "Development/EditorState.h"
+#include "Development/EditorResources.h"
 
 class Scene;
 class ResourceManager;
@@ -18,8 +19,10 @@ struct EditorLayoutState {
 class EditorUI
 {
 public:
-    EditorUI();
+    EditorUI(const EditorIcons& icons);
     ~EditorUI();
+
+public:
     void Render(Scene* scene, ResourceManager* resourceManager, int& selectedIndex,
 		std::function<void(const char*)> onSave, std::function<void(const char*)> onLoad);
 

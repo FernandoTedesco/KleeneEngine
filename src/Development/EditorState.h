@@ -1,5 +1,5 @@
 #pragma once
-struct EditorState{
+struct EditorState {
     bool showHierarchy = true;
     bool showInspector = true;
 };

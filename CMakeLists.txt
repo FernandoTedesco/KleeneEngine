@@ -56,6 +56,7 @@ ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/PlayerController.cpp
+${CMAKE_SOURCE_DIR}/src/Components/SpriteRenderer.cpp
 
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/EditorUI.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/ToolBar.cpp

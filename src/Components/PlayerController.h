@@ -8,7 +8,7 @@ class GameObject;
 class PlayerController : public Component
 {
 public:
-    PlayerController(GameObject* characterObject, Camera* gameCamera);
+    PlayerController(GameObject* characterObject);
     void Update(float dt);
     glm::vec3 GetPosition() const
     {

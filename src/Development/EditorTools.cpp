@@ -241,7 +241,6 @@ void EditorTools::PaintTerrain(Scene* scene, int selectedIndex, glm::vec3 rayOri
 	    newUVs[3] = glm::vec2(u1, v0);
 
 	    int vertexIndex = mapTileZ * mapWidth + mapTileX;
-	    mesh->UpdateTileUVs(vertexIndex, newUVs);
 	}
     }
 }
@@ -288,6 +287,7 @@ int EditorTools::RaycastScene(Scene* scene, ResourceManager* resourceManager, gl
 	}
 	return -1;
     }
+    return -1;
 }
 
 void EditorTools::DeleteObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,

@@ -8,6 +8,10 @@ public:
     Texture();
     ~Texture();
     bool LoadTexture(std::filesystem::path filepath);
+    unsigned int GetID() const
+    {
+	return this->textureID;
+    }
     void Use(unsigned int slot);
 
 private:

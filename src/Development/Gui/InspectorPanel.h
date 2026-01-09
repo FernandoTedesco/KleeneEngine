@@ -26,4 +26,5 @@ private:
 
     void RefreshAssetLists();
     std::vector<std::string> ScanDirectory(const std::filesystem::path& directoryPath);
+    void Stylize();
 };

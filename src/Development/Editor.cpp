@@ -32,7 +32,9 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->gizmo = new Gizmo();
     this->editorGrid = new EditorGrid(50);
     this->currentMode = EditorMode::SELECTION;
-    this->editorUI = new EditorUI();
+
+    EditorIcons loadedIcons = this->LoadIcons();
+    this->editorUI = new EditorUI(loadedIcons);
 
     ImGui::CreateContext();
     ImPlot::CreateContext();
@@ -165,4 +167,46 @@ void Editor::RenderHighlight(Shader* highlightShader)
 	}
 	gizmo->Draw(camera, object->position, highlightShader, window);
     }
+}
+
+EditorIcons Editor::LoadIcons()
+{
+
+    std::filesystem::path iconPath = ResourceManager::FolderFinder("assets") / "assets/icons";
+    uint32_t selectionIconID =
+	resourceManager->CreateTexture("Icon_Selection", iconPath / "selection.png");
+    uint32_t deleteIconID = resourceManager->CreateTexture("Icon_Delete", iconPath / "delete.png");
+    uint32_t placementIconID =
+	resourceManager->CreateTexture("Icon_Placement", iconPath / "placement.png");
+    uint32_t scaleIconID = resourceManager->CreateTexture("Icon_Scale", iconPath / "scale.png");
+    uint32_t rotationIconID =
+	resourceManager->CreateTexture("Icon_Rotation", iconPath / "rotation.png");
+    uint32_t paintIconID = resourceManager->CreateTexture("Icon_Paint", iconPath / "paint.png");
+    EditorIcons icons;
+    if (auto tex = resourceManager->GetTexture(selectionIconID))
+    {
+	icons.moveIcon = (void*)(intptr_t)resourceManager->GetTexture(selectionIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(deleteIconID))
+    {
+	icons.deleteIcon = (void*)(intptr_t)resourceManager->GetTexture(deleteIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(placementIconID))
+    {
+	icons.placementIcon =
+	    (void*)(intptr_t)resourceManager->GetTexture(placementIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(scaleIconID))
+    {
+	icons.scaleIcon = (void*)(intptr_t)resourceManager->GetTexture(scaleIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(rotationIconID))
+    {
+	icons.rotationIcon = (void*)(intptr_t)resourceManager->GetTexture(rotationIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(paintIconID))
+    {
+	icons.paintIcon = (void*)(intptr_t)resourceManager->GetTexture(paintIconID)->GetID();
+    }
+    return icons;
 }

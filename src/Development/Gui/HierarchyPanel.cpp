@@ -3,8 +3,11 @@
 void HierarchyPanel::Draw(Scene* scene, int& selectedIndex)
 {
     float windowHeight = ImGui::GetIO().DisplaySize.y;
-    ImGui::SetNextWindowPos(ImVec2(0, 80.0));
-    ImGui::SetNextWindowSize(ImVec2(250, windowHeight - 80.0f));
+    float barHeight = 70.0f;
+    ImGui::SetNextWindowPos(ImVec2(0, barHeight));
+    ImGui::SetNextWindowSize(ImVec2(200, windowHeight - barHeight));
+
+    this->Stylize();
 
     ImGui::Begin("Hierarchy", nullptr,
 		 ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse);
@@ -25,4 +28,18 @@ void HierarchyPanel::Draw(Scene* scene, int& selectedIndex)
 	}
     }
     ImGui::End();
+    ImGui::PopStyleColor(6);
+}
+
+void HierarchyPanel::Stylize()
+{
+    ImVec4 fixedColor = ImVec4(0.05f, 0.2f, 0.05f, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, fixedColor);
+
+    ImGui::PushStyleColor(ImGuiCol_Header, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, fixedColor);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, fixedColor);
 }

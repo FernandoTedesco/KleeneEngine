@@ -5,7 +5,7 @@
 #include <filesystem>
 #include "Utils/MemoryTracker.h"
 #include "Utils/Telemetry.h"
-
+#include "EditorResources.h"
 class Window;
 class Scene;
 class SceneManager;
@@ -25,7 +25,7 @@ public:
     void BeginFrame();
     void EndFrame();
     void DrawEditorUI();
-
+    EditorIcons LoadIcons();
     EditorGrid* GetGrid()
     {
 	return editorGrid;

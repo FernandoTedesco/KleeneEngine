@@ -14,10 +14,11 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
     }
     float windowWidth = ImGui::GetIO().DisplaySize.x;
     float windowHeight = ImGui::GetIO().DisplaySize.y;
-    float sidebarWidth = 300.0f;
-    ImGui::SetNextWindowPos(ImVec2(windowWidth - sidebarWidth, 80.0f));
-    ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - 80.0f));
-
+    float sidebarWidth = 200.0f;
+    float barHeight = 70.0f;
+    ImGui::SetNextWindowPos(ImVec2(windowWidth - sidebarWidth, barHeight));
+    ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - barHeight));
+    this->Stylize();
     ImGui::Begin("Inspector", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
     if (selectedEntityIndex >= 0 && selectedEntityIndex < scene->gameObjects.size())
     {
@@ -51,7 +52,9 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
     {
 	ImGui::Text("No object selected");
     }
+
     ImGui::End();
+    ImGui::PopStyleColor(6);
 }
 
 void InspectorPanel::DrawTransform(GameObject* object)
@@ -210,4 +213,17 @@ void InspectorPanel::RefreshAssetLists()
     std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
     availableMeshes = ScanDirectory(currentPath / "assets/models");
     availableTextures = ScanDirectory(currentPath / "assets/textures");
+}
+
+void InspectorPanel::Stylize()
+{
+    ImVec4 fixedColor = ImVec4(0.05f, 0.2f, 0.05f, 1.0f);
+    ImGui::PushStyleColor(ImGuiCol_TitleBg, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_TitleBgActive, fixedColor);
+
+    ImGui::PushStyleColor(ImGuiCol_Header, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_HeaderHovered, fixedColor);
+
+    ImGui::PushStyleColor(ImGuiCol_Button, fixedColor);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, fixedColor);
 }

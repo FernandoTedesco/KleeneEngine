@@ -7,4 +7,7 @@ class HierarchyPanel
 {
 public:
     void Draw(Scene* scene, int& selectedEntityIndex);
+
+private:
+    void Stylize();
 };

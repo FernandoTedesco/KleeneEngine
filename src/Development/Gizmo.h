@@ -4,7 +4,7 @@
 #include "Graphics/Shader.h"
 #include "Core/Camera.h"
 #include "Core/Window.h"
-struct GameObject;
+class GameObject;
 enum class GizmoMode { TRANSLATE, ROTATE, SCALE };
 
 enum class GizmoAxis { NONE, X, Y, Z };

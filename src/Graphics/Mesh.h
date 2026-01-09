@@ -20,9 +20,7 @@ public:
     glm::vec3 boundsMax;
     void Draw();
     void SetupMesh();
-    void GenerateTerrain(int width, int depth);
     bool LoadOBJ(const std::filesystem::path filePath);
-    void UpdateTileUVs(int tileIndex, glm::vec2 newUVs[4]);
 
 private:
     unsigned int VAO, VBO, EBO;
