@@ -12,65 +12,52 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include "Components/MeshRenderer.h"
 #include "Resources/ResourceManager.h"
+#include "Core/Paths.h"
 EditorTools::EditorTools()
     : isDragging(false), currentAxis(GizmoAxis::NONE), draggingStartMousePosition(0.0f),
       draggingStartPosition(0.0f), draggingStartScale(1.0f), draggingStartRotation(0.0f)
 {
+    this->gizmo = new Gizmo();
+}
+EditorTools::~EditorTools()
+{
+    delete this->gizmo;
 }
 
-void EditorTools::UpdateTranslation(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-				    glm::vec3 rayDirection)
+void EditorTools::UpdateTranslation(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+				    glm::vec3 rayDirection, ResourceManager* resourceManager)
 {
-    if (selectedIndex == -1 || selectedIndex >= scene->gameObjects.size())
+    bool handledByGizmo = false;
+    GameObject* object = nullptr;
+    if (selectedIndex >= 0 && selectedIndex < scene->gameObjects.size())
     {
-	isDragging = false;
-	return;
-    }
-    GameObject* object = scene->gameObjects[selectedIndex];
-    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
-    {
-	currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
-
-	if (currentAxis != GizmoAxis::NONE)
+	object = scene->gameObjects[selectedIndex];
+	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
 	{
 	    isDragging = true;
 	    draggingStartPosition = object->position;
 	    ImVec2 mPos = ImGui::GetMousePos();
 	    draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
+	    handledByGizmo = true;
 	}
-    }
-    if (isDragging && ImGui::IsMouseDown(0))
-    {
-	ImVec2 currentMouse = ImGui::GetMousePos();
-	float deltaX = currentMouse.x - draggingStartMousePosition.x;
-	float deltaY = currentMouse.y - draggingStartMousePosition.y;
-
-	float sensitivity = 0.02f;
-
-	glm::vec3 newPos = draggingStartPosition;
-	if (currentAxis == GizmoAxis::X)
-	    newPos.x += deltaX * sensitivity;
-	if (currentAxis == GizmoAxis::Y)
-	    newPos.x -= deltaY * sensitivity;
-	if (currentAxis == GizmoAxis::Z)
-	    newPos.x += deltaY * sensitivity;
-
-	if (ImGui::GetIO().KeyCtrl)
-	{
-	    float gridSnap = 1.0f;
-	    if (currentAxis == GizmoAxis::X)
-		newPos.x = std::round(newPos.x / gridSnap);
-	    if (currentAxis == GizmoAxis::Y)
-		newPos.y = std::round(newPos.y / gridSnap);
-	    if (currentAxis == GizmoAxis::Z)
-		newPos.z = std::round(newPos.z / gridSnap);
-	}
-	object->position = newPos;
-    }
-    if (ImGui::IsMouseReleased(0))
+    } else
     {
 	isDragging = false;
-	currentAxis = GizmoAxis::NONE;
+    }
+    if (!handledByGizmo && !isDragging && ImGui::IsMouseClicked(0) &&
+	!ImGui::GetIO().WantCaptureMouse)
+    {
+	int hit = RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
+	if (hit != -1)
+	{
+	    selectedIndex = hit;
+	    Terminal::Log(LOG_INFO, "Selected Object ID: " + std::to_string(hit));
+	    object = scene->gameObjects[selectedIndex];
+	} else
+	{
+	    selectedIndex = -1;
+	    object = nullptr;
+	}
     }
 }
 
@@ -250,47 +237,118 @@ int EditorTools::RaycastScene(Scene* scene, ResourceManager* resourceManager, gl
 {
     float closestDistance = FLT_MAX;
     int hitIndex = -1;
-
     for (int i = 0; i < scene->gameObjects.size(); i++)
     {
 	GameObject* object = scene->gameObjects[i];
+	if (!object)
+	    continue;
 	glm::vec3 aabbMin, aabbMax;
 	MeshRenderer* renderer = object->GetComponent<MeshRenderer>();
-	if (renderer)
+
+	bool hasMesh = false;
+	if (renderer && renderer->meshID != 0)
 	{
 	    Mesh* mesh = resourceManager->GetMesh(renderer->meshID);
 	    if (mesh)
 	    {
 		aabbMin = object->position + (mesh->boundsMin * object->scale);
 		aabbMax = object->position + (mesh->boundsMax * object->scale);
-
-	    } else
-	    {
-		glm::vec3 halfSize = object->scale * 0.5f;
-		aabbMin = object->position - halfSize;
-		aabbMax = object->position + halfSize;
-	    }
-	    float distance = 0.0f;
-	    if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
-	    {
-		if (distance < closestDistance)
-		{
-		    closestDistance = distance;
-		    hitIndex = i;
-		}
+		hasMesh = true;
 	    }
 	}
-	if (hitIndex != -1)
+	if (!hasMesh)
 	{
-	    Terminal::Log(LOG_INFO, "Selected Object ID: " + std::to_string(hitIndex));
-	    return hitIndex;
+	    glm::vec3 halfSize = object->scale * 0.5f;
+	    aabbMin = object->position - halfSize;
+	    aabbMax = object->position + halfSize;
 	}
-	return -1;
+	float distance = 0.0f;
+	if (Math::RayAABBIntersection(rayOrigin, rayDirection, aabbMin, aabbMax, distance))
+	{
+	    if (distance < closestDistance)
+	    {
+		closestDistance = distance;
+		hitIndex = i;
+	    }
+	}
     }
-    return -1;
+    return hitIndex;
 }
 
 void EditorTools::DeleteObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
-			       glm::vec3 rayDirection)
+			       glm::vec3 rayDirection, ResourceManager* resourceManager)
 {
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	int hitIndex = RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
+
+	if (hitIndex != -1)
+	{
+	    GameObject* objectToRemove = scene->gameObjects[hitIndex];
+	    if (hitIndex == selectedIndex)
+	    {
+		selectedIndex - 1;
+	    } else if (hitIndex < selectedIndex)
+	    {
+		selectedIndex--;
+	    }
+	    scene->RemoveGameObject(objectToRemove);
+	    Terminal::Log(LOG_INFO, "Object Deleted");
+	}
+    }
+}
+
+void EditorTools::Placement(Scene* scene, int gridX, int gridZ, ResourceManager* resourceManager)
+{
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	std::string name = "Object_" + std::to_string(scene->gameObjects.size());
+	GameObject* newObject = scene->CreateGameObject(name);
+
+	newObject->position = glm::vec3((float)gridX + 0.5f, 0.0f, (float)gridZ + 0.5f);
+	newObject->scale = glm::vec3(1.0f);
+	newObject->rotation = glm::vec3(0.0f);
+
+	MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
+	// Default Cube setup
+	std::filesystem::path cubePath = Paths::Models / "cube.obj";
+	std::filesystem::path texturePath = Paths::Textures / "bricks.jpg";
+	uint32_t cubeID = resourceManager->CreateMesh("cube", cubePath.string());
+	meshRenderer->SetMesh(cubeID);
+
+	uint32_t defaultTextureID = resourceManager->CreateTexture("default", texturePath.string());
+
+	uint32_t defaultMaterialID =
+	    resourceManager->CreateMaterial("material_bricks", defaultTextureID);
+	meshRenderer->SetMaterial(defaultMaterialID);
+	meshRenderer->isVisible = true;
+
+	Terminal::Log(LOG_SUCCESS, "Empty Object Placed at: " + std::to_string(gridX) + ", " +
+				       std::to_string(gridZ));
+    }
+}
+
+void EditorTools::SelectObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+			       glm::vec3 rayDirection, ResourceManager* resourceManager)
+{
+    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+    {
+	int hit = RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
+	if (hit != -1)
+	{
+
+	    if (selectedIndex != hit)
+	    {
+		selectedIndex = hit;
+		Terminal::Log(LOG_INFO, "Selected Object ID:" + std::to_string(hit));
+	    }
+
+	} else
+	{
+	    if (selectedIndex != -1)
+	    {
+		selectedIndex = -1;
+	    }
+	}
+    }
 }

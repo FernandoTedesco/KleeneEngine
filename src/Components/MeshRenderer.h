@@ -15,11 +15,12 @@ public:
     bool isVisible;
     MeshRenderer()
     {
-	meshID = 0;
-	materialID = 0;
+	meshID = -1;
+	materialID = -1;
 	colorTint = glm::vec3(1.0f);
 	castShadows = true;
 	receiveShadows = true;
+	isVisible = true;
     }
     void SetMesh(uint32_t id)
     {

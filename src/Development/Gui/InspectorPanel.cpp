@@ -15,7 +15,7 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
     float windowWidth = ImGui::GetIO().DisplaySize.x;
     float windowHeight = ImGui::GetIO().DisplaySize.y;
     float sidebarWidth = 200.0f;
-    float barHeight = 70.0f;
+    float barHeight = 80.0f;
     ImGui::SetNextWindowPos(ImVec2(windowWidth - sidebarWidth, barHeight));
     ImGui::SetNextWindowSize(ImVec2(sidebarWidth, windowHeight - barHeight));
     this->Stylize();

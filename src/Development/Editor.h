@@ -6,6 +6,7 @@
 #include "Utils/MemoryTracker.h"
 #include "Utils/Telemetry.h"
 #include "EditorResources.h"
+#include "Development/EditorState.h"
 class Window;
 class Scene;
 class SceneManager;
@@ -34,6 +35,7 @@ public:
     bool debugWireframemode = false;
 
 private:
+    void CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
     // Core Pointers
     Window* window;
     Scene* scene;
@@ -43,9 +45,8 @@ private:
 
     // Editor Components
     EditorGrid* editorGrid;
-    Gizmo* gizmo;
     EditorTools* tools;
-    EditorMode currentMode;
+    EditorState state;
 
     // GUI modules
     EditorUI* editorUI;

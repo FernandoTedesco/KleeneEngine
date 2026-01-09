@@ -18,7 +18,7 @@
 #include "Components/Light.h"
 #include "Graphics/Material.h"
 #include "Gui/EditorUI.h"
-
+#include "Development/EditorState.h"
 #include "Terminal.h"
 Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera* camera,
 	       ResourceManager* resourceManager)
@@ -29,9 +29,9 @@ Editor::Editor(Window* window, Scene* scene, SceneManager* sceneManager, Camera*
     this->camera = camera;
     this->resourceManager = resourceManager;
 
-    this->gizmo = new Gizmo();
     this->editorGrid = new EditorGrid(50);
-    this->currentMode = EditorMode::SELECTION;
+    this->state.currentMode = EditorMode::SELECTION;
+    this->tools = new EditorTools();
 
     EditorIcons loadedIcons = this->LoadIcons();
     this->editorUI = new EditorUI(loadedIcons);
@@ -57,7 +57,6 @@ Editor::~Editor()
     delete this->editorUI;
     delete this->tools;
     delete this->editorGrid;
-    delete this->gizmo;
 }
 
 void Editor::BeginFrame()
@@ -99,7 +98,9 @@ void Editor::DrawEditorUI()
 	Terminal::Log(LOG_SUCCESS, "Scene Saved: " + fullPath);
     };
 
-    editorUI->Render(scene, resourceManager, selectedEntityIndex, onSaveAction, onLoadAction);
+    // lambda stuff tbr
+    editorUI->Render(scene, resourceManager, selectedEntityIndex, onSaveAction, onLoadAction,
+		     state);
 
     float mouseX = ImGui::GetIO().MousePos.x;
     float mouseY = ImGui::GetIO().MousePos.y;
@@ -112,33 +113,14 @@ void Editor::DrawEditorUI()
     glm::vec3 rayDirection =
 	glm::normalize(glm::vec3(worldPosition) / worldPosition.w - camera->GetCameraPos());
     glm::vec3 rayOrigin = camera->GetCameraPos();
-
-    if (currentMode == EditorMode::TRANSLATE)
-    {
-	tools->UpdateTranslation(scene, selectedEntityIndex, rayOrigin, rayDirection);
-    }
-    if (currentMode == EditorMode::RESIZE)
-    {
-	tools->UpdateScale(scene, selectedEntityIndex, rayOrigin, rayDirection);
-    } else if (currentMode == EditorMode::ROTATION)
-    {
-	tools->UpdateRotation(scene, selectedEntityIndex, rayOrigin, rayDirection);
-    } else if (currentMode == EditorMode::DELETION)
-    {
-	tools->DeleteObject(scene, selectedEntityIndex, rayOrigin, rayDirection);
-    } else if (currentMode == EditorMode::SELECTION)
-    {
-	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
-	{
-	    int hit = tools->RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
-	    if (hit != -1)
-		selectedEntityIndex = hit;
-	}
-    }
+    CheckToolState(rayOrigin, rayDirection);
 }
 
 void Editor::RenderHighlight(Shader* highlightShader)
 {
+
+    if (state.currentMode == EditorMode::DELETION || state.currentMode == EditorMode::PLACEMENT)
+	return;
     if (highlightShader)
     {
 	highlightShader->Use();
@@ -146,7 +128,7 @@ void Editor::RenderHighlight(Shader* highlightShader)
 	{
 	    if (object->GetComponent<Light>())
 	    {
-		gizmo->DrawLightIcon(camera, object->position, highlightShader, window);
+		tools->gizmo->DrawLightIcon(camera, object->position, highlightShader, window);
 	    }
 	}
     }
@@ -165,7 +147,7 @@ void Editor::RenderHighlight(Shader* highlightShader)
 		highlightShader->SetMat4("model", model);
 	    }
 	}
-	gizmo->Draw(camera, object->position, highlightShader, window);
+	tools->gizmo->Draw(camera, object->position, highlightShader, window);
     }
 }
 
@@ -173,19 +155,35 @@ EditorIcons Editor::LoadIcons()
 {
 
     std::filesystem::path iconPath = ResourceManager::FolderFinder("assets") / "assets/icons";
+
     uint32_t selectionIconID =
 	resourceManager->CreateTexture("Icon_Selection", iconPath / "selection.png");
+
     uint32_t deleteIconID = resourceManager->CreateTexture("Icon_Delete", iconPath / "delete.png");
+
     uint32_t placementIconID =
 	resourceManager->CreateTexture("Icon_Placement", iconPath / "placement.png");
+
+    uint32_t translateIconID =
+	resourceManager->CreateTexture("Icon_Translate", iconPath / "translate.png");
+
     uint32_t scaleIconID = resourceManager->CreateTexture("Icon_Scale", iconPath / "scale.png");
+
     uint32_t rotationIconID =
 	resourceManager->CreateTexture("Icon_Rotation", iconPath / "rotation.png");
+
     uint32_t paintIconID = resourceManager->CreateTexture("Icon_Paint", iconPath / "paint.png");
     EditorIcons icons;
+
     if (auto tex = resourceManager->GetTexture(selectionIconID))
     {
-	icons.moveIcon = (void*)(intptr_t)resourceManager->GetTexture(selectionIconID)->GetID();
+	icons.selectionIcon =
+	    (void*)(intptr_t)resourceManager->GetTexture(selectionIconID)->GetID();
+    }
+    if (auto tex = resourceManager->GetTexture(translateIconID))
+    {
+	icons.translateIcon =
+	    (void*)(intptr_t)resourceManager->GetTexture(translateIconID)->GetID();
     }
     if (auto tex = resourceManager->GetTexture(deleteIconID))
     {
@@ -209,4 +207,40 @@ EditorIcons Editor::LoadIcons()
 	icons.paintIcon = (void*)(intptr_t)resourceManager->GetTexture(paintIconID)->GetID();
     }
     return icons;
+}
+
+void Editor::CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDirection)
+{
+    if (state.currentMode == EditorMode::TRANSLATE)
+    {
+	tools->UpdateTranslation(scene, selectedEntityIndex, rayOrigin, rayDirection,
+				 resourceManager);
+    } else if (state.currentMode == EditorMode::SCALE)
+    {
+	tools->UpdateScale(scene, selectedEntityIndex, rayOrigin, rayDirection);
+    } else if (state.currentMode == EditorMode::ROTATION)
+    {
+	tools->UpdateRotation(scene, selectedEntityIndex, rayOrigin, rayDirection);
+    } else if (state.currentMode == EditorMode::DELETION)
+    {
+	tools->DeleteObject(scene, selectedEntityIndex, rayOrigin, rayDirection, resourceManager);
+    } else if (state.currentMode == EditorMode::PLACEMENT)
+    {
+	if (std::abs(rayDirection.y) > 0.001f)
+	{
+	    float t = -rayOrigin.y / rayDirection.y;
+	    if (t > 0.0f)
+	    {
+		glm::vec3 hitPoint = rayOrigin + rayDirection * t;
+		int gridX = (int)std::floor(hitPoint.x);
+		int gridZ = (int)std::floor(hitPoint.z);
+
+		tools->Placement(scene, gridX, gridZ, resourceManager);
+	    }
+	}
+    } else if (state.currentMode == EditorMode::SELECTION)
+    {
+
+	tools->SelectObject(scene, selectedEntityIndex, rayOrigin, rayDirection, resourceManager);
+    }
 }

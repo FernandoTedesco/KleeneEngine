@@ -3,7 +3,7 @@
 void HierarchyPanel::Draw(Scene* scene, int& selectedIndex)
 {
     float windowHeight = ImGui::GetIO().DisplaySize.y;
-    float barHeight = 70.0f;
+    float barHeight = 80.0f;
     ImGui::SetNextWindowPos(ImVec2(0, barHeight));
     ImGui::SetNextWindowSize(ImVec2(200, windowHeight - barHeight));
 
@@ -18,15 +18,18 @@ void HierarchyPanel::Draw(Scene* scene, int& selectedIndex)
 	GameObject* object = scene->gameObjects[i];
 	if (!object)
 	    continue;
+
+	ImGui::PushID(object);
 	std::string label = object->name.empty() ? "Object " + std::to_string(i) : object->name;
-	label += "##" + std::to_string(i);
 
 	bool isSelected = (selectedIndex == i);
 	if (ImGui::Selectable(label.c_str(), isSelected))
 	{
 	    selectedIndex = i;
 	}
+	ImGui::PopID();
     }
+
     ImGui::End();
     ImGui::PopStyleColor(6);
 }

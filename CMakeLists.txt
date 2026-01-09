@@ -30,6 +30,7 @@ ${CMAKE_SOURCE_DIR}/src/Core/Window.cpp
 ${CMAKE_SOURCE_DIR}/src/Core/Engine.cpp
 ${CMAKE_SOURCE_DIR}/src/Core/Camera.cpp
 ${CMAKE_SOURCE_DIR}/src/Core/Input.cpp
+${CMAKE_SOURCE_DIR}/src/Core/Paths.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Shader.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Mesh.cpp
 ${CMAKE_SOURCE_DIR}/src/Graphics/Texture.cpp

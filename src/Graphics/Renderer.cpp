@@ -85,8 +85,7 @@ void Renderer::PassShadowMap(Scene* scene, Camera* camera, Window* window,
 	if (!object->isActive)
 	    continue;
 	MeshRenderer* meshRenderer = object->GetComponent<MeshRenderer>();
-	if (meshRenderer && meshRenderer->meshID != 0 && meshRenderer->castShadows &&
-	    meshRenderer->isVisible)
+	if (meshRenderer && meshRenderer->castShadows && meshRenderer->isVisible)
 	{
 	    DrawMesh(scene, meshRenderer, resourceManager, shadowShader, true);
 	}
@@ -151,6 +150,7 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
     frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
     mainShader->Use();
+    PrepareScene(camera, mainShader, window);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE1);
@@ -170,7 +170,7 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
 	if (!object->isActive)
 	    continue;
 	MeshRenderer* meshRenderer = object->GetComponent<MeshRenderer>();
-	if (meshRenderer && meshRenderer->meshID != 0 && meshRenderer->isVisible)
+	if (meshRenderer && meshRenderer->isVisible)
 	{
 	    DrawMesh(scene, meshRenderer, resourceManager, mainShader, false);
 	}
@@ -223,6 +223,15 @@ void Renderer::DrawMesh(Scene* scene, MeshRenderer* meshRenderer, ResourceManage
     {
 	if (material)
 	{
+	    glActiveTexture(GL_TEXTURE0);
+	    if (material->diffuseMap)
+	    {
+		glBindTexture(GL_TEXTURE_2D, material->diffuseMap->GetID());
+	    } else
+	    {
+		glBindTexture(GL_TEXTURE_2D, 0);
+	    }
+	    shader->SetInt("material.diffuse", 0);
 	    material->Use(shader);
 	    shader->SetVec3("material.color", meshRenderer->colorTint);
 	    shader->SetVec2("material.tiling", meshRenderer->textureTiling);
@@ -243,4 +252,6 @@ void Renderer::DrawMesh(Scene* scene, MeshRenderer* meshRenderer, ResourceManage
 	shader->SetMat4("model", modelMatrix);
     }
     mesh->Draw();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }

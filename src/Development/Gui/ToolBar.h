@@ -15,12 +15,13 @@ public:
 
 private:
     void* iconSelection = nullptr;
-    void* iconMove = nullptr;
+    void* iconTranslate = nullptr;
+    void* iconPlacement = nullptr;
     void* iconRotation = nullptr;
     void* iconScale = nullptr;
     void* iconDelete = nullptr;
     void* iconPaint = nullptr;
-    void DrawModesButton(void* iconID, EditorState& state);
+    bool DrawModesButton(void* iconID, bool isActive);
     char saveBuffer[64] = "File";
     char loadBuffer[64] = "File";
 

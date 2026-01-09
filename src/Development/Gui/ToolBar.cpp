@@ -1,11 +1,12 @@
 #include "ToolBar.h"
 #include "Core/Window.h"
+#include "Development/Terminal.h"
 
 void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveRequest,
 		   std::function<void(const char*)> onLoadRequest, EditorState& state)
 {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImVec2((float)windowWidth, 70.0f));
+    ImGui::SetNextWindowSize(ImVec2((float)windowWidth, 80.0f));
 
     Stylize();
     ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -32,17 +33,53 @@ void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveReq
 	}
 	ImGui::EndMenuBar();
 	ImGui::Spacing();
-	DrawModesButton(iconSelection, state);
+	if (ImGui::IsKeyPressed(ImGuiKey_3))
+	{
+	    state.currentMode = EditorMode::PLACEMENT;
+	}
+
+	// IF BUTTON CLICK
+	if (DrawModesButton(iconSelection, state.currentMode == EditorMode::SELECTION))
+	{
+	    state.currentMode = EditorMode::SELECTION;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Selection");
+	}
 	ImGui::SameLine();
-	DrawModesButton(iconDelete, state);
+	if (DrawModesButton(iconDelete, state.currentMode == EditorMode::DELETION))
+	{
+	    state.currentMode = EditorMode::DELETION;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Deletion");
+	}
 	ImGui::SameLine();
-	DrawModesButton(iconRotation, state);
+	if (DrawModesButton(iconPlacement, state.currentMode == EditorMode::PLACEMENT))
+	{
+	    state.currentMode = EditorMode::PLACEMENT;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Placement");
+	}
 	ImGui::SameLine();
-	DrawModesButton(iconScale, state);
+	if (DrawModesButton(iconTranslate, state.currentMode == EditorMode::TRANSLATE))
+	{
+	    state.currentMode = EditorMode::TRANSLATE;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Translation");
+	}
 	ImGui::SameLine();
-	DrawModesButton(iconDelete, state);
+	if (DrawModesButton(iconRotation, state.currentMode == EditorMode::ROTATION))
+	{
+	    state.currentMode = EditorMode::ROTATION;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Rotation");
+	}
 	ImGui::SameLine();
-	DrawModesButton(iconPaint, state);
+	if (DrawModesButton(iconScale, state.currentMode == EditorMode::SCALE))
+	{
+	    state.currentMode = EditorMode::SCALE;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Scale");
+	}
+	ImGui::SameLine();
+	if (DrawModesButton(iconPaint, state.currentMode == EditorMode::PAINT))
+	{
+	    state.currentMode = EditorMode::PAINT;
+	    Terminal::Log(LOG_INFO, "Mode Changed to: Paint");
+	}
     }
 
     ImGui::End();
@@ -117,22 +154,32 @@ void ToolBar::DrawLoadModal(std::function<void(const char*)> onConfirmLoad)
 void ToolBar::SetIcons(const EditorIcons& icons)
 {
     iconSelection = icons.selectionIcon;
-    iconMove = icons.moveIcon;
+    iconDelete = icons.deleteIcon;
+    iconPlacement = icons.placementIcon;
+    iconTranslate = icons.translateIcon;
     iconRotation = icons.rotationIcon;
     iconScale = icons.scaleIcon;
-    iconDelete = icons.deleteIcon;
     iconPaint = icons.paintIcon;
 }
-void ToolBar::DrawModesButton(void* iconID, EditorState& state)
+bool ToolBar::DrawModesButton(void* iconID, bool isActive)
 {
     if (!iconID)
-	return;
+	return false;
 
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
-    if (ImGui::ImageButton("##modeBtn", (ImTextureID)iconID, ImVec2(32, 32)))
+    ImGui::PushID(iconID);
+    if (isActive)
     {
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.2f, 0.6f, 0.2f, 1.0f));
+    } else
+    {
+	ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
     }
+    bool clicked = ImGui::ImageButton("##btn", (ImTextureID)iconID, ImVec2(32, 32), ImVec2(0, 1),
+				      ImVec2(1, 0));
+
     ImGui::PopStyleColor();
+    ImGui::PopID();
+    return clicked;
 }
 void ToolBar::Stylize()
 {

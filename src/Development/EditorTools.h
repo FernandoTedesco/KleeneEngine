@@ -10,33 +10,23 @@ class Window;
 class ResourceManager;
 class EditorGrid;
 
-enum class EditorMode {
-    SELECTION = 1,
-    DELETION = 2,
-    PLACEMENT = 3,
-    TRANSLATE = 4,
-    RESIZE = 5,
-    ROTATION = 6,
-    PAINT = 7
-};
-
 class EditorTools
 {
 public:
     EditorTools();
-    ~EditorTools() = default;
+    ~EditorTools();
     Gizmo* gizmo;
-    void UpdateTranslation(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-			   glm::vec3 rayDirection);
+    void UpdateTranslation(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+			   glm::vec3 rayDirection, ResourceManager* resourceManager);
     void UpdateRotation(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
 			glm::vec3 rayDirection);
     void UpdateScale(Scene* scene, int selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    void SelectObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
+		      ResourceManager* resourceManager);
+    void Placement(Scene* scene, int gridX, int gridZ, ResourceManager* ResourceManager);
 
-    void PlaceObject(Scene* scene, ResourceManager* resourceManager, int gridX, int gridZ,
-		     const std::vector<std::string>& meshes, int meshIndex,
-		     const std::vector<std::string>& textures, int textureIndex);
-    void DeleteObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
-		      glm::vec3 rayDirection);
+    void DeleteObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
+		      ResourceManager* resourceManager);
 
     void PaintTerrain(Scene* scene, int selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
 		      ResourceManager* resourceManager, int atlasRows, int atlasCols, int tileX,

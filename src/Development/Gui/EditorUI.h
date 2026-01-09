@@ -24,14 +24,13 @@ public:
 
 public:
     void Render(Scene* scene, ResourceManager* resourceManager, int& selectedIndex,
-		std::function<void(const char*)> onSave, std::function<void(const char*)> onLoad);
+		std::function<void(const char*)> onSave, std::function<void(const char*)> onLoad,
+		EditorState& state);
 
 private:
     ToolBar* toolBar;
     HierarchyPanel* hierarchyPanel;
     InspectorPanel* inspectorPanel;
-
-    EditorState editorState;
 
     EditorLayoutState layoutState;
 
