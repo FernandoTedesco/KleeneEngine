@@ -1,9 +1,13 @@
 #include "ParticleManager.h"
 #include <glad/glad.h>
 #include <vector>
+
+ParticleManager* ParticleManager::instance = nullptr;
+
 ParticleManager::ParticleManager(Shader* shader, unsigned int textureID, unsigned int amount)
     : shader(shader), textureID(textureID), amount(amount)
 {
+    instance = this;
     this->init();
     this->particles.resize(amount);
 }
@@ -65,13 +69,8 @@ void ParticleManager::init()
     glVertexAttribDivisor(2, 1);
     glBindVertexArray(0);
 }
-void ParticleManager::Update(float dt, unsigned int newParticles, glm::vec3 offset)
+void ParticleManager::Simulate(float dt)
 {
-    for (unsigned int i = 0; i < newParticles; ++i)
-    {
-	int unusedParticle = firstUnusedParticle();
-	respawnParticle(particles[unusedParticle], offset);
-    }
     for (unsigned int i = 0; i < amount; ++i)
     {
 	Particle& p = particles[i];
@@ -81,6 +80,15 @@ void ParticleManager::Update(float dt, unsigned int newParticles, glm::vec3 offs
 	    p.Position -= p.Velocity * dt;
 	    p.Color.a -= dt * 2.5f;
 	}
+    }
+}
+
+void ParticleManager::SpawnParticles(unsigned int count, glm::vec3 position)
+{
+    for (unsigned int i = 0; i < count; ++i)
+    {
+	int unusedParticle = firstUnusedParticle();
+	respawnParticle(particles[unusedParticle], position);
     }
 }
 

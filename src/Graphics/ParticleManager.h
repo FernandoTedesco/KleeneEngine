@@ -12,9 +12,11 @@ struct Particle {
 class ParticleManager
 {
 public:
+    static ParticleManager* instance;
     ParticleManager(Shader* shader, unsigned int textureID, unsigned int amount);
     ~ParticleManager();
-    void Update(float dt, unsigned int newParticles, glm::vec3 offset);
+    void Simulate(float dt);
+    void SpawnParticles(unsigned int count, glm::vec3 position);
     void Draw();
 
 private:

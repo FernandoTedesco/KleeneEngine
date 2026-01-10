@@ -59,6 +59,7 @@ ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/PlayerController.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/SpriteRenderer.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/Terrain.cpp
+${CMAKE_SOURCE_DIR}/src/Components/ParticleSystem.cpp
 
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/EditorUI.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/ToolBar.cpp

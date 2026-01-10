@@ -1,9 +1,12 @@
 #include "InspectorPanel.h"
+
 #include "Components/MeshRenderer.h"
 #include "Components/PlayerController.h"
 #include "Components/Terrain.h"
 #include "Components/SpriteRenderer.h"
 #include "Components/Light.h"
+#include "Components/ParticleSystem.h"
+
 #include "Graphics/Material.h"
 #include <iostream>
 #include <cstring>
@@ -44,6 +47,7 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
 	    DrawTerrain(object);
 	    DrawMeshRenderer(object, resourceManager);
 	    DrawLight(object);
+	    DrawParticleSystem(object);
 	    // DrawPlayerController(object);
 	    // DrawSpriteRenderer(object);
 	    ImGui::Separator();
@@ -88,6 +92,16 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 	return;
     if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
     {
+	if (ImGui::BeginPopupContextItem("MeshRendererCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<MeshRenderer>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
 	bool controlledByTerrain = (object->GetComponent<Terrain>() != nullptr);
 	if (controlledByTerrain)
 	{
@@ -179,6 +193,17 @@ void InspectorPanel::DrawTerrain(GameObject* object)
 	return;
     if (ImGui::CollapsingHeader("Terrain Generator", ImGuiTreeNodeFlags_DefaultOpen))
     {
+	if (ImGui::BeginPopupContextItem("TerrainCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<Terrain>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+
 	int w = terrain->width;
 	int d = terrain->depth;
 	float s = terrain->tileSize;
@@ -220,6 +245,10 @@ void InspectorPanel::DrawAddComponentButton(GameObject* object)
 	{
 	    object->AddComponent<Terrain>();
 	}
+	if (!object->GetComponent<ParticleSystem>() && ImGui::MenuItem("ParticleSystem"))
+	{
+	    object->AddComponent<ParticleSystem>();
+	}
 	ImGui::EndPopup();
     }
 }
@@ -231,6 +260,17 @@ void InspectorPanel::DrawLight(GameObject* object)
 
     if (ImGui::CollapsingHeader("Light Component", ImGuiTreeNodeFlags_DefaultOpen))
     {
+	if (ImGui::BeginPopupContextItem("LightCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<Light>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+
 	const char* types[] = {"Directional", "Point", "Spot"};
 	int currentType = (int)light->type;
 	if (ImGui::Combo("Type", &currentType, types, 3))
@@ -292,4 +332,27 @@ void InspectorPanel::Stylize()
 
     ImGui::PushStyleColor(ImGuiCol_Button, fixedColor);
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, fixedColor);
+}
+
+void InspectorPanel::DrawParticleSystem(GameObject* object)
+{
+    ParticleSystem* particleSystem = object->GetComponent<ParticleSystem>();
+    if (!particleSystem)
+	return;
+    if (ImGui::CollapsingHeader("Particle System", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	if (ImGui::BeginPopupContextItem("ParticleSystemCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<ParticleSystem>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+	ImGui::DragFloat("Spawn Rate", &particleSystem->spawnRate, 0.5f, 0.0f, 500.0f);
+	ImGui::DragFloat3("Offset", &particleSystem->offset[0], 0.1f);
+	ImGui::Text("Active particles managed by the Global System");
+    }
 }

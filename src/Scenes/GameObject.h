@@ -18,6 +18,19 @@ public:
     glm::vec3 scale;
     GameObject();
     ~GameObject();
+    template <typename T> void RemoveComponent()
+    {
+	for (size_t i = 0; i < components.size(); i++)
+	{
+	    T* componentFound = dynamic_cast<T*>(components[i]);
+	    if (componentFound != nullptr)
+	    {
+		components.erase(components.begin() + i);
+		delete componentFound;
+		return;
+	    }
+	}
+    }
     uint32_t GetID() const
     {
 	return id;

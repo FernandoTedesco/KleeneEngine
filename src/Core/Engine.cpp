@@ -67,7 +67,7 @@ void Engine::Update(float dt)
     {
 	activeScene->Update(dt);
     }
-    particleManager->Update(dt, 2, glm::vec3(0.0, 1.0f, 0.0f));
+    particleManager->Simulate(dt);
 }
 
 void Engine::Run()
