@@ -1,5 +1,8 @@
 #include "InspectorPanel.h"
 #include "Components/MeshRenderer.h"
+#include "Components/PlayerController.h"
+#include "Components/Terrain.h"
+#include "Components/SpriteRenderer.h"
 #include "Components/Light.h"
 #include "Graphics/Material.h"
 #include <iostream>
@@ -38,9 +41,13 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
 	    ImGui::Separator();
 
 	    DrawTransform(object);
+	    DrawTerrain(object);
 	    DrawMeshRenderer(object, resourceManager);
 	    DrawLight(object);
-
+	    // DrawPlayerController(object);
+	    // DrawSpriteRenderer(object);
+	    ImGui::Separator();
+	    DrawAddComponentButton(object);
 	    ImGui::Separator();
 	    if (ImGui::Button("Delete Object", ImVec2(-1, 0)))
 	    {
@@ -77,20 +84,25 @@ void InspectorPanel::DrawTransform(GameObject* object)
 void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resourceManager)
 {
     MeshRenderer* meshRenderer = object->GetComponent<MeshRenderer>();
-    bool hasMesh = (meshRenderer != nullptr);
-    if (ImGui::Checkbox("Mesh Renderer", &hasMesh))
+    if (!meshRenderer)
+	return;
+    if (ImGui::CollapsingHeader("Mesh Renderer", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	if (hasMesh && !meshRenderer)
-	    object->AddComponent<MeshRenderer>();
-    }
-    if (meshRenderer)
-    {
-	if (!availableMeshes.empty())
+	bool controlledByTerrain = (object->GetComponent<Terrain>() != nullptr);
+	if (controlledByTerrain)
+	{
+	    ImGui::TextDisabled("Mesh Source: Terrain");
+	    ImGui::SameLine();
+	    ImGui::TextDisabled("(Locked)");
+	}
+	if (!availableMeshes.empty() && !controlledByTerrain)
 	{
 	    if (ImGui::Combo(
 		    "Mesh Asset", &selectedMeshIndex,
 		    [](void* data, int index, const char** out_text) {
 			auto* vec = static_cast<std::vector<std::string>*>(data);
+			if (!vec || index < 0 || index >= vec->size())
+			    return false;
 			if (index < 0 || index >= vec->size())
 			    return false;
 			*out_text = vec->at(index).c_str();
@@ -98,17 +110,17 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 		    },
 		    &availableMeshes, (int)availableMeshes.size()))
 	    {
-	    }
-	    std::filesystem::path root = ResourceManager::FolderFinder("assets");
-	    std::filesystem::path path =
-		root / "assets/models" / availableMeshes[selectedMeshIndex];
+		std::filesystem::path root = ResourceManager::FolderFinder("assets");
+		std::filesystem::path path =
+		    root / "assets/models" / availableMeshes[selectedMeshIndex];
 
-	    uint32_t newId =
-		resourceManager->CreateMesh(availableMeshes[selectedMeshIndex], path.string());
-	    ;
-	    meshRenderer->SetMesh(newId);
-	    if (object->name.empty() || object->name.find("Object") != std::string::npos)
-		object->name = availableMeshes[selectedMeshIndex];
+		uint32_t newId =
+		    resourceManager->CreateMesh(availableMeshes[selectedMeshIndex], path.string());
+		;
+		meshRenderer->SetMesh(newId);
+		if (object->name.empty() || object->name.find("Object") != std::string::npos)
+		    object->name = availableMeshes[selectedMeshIndex];
+	    }
 	}
 	Material* material = resourceManager->GetMaterial(meshRenderer->materialID);
 	if (material)
@@ -125,6 +137,8 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 
 	    if (!availableTextures.empty())
 	    {
+		if (selectedTextureIndex < 0 || selectedTextureIndex >= availableTextures.size())
+		    selectedTextureIndex = 0;
 		bool textureComboOpen = ImGui::Combo(
 		    "Diffuse Map", &selectedTextureIndex,
 		    [](void* data, int index, const char** out_text) {
@@ -132,10 +146,10 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 			    static_cast<std::vector<std::string>*>(data);
 			if (index < 0 || index >= (int)vector->size())
 			    return false;
-			*out_text = vector->at(index).c_str();
+			*out_text = (*vector)[index].c_str(); //!!!!!
 			return true;
 		    },
-		    &selectedTextureIndex, (int)availableTextures.size());
+		    &availableTextures, (int)availableTextures.size());
 
 		if (textureComboOpen)
 		{
@@ -155,36 +169,88 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
     }
 }
 
+void InspectorPanel::DrawTerrain(GameObject* object)
+{
+    Terrain* terrain = object->GetComponent<Terrain>();
+    if (!terrain)
+	return;
+
+    if (!terrain)
+	return;
+    if (ImGui::CollapsingHeader("Terrain Generator", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	int w = terrain->width;
+	int d = terrain->depth;
+	float s = terrain->tileSize;
+
+	bool changed = false;
+	if (ImGui::DragInt("Width", &w, 1, 2, 256))
+	    changed = true;
+	if (ImGui::DragInt("Depth", &d, 1, 2, 256))
+	    changed = true;
+	if (ImGui::DragFloat("Tile Size", &s, 0.1, 0.1, 100.0f))
+	    changed = true;
+	if (changed)
+	{
+	    terrain->InitializeGrid(w, d, s);
+	}
+	if (ImGui::Button("Force Rebuild Mesh"))
+	{
+	    terrain->isDirty = true;
+	}
+	ImGui::Text("Vertices: %d", (w * d) * 4);
+    }
+}
+
+void InspectorPanel::DrawAddComponentButton(GameObject* object)
+{
+    if (ImGui::Button("Add Component", ImVec2(-1, 0)))
+	ImGui::OpenPopup("AddComponentPopup");
+    if (ImGui::BeginPopup("AddComponentPopup"))
+    {
+	if (!object->GetComponent<MeshRenderer>() && ImGui::MenuItem("Mesh Renderer"))
+	{
+	    object->AddComponent<MeshRenderer>();
+	}
+	if (!object->GetComponent<Light>() && ImGui::MenuItem("Light"))
+	{
+	    object->AddComponent<Light>();
+	}
+	if (!object->GetComponent<Terrain>() && ImGui::MenuItem("Terrain"))
+	{
+	    object->AddComponent<Terrain>();
+	}
+	ImGui::EndPopup();
+    }
+}
 void InspectorPanel::DrawLight(GameObject* object)
 {
     Light* light = object->GetComponent<Light>();
-    bool hasLight = (light != nullptr);
+    if (!light)
+	return;
 
-    if (ImGui::Checkbox("Light Component", &hasLight))
+    if (ImGui::CollapsingHeader("Light Component", ImGuiTreeNodeFlags_DefaultOpen))
     {
-	if (light)
+	const char* types[] = {"Directional", "Point", "Spot"};
+	int currentType = (int)light->type;
+	if (ImGui::Combo("Type", &currentType, types, 3))
 	{
-	    const char* types[] = {"Directional", "Point", "Spot"};
-	    int currentType = (int)light->type;
-	    if (ImGui::Combo("Type", &currentType, types, 3))
-	    {
-		light->type = (LightType)currentType;
-	    }
-	    ImGui::ColorEdit3("Color", &light->color[0]);
-	    ImGui::DragFloat("Intensity", &light->intensity, 0.1f, 0.0f, 100.0f);
+	    light->type = (LightType)currentType;
+	}
+	ImGui::ColorEdit3("Color", &light->color[0]);
+	ImGui::DragFloat("Intensity", &light->intensity, 0.1f, 0.0f, 100.0f);
 
-	    if (light->type != LightType::Directional)
-	    {
-		ImGui::Text("Attenuation");
-		ImGui::DragFloat("Linear", &light->linear, 0.001f, 0.0f, 1.0f, "%.4f");
-		ImGui::DragFloat("Quadratic", &light->quadratic, 0.001f, 0.0f, 1.0f, "%.4f");
-	    }
-	    if (light->type == LightType::Spot)
-	    {
-		ImGui::Text("Spot Angles");
-		ImGui::DragFloat("Inner CutOff", &light->cutOff, 0.5f, 0.0f, 180.0f);
-		ImGui::DragFloat("Outer CutOff", &light->outerCutOff, 0.5f, 0.0f, 180.0f);
-	    }
+	if (light->type != LightType::Directional)
+	{
+	    ImGui::Text("Attenuation");
+	    ImGui::DragFloat("Linear", &light->linear, 0.001f, 0.0f, 1.0f, "%.4f");
+	    ImGui::DragFloat("Quadratic", &light->quadratic, 0.001f, 0.0f, 1.0f, "%.4f");
+	}
+	if (light->type == LightType::Spot)
+	{
+	    ImGui::Text("Spot Angles");
+	    ImGui::DragFloat("Inner CutOff", &light->cutOff, 0.5f, 0.0f, 180.0f);
+	    ImGui::DragFloat("Outer CutOff", &light->outerCutOff, 0.5f, 0.0f, 180.0f);
 	}
     }
 }

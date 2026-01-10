@@ -23,7 +23,8 @@ private:
     void DrawTransform(GameObject* object);
     void DrawMeshRenderer(GameObject* object, ResourceManager* resourceManager);
     void DrawLight(GameObject* object);
-
+    void DrawTerrain(GameObject* object);
+    void DrawAddComponentButton(GameObject* object);
     void RefreshAssetLists();
     std::vector<std::string> ScanDirectory(const std::filesystem::path& directoryPath);
     void Stylize();

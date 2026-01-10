@@ -217,10 +217,10 @@ void Editor::CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDire
 				 resourceManager);
     } else if (state.currentMode == EditorMode::SCALE)
     {
-	tools->UpdateScale(scene, selectedEntityIndex, rayOrigin, rayDirection);
+	tools->UpdateScale(scene, selectedEntityIndex, rayOrigin, rayDirection, resourceManager);
     } else if (state.currentMode == EditorMode::ROTATION)
     {
-	tools->UpdateRotation(scene, selectedEntityIndex, rayOrigin, rayDirection);
+	tools->UpdateRotation(scene, selectedEntityIndex, rayOrigin, rayDirection, resourceManager);
     } else if (state.currentMode == EditorMode::DELETION)
     {
 	tools->DeleteObject(scene, selectedEntityIndex, rayOrigin, rayDirection, resourceManager);

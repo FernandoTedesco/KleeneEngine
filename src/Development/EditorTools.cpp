@@ -34,80 +34,58 @@ void EditorTools::UpdateTranslation(Scene* scene, int& selectedIndex, glm::vec3 
 	object = scene->gameObjects[selectedIndex];
 	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
 	{
-	    isDragging = true;
-	    draggingStartPosition = object->position;
-	    ImVec2 mPos = ImGui::GetMousePos();
-	    draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
-	    handledByGizmo = true;
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
+	    if (currentAxis != GizmoAxis::NONE)
+	    {
+		isDragging = true;
+		draggingStartPosition = object->position;
+		ImVec2 mPos = ImGui::GetMousePos();
+		draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
+		handledByGizmo = true;
+	    }
 	}
-    } else
-    {
-	isDragging = false;
     }
     if (!handledByGizmo && !isDragging && ImGui::IsMouseClicked(0) &&
 	!ImGui::GetIO().WantCaptureMouse)
     {
-	int hit = RaycastScene(scene, resourceManager, rayOrigin, rayDirection);
-	if (hit != -1)
+	SelectObject(scene, selectedIndex, rayOrigin, rayDirection, resourceManager);
+	if (selectedIndex != -1)
 	{
-	    selectedIndex = hit;
-	    Terminal::Log(LOG_INFO, "Selected Object ID: " + std::to_string(hit));
 	    object = scene->gameObjects[selectedIndex];
 	} else
 	{
-	    selectedIndex = -1;
 	    object = nullptr;
 	}
     }
-}
-
-void EditorTools::UpdateRotation(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-				 glm::vec3 rayDirection)
-{
-    if (selectedIndex == -1 || selectedIndex >= scene->gameObjects.size())
-    {
-	isDragging = false;
-	return;
-    }
-    GameObject* object = scene->gameObjects[selectedIndex];
-    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
-    {
-	currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
-
-	if (currentAxis != GizmoAxis::NONE)
-	{
-	    isDragging = true;
-	    draggingStartMousePosition = object->rotation;
-	    ImVec2 mPos = ImGui::GetMousePos();
-	    draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
-	}
-    }
-    if (isDragging && ImGui::IsMouseDown(0))
+    if (object && isDragging && ImGui::IsMouseDown(0))
     {
 	ImVec2 currentMouse = ImGui::GetMousePos();
 	float deltaX = currentMouse.x - draggingStartMousePosition.x;
 	float deltaY = currentMouse.y - draggingStartMousePosition.y;
+	float sensitivity = 0.02f;
 
-	float sensitivity = 0.5f;
-
-	glm::vec3 newRot = draggingStartPosition;
+	glm::vec3 newPos = draggingStartPosition;
 	if (currentAxis == GizmoAxis::X)
-	    newRot.z += deltaX * sensitivity;
+	    newPos.x += deltaX * sensitivity;
 	if (currentAxis == GizmoAxis::Y)
-	    newRot.x -= deltaY * sensitivity;
+	    newPos.y -= deltaY * sensitivity;
 	if (currentAxis == GizmoAxis::Z)
-	    newRot.y += deltaX * sensitivity;
+	    newPos.z += deltaY * sensitivity;
 
 	if (ImGui::GetIO().KeyCtrl)
 	{
-	    float angleSnap = 15.0f;
-	    newRot.x = std::round(newRot.x / angleSnap) * angleSnap;
-	    newRot.y = std::round(newRot.y / angleSnap) * angleSnap;
-	    newRot.z = std::round(newRot.z / angleSnap) * angleSnap;
+	    float gridSnap = 1.0f;
+	    if (currentAxis == GizmoAxis::X)
+		newPos.x = std::floor(newPos.x / gridSnap) + 0.5f;
+	    if (currentAxis == GizmoAxis::Y)
+		newPos.y = std::floor(newPos.y / gridSnap);
+	    if (currentAxis == GizmoAxis::Z)
+		newPos.z = std::floor(newPos.z / gridSnap) + 0.5f;
 	}
-	object->rotation = newRot;
-    }
 
+	object->SetPosition(newPos);
+	object->position = newPos;
+    }
     if (ImGui::IsMouseReleased(0))
     {
 	isDragging = false;
@@ -115,54 +93,138 @@ void EditorTools::UpdateRotation(Scene* scene, int selectedIndex, glm::vec3 rayO
     }
 }
 
-void EditorTools::UpdateScale(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-			      glm::vec3 rayDirection)
+void EditorTools::UpdateRotation(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+				 glm::vec3 rayDirection, ResourceManager* resourceManager)
 {
-    if (selectedIndex == -1 || selectedIndex >= scene->gameObjects.size())
+    bool handledByGizmo = false;
+    GameObject* object = nullptr;
+    if (selectedIndex >= 0 && selectedIndex < scene->gameObjects.size())
     {
-	isDragging = false;
-	return;
-    }
-    GameObject* object = scene->gameObjects[selectedIndex];
-    if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
-    {
-	currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
-
-	if (currentAxis != GizmoAxis::NONE)
+	object = scene->gameObjects[selectedIndex];
+	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
 	{
-	    isDragging = true;
-	    draggingStartScale = object->scale;
-	    ImVec2 mPos = ImGui::GetMousePos();
-	    draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
+	    if (currentAxis != GizmoAxis::NONE)
+	    {
+		isDragging = true;
+		draggingStartPosition = object->rotation;
+		ImVec2 mPos = ImGui::GetMousePos();
+		draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
+		handledByGizmo = true;
+	    }
 	}
     }
-    if (isDragging && ImGui::IsMouseDown(0))
+    if (!handledByGizmo && !isDragging && ImGui::IsMouseClicked(0) &&
+	!ImGui::GetIO().WantCaptureMouse)
+    {
+	SelectObject(scene, selectedIndex, rayOrigin, rayDirection, resourceManager);
+	if (selectedIndex != -1)
+	{
+	    object = scene->gameObjects[selectedIndex];
+	} else
+	{
+	    object = nullptr;
+	}
+    }
+    if (object && isDragging && ImGui::IsMouseDown(0))
     {
 	ImVec2 currentMouse = ImGui::GetMousePos();
 	float deltaX = currentMouse.x - draggingStartMousePosition.x;
 	float deltaY = currentMouse.y - draggingStartMousePosition.y;
+	float sensitivity = 0.5f;
 
+	glm::vec3 newRot = draggingStartPosition;
+	if (currentAxis == GizmoAxis::X)
+	    newRot.x -= deltaY * sensitivity;
+	if (currentAxis == GizmoAxis::Y)
+	    newRot.y -= deltaX * sensitivity;
+	if (currentAxis == GizmoAxis::Z)
+	    newRot.z -= deltaX * sensitivity;
+
+	if (ImGui::GetIO().KeyCtrl)
+	{
+	    float angleSnap = 15.0f;
+	    if (currentAxis == GizmoAxis::X)
+		newRot.x = std::floor(newRot.x / angleSnap) * angleSnap;
+	    if (currentAxis == GizmoAxis::Y)
+		newRot.y = std::floor(newRot.y / angleSnap) * angleSnap;
+	    if (currentAxis == GizmoAxis::Z)
+		newRot.z = std::floor(newRot.z / angleSnap) * angleSnap;
+	}
+
+	object->SetRotation(newRot);
+	object->rotation = newRot;
+    }
+    if (ImGui::IsMouseReleased(0))
+    {
+	isDragging = false;
+	currentAxis = GizmoAxis::NONE;
+    }
+}
+
+void EditorTools::UpdateScale(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+			      glm::vec3 rayDirection, ResourceManager* resourceManager)
+{
+    bool handledByGizmo = false;
+    GameObject* object = nullptr;
+    if (selectedIndex >= 0 && selectedIndex < scene->gameObjects.size())
+    {
+	object = scene->gameObjects[selectedIndex];
+	if (ImGui::IsMouseClicked(0) && !ImGui::GetIO().WantCaptureMouse)
+	{
+	    currentAxis = gizmo->CheckHover(rayOrigin, rayDirection, object->position, 1.0f);
+	    if (currentAxis != GizmoAxis::NONE)
+	    {
+		isDragging = true;
+		draggingStartPosition = object->scale;
+		ImVec2 mPos = ImGui::GetMousePos();
+		draggingStartMousePosition = glm::vec2(mPos.x, mPos.y);
+		handledByGizmo = true;
+	    }
+	}
+    }
+    if (!handledByGizmo && !isDragging && ImGui::IsMouseClicked(0) &&
+	!ImGui::GetIO().WantCaptureMouse)
+    {
+	SelectObject(scene, selectedIndex, rayOrigin, rayDirection, resourceManager);
+	if (selectedIndex != -1)
+	{
+	    object = scene->gameObjects[selectedIndex];
+	} else
+	{
+	    object = nullptr;
+	}
+    }
+    if (object && isDragging && ImGui::IsMouseDown(0))
+    {
+	ImVec2 currentMouse = ImGui::GetMousePos();
+	float deltaX = currentMouse.x - draggingStartMousePosition.x;
+	float deltaY = currentMouse.y - draggingStartMousePosition.y;
 	float sensitivity = 0.02f;
 
-	glm::vec3 newScale = draggingStartScale;
+	glm::vec3 newScale = draggingStartPosition;
 	if (currentAxis == GizmoAxis::X)
 	    newScale.x += deltaX * sensitivity;
 	if (currentAxis == GizmoAxis::Y)
 	    newScale.y -= deltaY * sensitivity;
 	if (currentAxis == GizmoAxis::Z)
 	    newScale.z += deltaY * sensitivity;
-	newScale = glm::max(newScale, glm::vec3(0.1f));
 
 	if (ImGui::GetIO().KeyCtrl)
 	{
 	    float scaleSnap = 0.5f;
-	    newScale.x = std::round(newScale.x / scaleSnap) * scaleSnap;
-	    newScale.y = std::round(newScale.y / scaleSnap) * scaleSnap;
-	    newScale.z = std::round(newScale.z / scaleSnap) * scaleSnap;
+	    if (currentAxis == GizmoAxis::X)
+		newScale.x = std::round(newScale.x / scaleSnap) * scaleSnap;
+	    if (currentAxis == GizmoAxis::Y)
+		newScale.y = std::round(newScale.y / scaleSnap) * scaleSnap;
+	    if (currentAxis == GizmoAxis::Z)
+		newScale.z = std::round(newScale.z / scaleSnap) * scaleSnap;
 	}
+	newScale = glm::max(newScale, glm::vec3(0.1f));
+
+	object->SetScale(newScale);
 	object->scale = newScale;
     }
-
     if (ImGui::IsMouseReleased(0))
     {
 	isDragging = false;

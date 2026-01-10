@@ -22,6 +22,7 @@ private:
     void* iconDelete = nullptr;
     void* iconPaint = nullptr;
     bool DrawModesButton(void* iconID, bool isActive);
+    void CheckKeys(EditorState& state);
     char saveBuffer[64] = "File";
     char loadBuffer[64] = "File";
 

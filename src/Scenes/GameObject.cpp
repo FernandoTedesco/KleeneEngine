@@ -49,7 +49,7 @@ glm::mat4 GameObject::GetModelMatrix()
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, position);
     glm::quat orientation = glm::quat(glm::radians(rotation));
-    glm::mat4(rotationMatrix) = glm::mat4_cast(orientation);
+    glm::mat4 rotationMatrix = glm::mat4_cast(orientation);
 
     model *= rotationMatrix;
     model = glm::scale(model, scale);

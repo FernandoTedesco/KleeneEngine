@@ -18,9 +18,10 @@ public:
     Gizmo* gizmo;
     void UpdateTranslation(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
 			   glm::vec3 rayDirection, ResourceManager* resourceManager);
-    void UpdateRotation(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-			glm::vec3 rayDirection);
-    void UpdateScale(Scene* scene, int selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection);
+    void UpdateRotation(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin,
+			glm::vec3 rayDirection, ResourceManager* ResourceManager);
+    void UpdateScale(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
+		     ResourceManager* resourceManager);
     void SelectObject(Scene* scene, int& selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
 		      ResourceManager* resourceManager);
     void Placement(Scene* scene, int gridX, int gridZ, ResourceManager* ResourceManager);

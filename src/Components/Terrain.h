@@ -8,6 +8,8 @@ class ResourceManager;
 
 class Terrain : public Component
 {
+    friend class InspectorPanel;
+
 public:
     Terrain();
     ~Terrain();

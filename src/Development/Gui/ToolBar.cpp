@@ -33,10 +33,7 @@ void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveReq
 	}
 	ImGui::EndMenuBar();
 	ImGui::Spacing();
-	if (ImGui::IsKeyPressed(ImGuiKey_3))
-	{
-	    state.currentMode = EditorMode::PLACEMENT;
-	}
+	ToolBar::CheckKeys(state);
 
 	// IF BUTTON CLICK
 	if (DrawModesButton(iconSelection, state.currentMode == EditorMode::SELECTION))
@@ -180,6 +177,38 @@ bool ToolBar::DrawModesButton(void* iconID, bool isActive)
     ImGui::PopStyleColor();
     ImGui::PopID();
     return clicked;
+}
+
+void ToolBar::CheckKeys(EditorState& state)
+{
+    if (ImGui::IsKeyPressed(ImGuiKey_1))
+    {
+	state.currentMode = EditorMode::SELECTION;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_2))
+    {
+	state.currentMode = EditorMode::DELETION;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_3))
+    {
+	state.currentMode = EditorMode::PLACEMENT;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_4))
+    {
+	state.currentMode = EditorMode::TRANSLATE;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_5))
+    {
+	state.currentMode = EditorMode::ROTATION;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_6))
+    {
+	state.currentMode = EditorMode::SCALE;
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_7))
+    {
+	state.currentMode = EditorMode::PAINT;
+    }
 }
 void ToolBar::Stylize()
 {
