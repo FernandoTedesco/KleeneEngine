@@ -8,6 +8,7 @@ ParticleManager::ParticleManager(Shader* shader, unsigned int textureID, unsigne
     : shader(shader), textureID(textureID), amount(amount)
 {
     instance = this;
+    this->lastUsedParticle = 0;
     this->init();
     this->particles.resize(amount);
 }
@@ -71,7 +72,7 @@ void ParticleManager::init()
 }
 void ParticleManager::Simulate(float dt)
 {
-    for (unsigned int i = 0; i < amount; ++i)
+    for (unsigned int i = 0; i < particles.size(); ++i)
     {
 	Particle& p = particles[i];
 	p.life -= dt;
@@ -97,9 +98,9 @@ void ParticleManager::Draw()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     shader->Use();
     std::vector<float> gpuData;
-    gpuData.reserve(amount * 7);
+    gpuData.reserve(particles.size() * 7);
     unsigned int activeCount = 0;
-    for (unsigned int i = 0; i < amount; ++i)
+    for (unsigned int i = 0; i < particles.size(); ++i)
     {
 	Particle& p = particles[i];
 	if (p.life > 0.0f)
@@ -133,4 +134,8 @@ ParticleManager::~ParticleManager()
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &quadVBO);
     glDeleteBuffers(1, &instanceVBO);
+    if (instance == this)
+    {
+	instance = nullptr;
+    }
 }

@@ -26,6 +26,8 @@
 #include "Components/MeshRenderer.h"
 #include "Components/Light.h"
 
+#include "Paths.h"
+
 Engine::Engine()
 {
 
@@ -56,6 +58,11 @@ Engine::Engine()
     terminal->SetEditorContext(editor);
 
     isRunning = true;
+
+    std::filesystem::path scenePath = Paths::Assets / "scenes/default2.Kleene";
+    //   Terminal::Log(LOG_INFO, "Path: " + scenePath.string());
+    SceneManager::LoadScene(scenePath.string(), *activeScene, resourceManager);
+
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");
 }
 
@@ -67,7 +74,10 @@ void Engine::Update(float dt)
     {
 	activeScene->Update(dt);
     }
-    particleManager->Simulate(dt);
+    if (particleManager != nullptr)
+    {
+	// particleManager->Simulate(dt);
+    }
 }
 
 void Engine::Run()

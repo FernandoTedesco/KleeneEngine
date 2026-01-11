@@ -23,6 +23,9 @@ uint32_t ResourceManager::CreateMesh(const std::string& name, std::filesystem::p
 	newMesh->LoadOBJ(filePath);
 	newMesh->SetupMesh();
 	meshNames.push_back(name);
+
+	meshPaths.push_back(filePath.string());
+
 	meshVector.push_back(newMesh);
 	id = meshVector.size() - 1;
 	meshMap[name] = id;
@@ -44,6 +47,7 @@ uint32_t ResourceManager::CreateMesh(const std::string& name)
     }
     Mesh* newMesh = new Mesh();
     meshNames.push_back(name);
+    meshPaths.push_back(name);
     meshVector.push_back(newMesh);
     uint32_t id = (uint32_t)meshVector.size() - 1;
     meshMap[name] = id;
@@ -60,6 +64,7 @@ uint32_t ResourceManager::CreateTexture(const std::string& name, std::filesystem
 	Texture* newTexture = new Texture();
 	newTexture->LoadTexture(filePath);
 	textureNames.push_back(name);
+	texturePaths.push_back(filePath.string());
 	textureVector.push_back(newTexture);
 	id = textureVector.size() - 1;
 	textureMap[name] = id;

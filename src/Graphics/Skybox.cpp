@@ -5,6 +5,7 @@
 #include "Development/Terminal.h"
 Skybox::Skybox(std::vector<std::string> facePaths)
 {
+    this->storedPaths = facePaths;
     SetupMesh();
     textureID = LoadCubemap(facePaths);
 }

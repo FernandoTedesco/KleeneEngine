@@ -26,7 +26,7 @@ private:
     void DrawTerrain(GameObject* object);
     void DrawParticleSystem(GameObject* object);
 
-    void DrawAddComponentButton(GameObject* object);
+    void DrawAddComponentButton(GameObject* object, ResourceManager* resourceManager);
     void RefreshAssetLists();
     std::vector<std::string> ScanDirectory(const std::filesystem::path& directoryPath);
     void Stylize();

@@ -1,225 +1,264 @@
 #include "SceneManager.h"
-#include <filesystem>
-#include <ios>
-#include <fstream>
-#include "glm/glm.hpp"
 #include <iostream>
+#include <fstream>
 #include "Resources/ResourceManager.h"
 #include "GameObject.h"
+
 #include "Components/MeshRenderer.h"
 #include "Components/Light.h"
-#include "Graphics/Material.h"
+#include "Components/Terrain.h"
+
 #include "Development/Terminal.h"
-#include "Scene.h"
-#include "Graphics/Skybox.h"
+#include "Core/Paths.h"
+#include "Nlohmann/json.hpp"
+#include "Graphics/Material.h"
+#include "Graphics/Texture.h"
+using json = nlohmann::json;
 
-bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
-			     ResourceManager* resourceManager)
+namespace {
+json Vec3ToJson(const glm::vec3& v)
 {
-    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    std::filesystem::path fullPath = currentPath / "assets/scenes" / fileName;
-    std::ifstream sceneStream(fullPath, std::ios::binary);
-
-    if (!sceneStream)
-    {
-	Terminal::Log(LOG_ERROR, "Failed to open file for loading:");
-	return false;
-    }
-    uint16_t signature, version;
-    uint32_t count;
-
-    sceneStream.read(reinterpret_cast<char*>(&signature), sizeof(uint16_t));
-    if (signature != 0x4B4C)
-	return false;
-    sceneStream.read(reinterpret_cast<char*>(&version), sizeof(uint16_t));
-    if (version != 0x0006)
-    {
-	Terminal::Log(LOG_WARNING, "Version mismatch detected, attempting to load anyway");
-    }
-    sceneStream.read(reinterpret_cast<char*>(&count), sizeof(uint32_t));
-    targetScene.gameObjects.clear();
-    targetScene.gameObjects.reserve(count);
-    std::filesystem::path modelsPath = currentPath / "assets/models";
-    std::filesystem::path texturesPath = currentPath / "assets/textures";
-    for (uint32_t i = 0; i < count; i++)
-    {
-	GameObject* newObject = targetScene.CreateGameObject("LoadedObject");
-	glm::vec3 position, scale;
-	glm::vec4 rotation;
-	sceneStream.read(reinterpret_cast<char*>(&position), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&scale), sizeof(glm::vec3));
-	sceneStream.read(reinterpret_cast<char*>(&rotation), sizeof(glm::vec4));
-
-	newObject->SetPosition(position);
-	newObject->SetScale(scale);
-	newObject->SetRotation(rotation);
-
-	bool hasMesh;
-	sceneStream.read(reinterpret_cast<char*>(&hasMesh), sizeof(bool));
-
-	if (hasMesh)
-	{
-	    uint32_t stringLen;
-	    std::string meshName;
-	    sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
-	    meshName.resize(stringLen);
-	    sceneStream.read(&meshName[0], stringLen);
-
-	    std::string textureName;
-	    sceneStream.read(reinterpret_cast<char*>(&stringLen), sizeof(uint32_t));
-	    textureName.resize(stringLen);
-	    sceneStream.read(&textureName[0], stringLen);
-	    uint32_t meshID = resourceManager->CreateMesh(meshName, modelsPath / meshName);
-	    uint32_t textureID =
-		resourceManager->CreateTexture(textureName, texturesPath / textureName);
-	    std::string materialName = "Mat_" + textureName;
-	    uint32_t materialID = resourceManager->CreateMaterial(materialName, textureID);
-
-	    MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
-	    meshRenderer->SetMesh(meshID);
-	    meshRenderer->SetMaterial(materialID);
-
-	    newObject->name = meshName;
-	}
-	bool hasLight;
-	sceneStream.read(reinterpret_cast<char*>(&hasLight), sizeof(bool));
-
-	if (hasLight)
-	{
-	    Light* light = newObject->AddComponent<Light>();
-	    sceneStream.read(reinterpret_cast<char*>(&light->type), sizeof(int));
-	    sceneStream.read(reinterpret_cast<char*>(&light->color), sizeof(glm::vec3));
-	    sceneStream.read(reinterpret_cast<char*>(&light->intensity), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&light->constant), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&light->linear), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&light->quadratic), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&light->cutOff), sizeof(float));
-	    sceneStream.read(reinterpret_cast<char*>(&light->outerCutOff), sizeof(float));
-	}
-    }
-    bool hasSky = false;
-    sceneStream.read(reinterpret_cast<char*>(&hasSky), sizeof(bool));
-    if (hasSky)
-    {
-	targetScene.skyboxPaths.resize(6);
-	for (size_t i = 0; i < 6; i++)
-	{
-	    uint32_t len;
-	    sceneStream.read(reinterpret_cast<char*>(&len), sizeof(uint32_t));
-	    targetScene.skyboxPaths[i].resize(len);
-	    sceneStream.read(&targetScene.skyboxPaths[i][0], len);
-	}
-	targetScene.skybox = new Skybox(targetScene.skyboxPaths);
-    }
-    Terminal::Log(LOG_SUCCESS, "Scene loaded ");
-    return true;
+    return {v.x, v.y, v.z};
 }
+glm::vec3 JsonToVec3(const json& j, const glm::vec3& default = glm::vec3(0.0f))
+{
+    if (j.is_array() && j.size() >= 3)
+    {
+	return glm::vec3(j[0], j[1], j[2]);
+    }
+    return default;
+}
+json Vec2ToJson(const glm::vec2& v)
+{
+    return {v.x, v.y};
+}
+glm::vec2 JsonToVec2(const json& j)
+{
+    if (j.is_array() && j.size() >= 2)
+    {
+	return glm::vec2(j[0], j[1]);
+    }
+    return glm::vec2(0.0f);
+}
+} // namespace
 
 bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 			     ResourceManager* resourceManager)
 {
+    std::filesystem::path finalPath = Paths::Assets / "scenes" / fileName.filename();
 
-    std::filesystem::path currentPath = ResourceManager::FolderFinder("assets");
-    std::filesystem::path fullPath = currentPath / "assets/scenes" / fileName;
+    json root;
+    root["Format"] = "KleeneEngine_JSON";
+    root["Version"] = 1;
+    root["ObjectCount"] = targetScene.gameObjects.size();
 
-    std::ofstream sceneStream(fullPath, std::ios::binary | std::ios::trunc);
-    if (!sceneStream)
+    json objectsArray = json::array();
+    for (GameObject* object : targetScene.gameObjects)
     {
-	std::cout << "[ERROR] Failed to save file" << fileName << std::endl;
-	return false;
-    }
-    uint16_t signature = 0x4B4C;
-    uint16_t version = 0x0006;
-    uint32_t objectCount = (uint32_t)targetScene.gameObjects.size();
+	json objectData;
+	objectData["Name"] = object->name;
+	objectData["ID"] = object->GetID();
 
-    sceneStream.write(reinterpret_cast<const char*>(&signature), sizeof(uint16_t));
-    sceneStream.write(reinterpret_cast<const char*>(&version), sizeof(uint16_t));
-    sceneStream.write(reinterpret_cast<const char*>(&objectCount), sizeof(uint32_t));
-    for (size_t i = 0; i < targetScene.gameObjects.size(); i++)
-    {
-	GameObject* currentObject = targetScene.gameObjects[i];
-	glm::vec3 position = currentObject->position;
-	glm::vec3 scale = currentObject->scale;
-	glm::vec3 rotation = currentObject->rotation;
+	objectData["Transform"]["Position"] = Vec3ToJson(object->position);
+	objectData["Transform"]["Rotation"] = Vec3ToJson(object->rotation);
+	objectData["Transform"]["Scale"] = Vec3ToJson(object->scale);
 
-	sceneStream.write(reinterpret_cast<const char*>(&position), sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&scale), sizeof(glm::vec3));
-	sceneStream.write(reinterpret_cast<const char*>(&rotation), sizeof(glm::vec4));
-
-	MeshRenderer* meshRenderer = currentObject->GetComponent<MeshRenderer>();
-	bool hasMesh = (meshRenderer != nullptr);
-	sceneStream.write(reinterpret_cast<const char*>(&hasMesh), sizeof(bool));
-	if (hasMesh)
+	MeshRenderer* mesh = object->GetComponent<MeshRenderer>();
+	if (mesh != nullptr)
 	{
-	    std::string meshName = "Unknow";
-	    if (meshRenderer->meshID < resourceManager->meshNames.size())
-		meshName = resourceManager->meshNames[meshRenderer->meshID];
+	    json comp;
+	    std::string meshPathStr = "cube.obj";
 
-	    uint32_t meshNameSize = (uint32_t)meshName.size();
-	    sceneStream.write(reinterpret_cast<const char*>(&meshNameSize), sizeof(uint32_t));
-	    sceneStream.write(meshName.c_str(), meshNameSize);
-
-	    std::string textureName = "Default.png";
-	    Material* objectMaterial = resourceManager->GetMaterial(meshRenderer->materialID);
-	    if (objectMaterial != nullptr && objectMaterial->diffuseMap != nullptr)
+	    if (mesh->meshID < resourceManager->meshNames.size())
 	    {
-		for (size_t t = 0; t < resourceManager->textureNames.size(); t++)
+		meshPathStr = resourceManager->meshPaths[mesh->meshID];
+	    }
+
+	    std::string textureFileName = "default.png";
+	    Material* material = resourceManager->GetMaterial(mesh->materialID);
+	    if (material && material->diffuseMap)
+	    {
+		for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
 		{
-		    if (resourceManager->GetTexture((uint32_t)t) == objectMaterial->diffuseMap)
+		    if (resourceManager->textureVector[i] == material->diffuseMap)
 		    {
-			textureName = resourceManager->textureNames[t];
+			if (i < resourceManager->texturePaths.size())
+			    textureFileName =
+				std::filesystem::path(resourceManager->texturePaths[i])
+				    .filename()
+				    .string();
 			break;
 		    }
 		}
 	    }
+	    comp["MeshFile"] = meshPathStr;
+	    comp["TextureFile"] = textureFileName;
+	    comp["Tiling"] = Vec2ToJson(mesh->textureTiling);
+	    comp["Offset"] = Vec2ToJson(mesh->textureOffset);
+	    comp["Color"] = Vec3ToJson(mesh->colorTint);
+	    comp["CastShadows"] = mesh->castShadows;
+	    comp["ReceiveShadows"] = mesh->receiveShadows;
 
-	    uint32_t textureNameSize = (uint32_t)textureName.size();
-	    sceneStream.write(reinterpret_cast<const char*>(&textureNameSize), sizeof(uint32_t));
-	    sceneStream.write(textureName.c_str(), textureNameSize);
+	    objectData["Components"]["MeshRenderer"] = comp;
 	}
-	Light* light = currentObject->GetComponent<Light>();
-	bool hasLight = (light != nullptr);
-	sceneStream.write(reinterpret_cast<const char*>(&hasLight), sizeof(bool));
-	if (hasLight)
+	Light* light = object->GetComponent<Light>();
+	if (light != nullptr)
 	{
-	    sceneStream.write(reinterpret_cast<const char*>(&light->type), sizeof(int));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->color), sizeof(glm::vec3));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->intensity), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->constant), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->linear), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->quadratic), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->cutOff), sizeof(float));
-	    sceneStream.write(reinterpret_cast<const char*>(&light->outerCutOff), sizeof(float));
+	    json comp;
+	    comp["Type"] = (int)light->type;
+	    comp["Color"] = Vec3ToJson(light->color);
+	    comp["Intensity"] = light->intensity;
+	    comp["Constant"] = light->constant;
+	    comp["Linear"] = light->linear;
+	    comp["Quadratic"] = light->quadratic;
+	    comp["CutOff"] = light->cutOff;
+	    comp["OuterCutOff"] = light->outerCutOff;
+
+	    objectData["Components"]["Light"] = comp;
 	}
+
+	Terrain* terrain = object->GetComponent<Terrain>();
+	if (terrain != nullptr)
+	{
+	    json comp;
+	    comp["Width"] = terrain->width;
+	    comp["Depth"] = terrain->depth;
+	    comp["TileSize"] = terrain->tileSize;
+
+	    comp["HeightMap"] = terrain->heightMap;
+	    objectData["Components"]["Terrain"] = comp;
+	}
+	objectsArray.push_back(objectData);
     }
-    bool hasSky = (targetScene.skybox != nullptr);
-    sceneStream.write((char*)&hasSky, sizeof(bool));
-    if (hasSky)
+
+    root["GameObjects"] = objectsArray;
+
+    if (targetScene.skybox != nullptr && targetScene.skyboxPaths.size() == 6)
     {
-	for (size_t i = 0; i < targetScene.skyboxPaths.size(); i++)
-	{
-	    std::string& path = targetScene.skyboxPaths[i];
-	    uint32_t len = (uint32_t)path.size();
-	    sceneStream.write(reinterpret_cast<const char*>(&len), sizeof(uint32_t));
-	    sceneStream.write(path.c_str(), len);
-	}
+	root["Skybox"] = targetScene.skyboxPaths;
     }
-    sceneStream.close();
-    Terminal::Log(LOG_SUCCESS, "Scene saved succesfully: ");
+    std::ofstream file(finalPath);
+    if (!file.is_open())
+    {
+	Terminal::Log(LOG_ERROR, "Failed to create JSON file: " + finalPath.string());
+	return false;
+    }
+    file << root.dump(4);
+    file.close();
+    Terminal::Log(LOG_SUCCESS, "Scene saved successfully!");
     return true;
 }
-GameObject* SceneManager::AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID,
-				    uint32_t materialID)
+
+bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
+			     ResourceManager* resourceManager)
 {
-    GameObject* newObject = new GameObject();
-    newObject->position = position;
-    MeshRenderer* renderer = newObject->AddComponent<MeshRenderer>();
-    renderer->SetMesh(meshID);
-    renderer->SetMaterial(materialID);
-    newObject->scale = glm::vec3(1.0f, 1.0f, 1.0f);
-    newObject->rotation = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-    newObject->isActive = true;
-    newObject->name = "Object_" + std::to_string(targetScene.gameObjects.size());
-    targetScene.gameObjects.push_back(newObject);
-    return (newObject);
+    std::filesystem::path finalPath = Paths::Assets / "scenes" / fileName.filename();
+    std::ifstream file(finalPath);
+    if (!file.is_open())
+    {
+	Terminal::Log(LOG_ERROR, "JSON File not found: " + finalPath.string());
+	return false;
+    }
+    targetScene.Clear();
+    try
+    {
+	json root;
+	file >> root;
+	if (root.contains("GameObjects"))
+	{
+	    for (const auto& objJson : root["GameObjects"])
+	    {
+		std::string name = objJson.value("Name", "Unnamed Object");
+		GameObject* newObject = targetScene.CreateGameObject(name);
+		if (objJson.contains("Transform"))
+		{
+		    newObject->SetPosition(JsonToVec3(objJson["Transform"]["Position"]));
+		    newObject->SetRotation(JsonToVec3(objJson["Transform"]["Rotation"]));
+		    json scaleJson =
+			objJson["Transform"].value("Scale", json::array({1.0, 1.0, 1.0}));
+		    newObject->SetScale(JsonToVec3(scaleJson, glm::vec3(1.0f)));
+		}
+		if (objJson.contains("Components"))
+		{
+		    const auto& comps = objJson["Components"];
+		    if (comps.contains("MeshRenderer"))
+		    {
+			const auto& mData = comps["MeshRenderer"];
+			std::string meshName = mData.value("MeshFile", "cube.obj");
+			std::string textureName = mData.value("TextureFile", "default.png");
+
+			uint32_t meshID =
+			    resourceManager->CreateMesh(meshName, Paths::Models / meshName);
+			std::filesystem::path texturePath = Paths::Textures / textureName;
+			uint32_t textureID = 0;
+			if (std::filesystem::exists(texturePath))
+			    textureID = resourceManager->CreateTexture(textureName, texturePath);
+
+			std::string materialName = "Mat_" + textureName;
+			uint32_t materialID =
+			    resourceManager->CreateMaterial(materialName, textureID);
+			MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
+			meshRenderer->SetMesh(meshID);
+			meshRenderer->SetMaterial(materialID);
+
+			meshRenderer->textureTiling = JsonToVec2(mData["Tiling"]);
+			meshRenderer->textureOffset = JsonToVec2(mData["Offset"]);
+			meshRenderer->colorTint = JsonToVec3(mData["Color"], glm::vec3(1.0f));
+			meshRenderer->castShadows = mData.value("CastShadows", true);
+			meshRenderer->receiveShadows = mData.value("ReceiveShadows", true);
+		    }
+		    if (comps.contains("Light"))
+		    {
+			const auto& lData = comps["Light"];
+			Light* l = newObject->AddComponent<Light>();
+			l->type = (decltype(l->type))lData.value("Type", 0);
+			l->color = JsonToVec3(lData["Color"], glm::vec3(1.0f));
+			l->intensity = lData.value("Intensity", 1.0f);
+			l->constant = lData.value("Constant", 1.0f);
+			l->linear = lData.value("Linear", 0.09f);
+			l->quadratic = lData.value("Quadratic", 0.032f);
+			l->cutOff = lData.value("CutOff", 12.0f);
+			l->outerCutOff = lData.value("OuterCutOff", 15.0f);
+		    }
+		    if (comps.contains("Terrain"))
+		    {
+			const auto& tData = comps["Terrain"];
+			Terrain* terrain = newObject->AddComponent<Terrain>();
+			terrain->SetResourceManager(resourceManager);
+			int w = tData.value("Width", 10);
+			int d = tData.value("Depth", 10);
+			float s = tData.value("TileSize", 1.0f);
+			terrain->InitializeGrid(w, d, s);
+			if (tData.contains("HeightMap"))
+			{
+			    std::vector<float> savedHeights =
+				tData["HeightMap"].get<std::vector<float>>();
+			    if (savedHeights.size() == terrain->heightMap.size())
+			    {
+				terrain->heightMap = savedHeights;
+				terrain->isDirty = true;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+	if (root.contains("Skybox") && root["Skybox"].is_array())
+	{
+	    targetScene.skyboxPaths.clear();
+	    for (const auto& path : root["Skybox"])
+	    {
+		targetScene.skyboxPaths.push_back(path.get<std::string>());
+	    }
+	    if (targetScene.skyboxPaths.size() == 6)
+		targetScene.skybox = new Skybox(targetScene.skyboxPaths);
+	}
+	Terminal::Log(LOG_SUCCESS, "Scene loaded successfully");
+	return true;
+    } catch (json::exception& e)
+    {
+	std::string error = e.what();
+	Terminal::Log(LOG_ERROR, "Critical error while loading file" + error);
+	return false;
+    }
 }

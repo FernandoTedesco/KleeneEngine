@@ -9,10 +9,17 @@ class ResourceManager;
 class Terrain : public Component
 {
     friend class InspectorPanel;
+    friend class SceneManager;
+    friend class EditorTools;
 
 public:
     Terrain();
     ~Terrain();
+
+    std::vector<int> tileMap;
+    int atlasCols = 16;
+    int atlasRows = 16;
+    void SetTileTexture(int x, int z, int textureIndex);
 
     void Start() override;
     void Update(float dt) override;

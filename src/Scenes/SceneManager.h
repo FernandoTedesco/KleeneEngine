@@ -1,11 +1,8 @@
 #pragma once
-#include <string>
 #include <filesystem>
-#include "glm/glm.hpp"
+#include "Scene.h"
 
-class Scene;
 class ResourceManager;
-class GameObject;
 class SceneManager
 {
 public:
@@ -13,6 +10,4 @@ public:
 			  ResourceManager* resourceManager);
     static bool LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			  ResourceManager* resourceManager);
-    static GameObject* AddObject(Scene& targetScene, glm::vec3 position, uint32_t meshID,
-				 uint32_t materialID);
 };

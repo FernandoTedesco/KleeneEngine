@@ -28,7 +28,10 @@ void EditorUI::Render(Scene* scene, ResourceManager* resourceManager, int& selec
     }
     if (state.showInspector)
     {
-	inspectorPanel->Draw(scene, selectedIndex, resourceManager);
+	if (selectedIndex >= 0 && selectedIndex < scene->gameObjects.size())
+	{
+	    inspectorPanel->Draw(scene, selectedIndex, resourceManager);
+	}
     }
 }
 

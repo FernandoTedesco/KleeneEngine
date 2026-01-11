@@ -11,6 +11,7 @@
 #include "Graphics/Mesh.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include "Components/MeshRenderer.h"
+#include "Components/Terrain.h"
 #include "Resources/ResourceManager.h"
 #include "Core/Paths.h"
 EditorTools::EditorTools()
@@ -233,13 +234,15 @@ void EditorTools::UpdateScale(Scene* scene, int& selectedIndex, glm::vec3 rayOri
 }
 
 void EditorTools::PaintTerrain(Scene* scene, int selectedIndex, glm::vec3 rayOrigin,
-			       glm::vec3 rayDirection, ResourceManager* resourceManager,
-			       int atlasRows, int atlasCols, int tileX, int tileY)
+			       glm::vec3 rayDirection, ResourceManager* resourceManager)
 {
 
     if (selectedIndex < 0 || selectedIndex >= scene->gameObjects.size())
 	return;
     GameObject* object = scene->gameObjects[selectedIndex];
+    Terrain* terrain = object->GetComponent<Terrain>();
+    if (!terrain)
+	return;
 
     glm::mat4 modelMatrix(glm::mat4(1.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(object->position));
@@ -264,32 +267,22 @@ void EditorTools::PaintTerrain(Scene* scene, int selectedIndex, glm::vec3 rayOri
     if (renderer)
     {
 	Mesh* mesh = resourceManager->GetMesh(renderer->meshID);
+	if (!mesh)
+	    return;
 
-	if (localHit.x >= mesh->boundsMin.x && localHit.x < mesh->boundsMax.x &&
-	    localHit.z >= mesh->boundsMin.z && localHit.z < mesh->boundsMax.z)
+	if (localHit.x >= mesh->boundsMin.x && localHit.x <= mesh->boundsMax.x &&
+	    localHit.z >= mesh->boundsMin.z && localHit.z <= mesh->boundsMax.z)
 	{
-	    int mapTileX = (int)localHit.x;
-	    int mapTileZ = (int)localHit.z;
-	    int mapWidth = (int)mesh->boundsMax.x;
+	    float localX = localHit.x - mesh->boundsMin.x;
+	    float localZ = localHit.z - mesh->boundsMin.z;
 
-	    int vertexindex = mapTileZ * mapWidth + mapTileX;
-
-	    int atlasCols = 16;
-	    int atlasRows = 16;
-	    float uStep = 1.0f / (float)atlasCols;
-	    float vStep = 1.0f / (float)atlasRows;
-	    float u0 = tileX * uStep;
-	    float v0 = tileY * vStep;
-	    float u1 = u0 + uStep;
-	    float v1 = v0 + vStep;
-
-	    glm::vec2 newUVs[4];
-	    newUVs[0] = glm::vec2(u0, v0);
-	    newUVs[1] = glm::vec2(u0, v1);
-	    newUVs[2] = glm::vec2(u1, v1);
-	    newUVs[3] = glm::vec2(u1, v0);
-
-	    int vertexIndex = mapTileZ * mapWidth + mapTileX;
+	    float tSize = (terrain->tileSize > 0.01f) ? terrain->tileSize : 1.0f;
+	    int mapTileX = (int)(localHit.x / terrain->tileSize);
+	    int mapTileZ = (int)(localHit.z / terrain->tileSize);
+	    if (mapTileX >= 0 && mapTileZ >= 0)
+	    {
+		terrain->SetTileTexture(mapTileX, mapTileZ, this->selectedTileID);
+	    }
 	}
     }
 }

@@ -17,11 +17,14 @@ Mesh::Mesh()
 
 void Mesh::SetupMesh()
 {
-
+    if (VAO == 0)
+    {
+	glGenVertexArrays(1, &this->VAO);
+	glGenBuffers(1, &this->VBO);
+	glGenBuffers(1, &this->EBO);
+    }
     // Configuration for data delivery
-    glGenVertexArrays(1, &this->VAO);
-    glGenBuffers(1, &this->VBO);
-    glGenBuffers(1, &this->EBO);
+
     glBindVertexArray(this->VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 

@@ -9,6 +9,8 @@
 
 Texture::Texture()
 {
+    this->width = 0;
+    this->height = 0;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -25,13 +27,13 @@ Texture::Texture()
 
 bool Texture::LoadTexture(std::filesystem::path filePath)
 {
-    int width;
-    int height;
+
     int component;
 
     stbi_set_flip_vertically_on_load(true);
 
-    unsigned char* data = stbi_load(((filePath).string()).c_str(), &width, &height, &component, 4);
+    unsigned char* data =
+	stbi_load(((filePath).string()).c_str(), &this->width, &this->height, &component, 4);
     if (data)
     {
 

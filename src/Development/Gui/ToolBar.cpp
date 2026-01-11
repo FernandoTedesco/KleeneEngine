@@ -29,6 +29,7 @@ void ToolBar::Draw(float windowWidth, std::function<void(const char*)> onSaveReq
 	{
 	    ImGui::MenuItem("Hierarchy Panel", nullptr, &state.showHierarchy);
 	    ImGui::MenuItem("Inspector Panel", nullptr, &state.showInspector);
+	    ImGui::MenuItem("Show Grid", nullptr, &state.showGrid);
 	    ImGui::EndMenu();
 	}
 	ImGui::EndMenuBar();

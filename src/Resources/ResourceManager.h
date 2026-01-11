@@ -34,14 +34,17 @@ public:
     std::vector<std::string> textureNames;
     std::vector<std::string> materialNames;
 
-private:
-    // Get a resource ID through a name
-    std::map<std::string, uint32_t> meshMap;
-    std::map<std::string, uint32_t> textureMap;
-    std::map<std::string, uint32_t> materialMap;
+    std::vector<std::string> meshPaths;
+    std::vector<std::string> texturePaths;
 
     // Real resource Allocation
     std::vector<Mesh*> meshVector;
     std::vector<Texture*> textureVector;
     std::vector<Material*> materialVector;
+
+private:
+    // Get a resource ID through a name
+    std::map<std::string, uint32_t> meshMap;
+    std::map<std::string, uint32_t> textureMap;
+    std::map<std::string, uint32_t> materialMap;
 };

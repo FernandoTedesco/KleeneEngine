@@ -13,7 +13,17 @@ public:
 	return this->textureID;
     }
     void Use(unsigned int slot);
+    int GetWidth() const
+    {
+	return width;
+    }
+    int GetHeight() const
+    {
+	return height;
+    }
 
 private:
     unsigned int textureID;
+    int width = 0;
+    int height = 0;
 };

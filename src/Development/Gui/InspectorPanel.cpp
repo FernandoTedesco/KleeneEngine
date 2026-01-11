@@ -51,7 +51,7 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
 	    // DrawPlayerController(object);
 	    // DrawSpriteRenderer(object);
 	    ImGui::Separator();
-	    DrawAddComponentButton(object);
+	    DrawAddComponentButton(object, resourceManager);
 	    ImGui::Separator();
 	    if (ImGui::Button("Delete Object", ImVec2(-1, 0)))
 	    {
@@ -151,32 +151,58 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 
 	    if (!availableTextures.empty())
 	    {
-		if (selectedTextureIndex < 0 || selectedTextureIndex >= availableTextures.size())
-		    selectedTextureIndex = 0;
-		bool textureComboOpen = ImGui::Combo(
-		    "Diffuse Map", &selectedTextureIndex,
-		    [](void* data, int index, const char** out_text) {
-			std::vector<std::string>* vector =
-			    static_cast<std::vector<std::string>*>(data);
-			if (index < 0 || index >= (int)vector->size())
-			    return false;
-			*out_text = (*vector)[index].c_str(); //!!!!!
-			return true;
-		    },
-		    &availableTextures, (int)availableTextures.size());
-
-		if (textureComboOpen)
+		if (material->diffuseMap)
 		{
-		    std::filesystem::path CurrentPath = ResourceManager::FolderFinder("assets");
-		    std::filesystem::path path =
-			CurrentPath / "assets/textures" / availableTextures[selectedTextureIndex];
-		    uint32_t newTextureId = resourceManager->CreateTexture(
-			availableTextures[selectedTextureIndex], path);
+		    std::string currentTextureName = "";
+		    for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
+		    {
+			if (resourceManager->textureVector[i] == material->diffuseMap)
+			{
+			    if (i < resourceManager->textureNames.size())
+				currentTextureName = resourceManager->textureNames[i];
+			    break;
+			}
+		    }
+		    if (!currentTextureName.empty())
+		    {
+			for (int i = 0; i < availableTextures.size(); i++)
+			{
+			    if (availableTextures[i] == currentTextureName)
+			    {
+				selectedTextureIndex = i;
+				break;
+			    }
+			}
+		    }
+		    if (selectedTextureIndex < 0 ||
+			selectedTextureIndex >= availableTextures.size())
+			selectedTextureIndex = 0;
+		    bool textureComboOpen = ImGui::Combo(
+			"Texture Map", &selectedTextureIndex,
+			[](void* data, int index, const char** out_text) {
+			    std::vector<std::string>* vector =
+				static_cast<std::vector<std::string>*>(data);
+			    if (index < 0 || index >= (int)vector->size())
+				return false;
+			    *out_text = (*vector)[index].c_str(); //!!!!!
+			    return true;
+			},
+			&availableTextures, (int)availableTextures.size());
 
-		    std::string newMatName = "Mat_" + availableTextures[selectedTextureIndex] +
-					     "_" + std::to_string(rand());
-		    uint32_t newMatId = resourceManager->CreateMaterial(newMatName, newTextureId);
-		    meshRenderer->SetMaterial(newMatId);
+		    if (textureComboOpen)
+		    {
+			std::filesystem::path CurrentPath = ResourceManager::FolderFinder("assets");
+			std::filesystem::path path = CurrentPath / "assets/textures" /
+						     availableTextures[selectedTextureIndex];
+			uint32_t newTextureId = resourceManager->CreateTexture(
+			    availableTextures[selectedTextureIndex], path);
+
+			std::string newMatName = "Mat_" + availableTextures[selectedTextureIndex] +
+						 "_" + std::to_string(rand());
+			uint32_t newMatId =
+			    resourceManager->CreateMaterial(newMatName, newTextureId);
+			meshRenderer->SetMaterial(newMatId);
+		    }
 		}
 	    }
 	}
@@ -227,7 +253,7 @@ void InspectorPanel::DrawTerrain(GameObject* object)
     }
 }
 
-void InspectorPanel::DrawAddComponentButton(GameObject* object)
+void InspectorPanel::DrawAddComponentButton(GameObject* object, ResourceManager* resourceManager)
 {
     if (ImGui::Button("Add Component", ImVec2(-1, 0)))
 	ImGui::OpenPopup("AddComponentPopup");
@@ -243,7 +269,8 @@ void InspectorPanel::DrawAddComponentButton(GameObject* object)
 	}
 	if (!object->GetComponent<Terrain>() && ImGui::MenuItem("Terrain"))
 	{
-	    object->AddComponent<Terrain>();
+	    Terrain* terrain = object->AddComponent<Terrain>();
+	    terrain->SetResourceManager(resourceManager);
 	}
 	if (!object->GetComponent<ParticleSystem>() && ImGui::MenuItem("ParticleSystem"))
 	{

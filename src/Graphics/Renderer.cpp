@@ -195,10 +195,10 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
 	scene->particleManager->Draw();
     }
     if (editor)
+    {
 	editor->RenderHighlight(mainShader);
-    if (editor && editor->GetGrid())
-	editor->GetGrid()->EditorGridDraw(camera, (float)window->GetWidth(),
-					  (float)window->GetHeight());
+    }
+
     frameBuffer->Unbind();
 }
 

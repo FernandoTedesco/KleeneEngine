@@ -3,5 +3,6 @@ enum class EditorMode { SELECTION, TRANSLATE, ROTATION, SCALE, PLACEMENT, DELETI
 struct EditorState {
     bool showHierarchy = true;
     bool showInspector = true;
+    bool showGrid = true;
     EditorMode currentMode = EditorMode::SELECTION;
 };

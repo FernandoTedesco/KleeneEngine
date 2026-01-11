@@ -26,6 +26,7 @@ public:
     void BeginFrame();
     void EndFrame();
     void DrawEditorUI();
+    void DrawTileMapSelector();
     EditorIcons LoadIcons();
     EditorGrid* GetGrid()
     {

@@ -30,11 +30,13 @@ public:
 		      ResourceManager* resourceManager);
 
     void PaintTerrain(Scene* scene, int selectedIndex, glm::vec3 rayOrigin, glm::vec3 rayDirection,
-		      ResourceManager* resourceManager, int atlasRows, int atlasCols, int tileX,
-		      int tileY);
+		      ResourceManager* resourceManager);
 
-    void CreateProceduralTerrain(Scene* scene, ResourceManager* resourceManager);
-
+    int selectedTileID = 0;
+    void SetSelectedTile(int id)
+    {
+	selectedTileID = id;
+    }
     int RaycastScene(Scene* scene, ResourceManager* resourceManager, glm::vec3 rayOrigin,
 		     glm::vec3 rayDirection);
 
