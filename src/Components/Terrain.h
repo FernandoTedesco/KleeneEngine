@@ -19,6 +19,7 @@ public:
     std::vector<int> tileMap;
     int atlasCols = 16;
     int atlasRows = 16;
+    std::string atlasTextureName = "atlas.png";
     void SetTileTexture(int x, int z, int textureIndex);
 
     void Start() override;

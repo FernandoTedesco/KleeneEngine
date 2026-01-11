@@ -263,102 +263,52 @@ void Editor::CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDire
 
 void Editor::DrawTileMapSelector()
 {
+
     if (state.currentMode != EditorMode::PAINT)
 	return;
+
     ImGui::Begin("TileMap Selector");
 
-    static std::vector<std::string> availableMaps;
-    static int selectedMapIndex = -1;
-    static uint32_t currentAtlasID = 0;
     static int tileSize = 32;
     if (tileSize < 8)
 	tileSize = 8;
 
-    if (availableMaps.empty() || ImGui::Button("Refresh List"))
-    {
-	availableMaps.clear();
-	selectedMapIndex = -1;
+    uint32_t activeAtlasID = 0;
 
-	if (std::filesystem::exists(Paths::Tilemaps))
+    if (selectedEntityIndex >= 0 && selectedEntityIndex < scene->gameObjects.size())
+    {
+	if (auto terrain = scene->gameObjects[selectedEntityIndex]->GetComponent<Terrain>())
 	{
-	    for (const auto& entry : std::filesystem::directory_iterator(Paths::Tilemaps))
+	    if (terrain->atlasTextureName.empty())
+		terrain->atlasTextureName = "atlas.png";
+	    Editor::DrawAtlasSelector(terrain);
+
+	    activeAtlasID = resourceManager->CreateTexture(
+		terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
+	    Texture* texture = resourceManager->GetTexture(activeAtlasID);
+
+	    if (texture)
 	    {
-		if (entry.path().extension() == ".png")
+		terrain->atlasCols = texture->GetWidth() / tileSize;
+		terrain->atlasRows = texture->GetHeight() / tileSize;
+		if (terrain->atlasCols < 1)
+		    terrain->atlasCols = 1;
+		if (terrain->atlasRows < 1)
+		    terrain->atlasRows = 1;
+
+		if (auto rend =
+			scene->gameObjects[selectedEntityIndex]->GetComponent<MeshRenderer>())
 		{
-		    availableMaps.push_back(entry.path().filename().string());
-		}
-	    }
-	} else
-	{
-	    ImGui::TextColored(ImVec4(1, 0, 0, 1), "Error: Paths::Tilemaps not found");
-	}
-    }
-    if (selectedMapIndex == -1 && !availableMaps.empty())
-    {
-	selectedMapIndex = 0;
-	std::string filename = availableMaps[0];
-	currentAtlasID = resourceManager->CreateTexture(filename, Paths::Tilemaps / filename);
-	if (currentAtlasID != 0)
-	    Terminal::Log(LOG_SUCCESS, "Auto-Loaded: " + filename);
-    }
-
-    const char* previewValue = (selectedMapIndex >= 0 && selectedMapIndex < availableMaps.size())
-				   ? availableMaps[selectedMapIndex].c_str()
-				   : "Select a Tilemap...";
-    if (ImGui::BeginCombo("Atlas File", previewValue))
-    {
-	for (int i = 0; i < availableMaps.size(); i++)
-	{
-
-	    const bool isSelected = (selectedMapIndex == i);
-	    if (ImGui::Selectable(availableMaps[i].c_str(), isSelected))
-	    {
-		selectedMapIndex = i;
-		std::string filename = availableMaps[i];
-
-		currentAtlasID =
-		    resourceManager->CreateTexture(filename, Paths::Tilemaps / filename);
-
-		Texture* newTexture = resourceManager->GetTexture(currentAtlasID);
-		if (newTexture && selectedEntityIndex >= 0 &&
-		    selectedEntityIndex < scene->gameObjects.size())
-		{
-		    if (auto terrain =
-			    scene->gameObjects[selectedEntityIndex]->GetComponent<Terrain>())
+		    if (auto material = resourceManager->GetMaterial(rend->materialID))
 		    {
-			terrain->atlasCols = newTexture->GetWidth() / tileSize;
-			terrain->atlasRows = newTexture->GetHeight() / tileSize;
-			if (terrain->atlasCols < 1)
-			    terrain->atlasCols = 1;
-			if (terrain->atlasRows < 1)
-			    terrain->atlasRows = 1;
-
-			if (auto rend = scene->gameObjects[selectedEntityIndex]
-					    ->GetComponent<MeshRenderer>())
-			    if (auto material = resourceManager->GetMaterial(rend->materialID))
-			    {
-				material->diffuseMap = newTexture;
-			    }
+			material->diffuseMap = texture;
 		    }
 		}
-
-		if (currentAtlasID == 0)
-		{
-		    Terminal::Log(LOG_ERROR, "Failed to laod tilemap: " + filename);
-		} else
-		{
-		    Terminal::Log(LOG_SUCCESS, "Loaded tilemap: " + filename);
-		}
 	    }
-	    if (isSelected)
-		ImGui::SetItemDefaultFocus();
 	}
-	ImGui::EndCombo();
     }
-
     ImGui::Separator();
-    Texture* texture = resourceManager->GetTexture(currentAtlasID);
-
+    Texture* texture = resourceManager->GetTexture(activeAtlasID);
     if (texture)
     {
 	float textureWidth = (float)texture->GetWidth();
@@ -407,15 +357,39 @@ void Editor::DrawTileMapSelector()
 	    ImGui::PopStyleColor();
 	    float lastButtonX = ImGui::GetItemRectMax().x;
 	    float nextButtonX = lastButtonX + style.ItemSpacing.x + buttonSize;
+
 	    if ((i + 1) % 8 != 0)
 	    {
 		ImGui::SameLine();
 	    }
 	    ImGui::PopID();
 	}
-    } else
-    {
-	ImGui::TextDisabled("No Tilemap Selected");
     }
+
     ImGui::End();
+}
+
+void Editor::DrawAtlasSelector(Terrain* terrain)
+{
+    if (ImGui::BeginCombo("Atlas File", terrain->atlasTextureName.c_str()))
+    {
+	if (std::filesystem::exists(Paths::Tilemaps))
+	{
+	    for (const auto& entry : std::filesystem::directory_iterator(Paths::Tilemaps))
+	    {
+		if (entry.path().extension() == "png")
+		{
+		    std::string filename = entry.path().filename().string();
+		    bool isSelected = (terrain->atlasTextureName == filename);
+		    if (ImGui::Selectable(filename.c_str(), isSelected))
+		    {
+			terrain->atlasTextureName = filename;
+		    }
+		    if (isSelected)
+			ImGui::SetItemDefaultFocus();
+		}
+	    }
+	}
+	ImGui::EndCombo();
+    }
 }

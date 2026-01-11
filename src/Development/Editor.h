@@ -16,6 +16,7 @@ class Shader;
 class Gizmo;
 class ResourceManager;
 class EditorUI;
+class Terrain;
 
 class Editor
 {
@@ -37,6 +38,7 @@ public:
 
 private:
     void CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
+    void DrawAtlasSelector(Terrain* terrain);
     // Core Pointers
     Window* window;
     Scene* scene;

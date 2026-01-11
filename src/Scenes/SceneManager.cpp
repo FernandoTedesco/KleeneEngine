@@ -126,6 +126,12 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	    comp["TileSize"] = terrain->tileSize;
 
 	    comp["HeightMap"] = terrain->heightMap;
+	    comp["TileMap"] = terrain->tileMap;
+	    comp["AtlasCols"] = terrain->atlasCols;
+	    comp["AtlasRows"] = terrain->atlasRows;
+	    comp["AtlasTexture"] =
+		terrain->atlasTextureName.empty() ? "atlas.png" : terrain->atlasTextureName;
+
 	    objectData["Components"]["Terrain"] = comp;
 	}
 	objectsArray.push_back(objectData);
@@ -239,6 +245,26 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 				terrain->isDirty = true;
 			    }
 			}
+			if (tData.contains("TileMap"))
+			{
+			    terrain->tileMap = tData["TileMap"].get<std::vector<int>>();
+			}
+			terrain->atlasCols = tData.value("AtlasCols", 1);
+			terrain->atlasRows = tData.value("AtlasRows", 1);
+			terrain->atlasTextureName = tData.value("AtlasTexture", "atlas.png");
+			uint32_t atlasID = resourceManager->CreateTexture(
+			    terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
+
+			if (auto rend = newObject->GetComponent<MeshRenderer>())
+			{
+			    if (auto mat = resourceManager->GetMaterial(rend->materialID))
+			    {
+				mat->diffuseMap = resourceManager->GetTexture(atlasID);
+				mat->colorTint = glm::vec3(1.0f);
+			    }
+			}
+
+			terrain->isDirty = true;
 		    }
 		}
 	    }
