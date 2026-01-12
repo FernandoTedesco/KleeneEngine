@@ -59,8 +59,8 @@ Engine::Engine()
 
     isRunning = true;
 
-    std::filesystem::path scenePath = Paths::Assets / "scenes/default2.Kleene";
-    //   Terminal::Log(LOG_INFO, "Path: " + scenePath.string());
+    std::filesystem::path scenePath = Paths::Assets / "scenes/default4.Kleene";
+    //    Terminal::Log(LOG_INFO, "Path: " + scenePath.string());
     SceneManager::LoadScene(scenePath.string(), *activeScene, resourceManager);
 
     Terminal::Log(LOG_SUCCESS, "Kleene Engine Ready");

@@ -6,7 +6,7 @@
 #include "Components/SpriteRenderer.h"
 #include "Components/Light.h"
 #include "Components/ParticleSystem.h"
-
+#include "Core/Paths.h"
 #include "Graphics/Material.h"
 #include <iostream>
 #include <cstring>
@@ -148,61 +148,21 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 	    ImGui::Spacing();
 	    ImGui::DragFloat("Specular", &material->specular, 0.05f, 0.0f, 1.0f);
 	    ImGui::DragFloat("Shininess", &material->shininess, 1.0f, 2.0f, 256.0f);
-
+	    ImGui::Separator();
+	    ImGui::Text("Textures");
 	    if (!availableTextures.empty())
 	    {
-		if (material->diffuseMap)
+		Texture* newDiffuse =
+		    DrawTextureSelector("Diffuse Map", material->diffuseMap, resourceManager);
+		if (newDiffuse != material->diffuseMap)
 		{
-		    std::string currentTextureName = "";
-		    for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
-		    {
-			if (resourceManager->textureVector[i] == material->diffuseMap)
-			{
-			    if (i < resourceManager->textureNames.size())
-				currentTextureName = resourceManager->textureNames[i];
-			    break;
-			}
-		    }
-		    if (!currentTextureName.empty())
-		    {
-			for (int i = 0; i < availableTextures.size(); i++)
-			{
-			    if (availableTextures[i] == currentTextureName)
-			    {
-				selectedTextureIndex = i;
-				break;
-			    }
-			}
-		    }
-		    if (selectedTextureIndex < 0 ||
-			selectedTextureIndex >= availableTextures.size())
-			selectedTextureIndex = 0;
-		    bool textureComboOpen = ImGui::Combo(
-			"Texture Map", &selectedTextureIndex,
-			[](void* data, int index, const char** out_text) {
-			    std::vector<std::string>* vector =
-				static_cast<std::vector<std::string>*>(data);
-			    if (index < 0 || index >= (int)vector->size())
-				return false;
-			    *out_text = (*vector)[index].c_str(); //!!!!!
-			    return true;
-			},
-			&availableTextures, (int)availableTextures.size());
-
-		    if (textureComboOpen)
-		    {
-			std::filesystem::path CurrentPath = ResourceManager::FolderFinder("assets");
-			std::filesystem::path path = CurrentPath / "assets/textures" /
-						     availableTextures[selectedTextureIndex];
-			uint32_t newTextureId = resourceManager->CreateTexture(
-			    availableTextures[selectedTextureIndex], path);
-
-			std::string newMatName = "Mat_" + availableTextures[selectedTextureIndex] +
-						 "_" + std::to_string(rand());
-			uint32_t newMatId =
-			    resourceManager->CreateMaterial(newMatName, newTextureId);
-			meshRenderer->SetMaterial(newMatId);
-		    }
+		    material->diffuseMap = newDiffuse;
+		}
+		Texture* newNormal =
+		    DrawTextureSelector("Normal Map", material->normalMap, resourceManager);
+		if (newNormal != material->normalMap)
+		{
+		    material->normalMap = newNormal;
 		}
 	    }
 	}
@@ -382,4 +342,62 @@ void InspectorPanel::DrawParticleSystem(GameObject* object)
 	ImGui::DragFloat3("Offset", &particleSystem->offset[0], 0.1f);
 	ImGui::Text("Active particles managed by the Global System");
     }
+}
+
+Texture* InspectorPanel::DrawTextureSelector(const char* label, Texture* currentTexture,
+					     ResourceManager* resourceManager)
+{
+    int selectedIndex = -1;
+    std::string currentTextureName = "None";
+    if (currentTexture)
+    {
+	for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
+	{
+	    if (resourceManager->textureVector[i] == currentTexture)
+	    {
+		if (i < resourceManager->textureNames.size())
+		    currentTextureName = resourceManager->textureNames[i];
+		break;
+	    }
+	}
+	for (int i = 0; i < availableTextures.size(); i++)
+	{
+	    if (availableTextures[i] == currentTextureName)
+	    {
+		selectedIndex = i;
+		break;
+	    }
+	}
+    }
+    Texture* resultTexture = currentTexture;
+    ImGui::PushID(label);
+    if (ImGui::Combo(
+	    label, &selectedIndex,
+	    [](void* data, int index, const char** out_text) {
+		auto* vec = static_cast<std::vector<std::string>*>(data);
+		if (index < 0 || index >= vec->size())
+		    return false;
+		*out_text = vec->at(index).c_str();
+		return true;
+	    },
+	    &availableTextures, ((int)availableTextures.size())))
+    {
+	if (selectedIndex >= 0 && selectedIndex < availableTextures.size())
+	{
+	    std::filesystem::path path = Paths::Textures / availableTextures[selectedIndex];
+	    uint32_t newTextureID =
+		resourceManager->CreateTexture(availableTextures[selectedIndex], path);
+	    resultTexture = resourceManager->GetTexture(newTextureID);
+	}
+    }
+    if (resultTexture)
+    {
+	ImGui::SameLine();
+	if (ImGui::Button("X"))
+	{
+	    resultTexture = nullptr;
+	}
+    }
+    ImGui::PopID();
+    return resultTexture;
 }

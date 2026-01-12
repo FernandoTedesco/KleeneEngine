@@ -20,6 +20,7 @@ public:
     void SetInt(const std::string& name, int value);
     void SetVec2(const std::string& name, const glm::vec2& value);
     void SetFloat(const std::string& name, float value);
+    void SetBool(const std::string& name, bool value);
 
 private:
     unsigned int programID;

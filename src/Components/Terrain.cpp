@@ -24,6 +24,7 @@ void Terrain::Start()
 	if (!meshRenderer)
 	{
 	    meshRenderer = owner->AddComponent<MeshRenderer>();
+	    meshRenderer->SetMaterial(0);
 	}
 	uniqueMeshName = "ProceduralTerrain_" + std::to_string(owner->GetID());
     }
@@ -78,10 +79,11 @@ void Terrain::SetBlockHeight(int x, int z, float height)
 
 void Terrain::RebuildMesh()
 {
+
     if (!resourceManager || !meshRenderer)
 	return;
-    uint32_t meshID = resourceManager->CreateMesh(uniqueMeshName);
 
+    uint32_t meshID = resourceManager->CreateMesh(uniqueMeshName);
     Mesh* meshPtr = resourceManager->GetMesh(meshID);
     if (!meshPtr)
 	return;
@@ -109,10 +111,12 @@ void Terrain::RebuildMesh()
 	    float vStep = 1.0f / (float)atlasRows;
 	    int atlasX = tileIndex % atlasCols;
 	    int atlasY = tileIndex / atlasCols;
+
 	    float u0 = (atlasX * uStep) + padding;
 	    float v0 = (1.0f - ((atlasY + 1) * vStep)) + padding;
-	    float u1 = (u0 + uStep) - padding;
+	    float u1 = ((atlasX + 1) * uStep) - padding;
 	    float v1 = (1.0f - (atlasY * vStep)) - padding;
+	    std::swap(v0, v1);
 
 	    Mesh::Vertex v[4];
 
@@ -154,6 +158,7 @@ void Terrain::RebuildMesh()
     }
     meshPtr->boundsMin = glm::vec3(0.0f, 0.0f, 0.0f);
     meshPtr->boundsMax = glm::vec3(width * tileSize, maxHeight + 1.0f, depth * tileSize);
+    meshPtr->CalculateTangents();
     meshPtr->SetupMesh();
     meshRenderer->SetMesh(meshID);
 }

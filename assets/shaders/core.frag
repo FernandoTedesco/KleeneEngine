@@ -6,14 +6,16 @@ in vec2 textureCoordinate;
 in vec3 normalVector;
 in vec3 FragPos;
 in vec4 FragPosLightSpace;
+in mat3 TBN;
 
 uniform vec3 objectColor;
-uniform sampler2D texture1;
-uniform vec3 viewPos;
+uniform vec3 viewPos; 
 uniform sampler2D shadowMap;
 
 struct Material{
     sampler2D diffuse;
+    sampler2D normalMap;
+    bool useNormalMap;
     vec2 tiling;
     vec2 offset;
     vec3 color;
@@ -45,18 +47,18 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     {
         return 0.0;
     }
-    float bias = max(0.00005 * (1.0 - dot(normal, lightDir)), 0.00005);
+    float bias = max(0.0005 * (1.0 - dot(normal, lightDir)), 0.0005);
     float shadow = 0.0;
     vec2 texelSize = 1.0/ textureSize(shadowMap, 0);
-    for(int x = -1; x <= 1;++x)
+    for(int x = -2; x <= 2;++x)
     {
-        for(int y = -1; y<= 1; ++y)
+        for(int y = -2; y<= 2; ++y)
         {
             float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x,y) * texelSize).r;
             shadow += (projCoords.z - bias)>pcfDepth ? 1.0 : 0.0;
         }
     }
-    shadow /= 9.0f;
+    shadow /= 25.0f;
     return shadow;
 }
 
@@ -108,7 +110,17 @@ void main()
         discard;
     }
     vec3 albedo = pow(vec3(texColor),vec3(2.2))*material.color;
-    vec3 norm = normalize(normalVector);
+    vec3 norm;
+    if(material.useNormalMap)
+    {
+        norm = texture(material.normalMap, tiledCoords).rgb;
+        norm = norm * 2.0 - 1.0;
+        norm = normalize(TBN * norm);
+    }
+    else
+    {
+        norm = normalize(TBN[2]);
+    }
     vec3 viewDirection = normalize(viewPos - FragPos);
     vec3 result = vec3(0.0);
     for(int i = 0; i<numLights; i++)

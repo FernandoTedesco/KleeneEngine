@@ -350,7 +350,7 @@ void Editor::DrawTileMapSelector()
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
 	    }
 	    if (ImGui::ImageButton("##tile", imTexID, ImVec2(buttonSize, buttonSize),
-				   ImVec2(u0, v0), ImVec2(u1, v1)))
+				   ImVec2(u0, v1), ImVec2(u1, v0)))
 	    {
 		tools->SetSelectedTile(correctedID);
 	    }

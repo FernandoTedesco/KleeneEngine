@@ -13,12 +13,15 @@ public:
 	glm::vec3 position;
 	glm::vec2 textureCoordinates;
 	glm::vec3 normal;
+	glm::vec3 tangent;
+	glm::vec3 bitangent;
     };
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indexes;
     glm::vec3 boundsMin;
     glm::vec3 boundsMax;
     void Draw();
+    void CalculateTangents();
     void SetupMesh();
     bool LoadOBJ(const std::filesystem::path filePath);
 

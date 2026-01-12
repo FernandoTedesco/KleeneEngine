@@ -73,26 +73,50 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	    {
 		meshPathStr = resourceManager->meshPaths[mesh->meshID];
 	    }
+	    std::string diffuseName = "default.png";
+	    std::string normalName = "None";
 
-	    std::string textureFileName = "default.png";
 	    Material* material = resourceManager->GetMaterial(mesh->materialID);
-	    if (material && material->diffuseMap)
+	    if (material)
 	    {
-		for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
+		if (material->diffuseMap)
 		{
-		    if (resourceManager->textureVector[i] == material->diffuseMap)
+		    for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
 		    {
-			if (i < resourceManager->texturePaths.size())
-			    textureFileName =
-				std::filesystem::path(resourceManager->texturePaths[i])
-				    .filename()
-				    .string();
-			break;
+			if (resourceManager->textureVector[i] == material->diffuseMap)
+			{
+			    if (i < resourceManager->texturePaths.size())
+				diffuseName =
+				    std::filesystem::path(resourceManager->texturePaths[i])
+					.filename()
+					.string();
+			    break;
+			}
+		    }
+		}
+		if (material->normalMap)
+		{
+		    for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
+		    {
+			if (resourceManager->textureVector[i] == material->normalMap)
+			{
+			    if (resourceManager->textureVector[i] == material->normalMap)
+			    {
+				if (i < resourceManager->texturePaths.size())
+				    normalName =
+					std::filesystem::path(resourceManager->texturePaths[i])
+					    .filename()
+					    .string();
+				break;
+			    }
+			}
 		    }
 		}
 	    }
-	    comp["MeshFile"] = meshPathStr;
-	    comp["TextureFile"] = textureFileName;
+	    comp["MeshFile"] = std::filesystem::path(meshPathStr).filename().string();
+	    comp["TextureFile"] = diffuseName;
+	    comp["NormalFile"] = normalName;
+
 	    comp["Tiling"] = Vec2ToJson(mesh->textureTiling);
 	    comp["Offset"] = Vec2ToJson(mesh->textureOffset);
 	    comp["Color"] = Vec3ToJson(mesh->colorTint);
@@ -192,6 +216,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			const auto& mData = comps["MeshRenderer"];
 			std::string meshName = mData.value("MeshFile", "cube.obj");
 			std::string textureName = mData.value("TextureFile", "default.png");
+			std::string normalName = mData.value("NormalFile", "None");
 
 			uint32_t meshID =
 			    resourceManager->CreateMesh(meshName, Paths::Models / meshName);
@@ -200,9 +225,24 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			if (std::filesystem::exists(texturePath))
 			    textureID = resourceManager->CreateTexture(textureName, texturePath);
 
+			uint32_t normalID = 0;
+			bool hasNormal = false;
+			if (normalName != "None" && !normalName.empty())
+			{
+			    std::filesystem::path normalPath = Paths::Textures / normalName;
+			    normalID = resourceManager->CreateTexture(normalName, normalPath);
+			    hasNormal = true;
+			}
+
 			std::string materialName = "Mat_" + textureName;
 			uint32_t materialID =
 			    resourceManager->CreateMaterial(materialName, textureID);
+			if (hasNormal)
+			{
+			    Material* material = resourceManager->GetMaterial(materialID);
+			    if (material)
+				material->normalMap = resourceManager->GetTexture(normalID);
+			}
 			MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
 			meshRenderer->SetMesh(meshID);
 			meshRenderer->SetMaterial(materialID);

@@ -195,3 +195,20 @@ ResourceManager::~ResourceManager()
     textureMap.clear();
     materialMap.clear();
 }
+
+void ResourceManager::BindNormalMap(const std::string& materialName, uint32_t normalTextureID)
+{
+    if (materialMap.find(materialName) == materialMap.end())
+    {
+	std::cout << "Material not found" << materialName << std::endl;
+	return;
+    }
+    uint32_t materialID = materialMap[materialName];
+    Texture* normalTexture = GetTexture(normalTextureID);
+    if (!normalTexture)
+    {
+	std::cout << "Error" << std::endl;
+	return;
+    }
+    materialVector[materialID]->normalMap = normalTexture;
+}

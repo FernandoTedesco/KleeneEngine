@@ -20,7 +20,7 @@ public:
     uint32_t CreateMesh(const std::string& name);
     uint32_t CreateTexture(const std::string& name, std::filesystem::path filePath);
     uint32_t CreateMaterial(const std::string& name, uint32_t textureID);
-
+    void BindNormalMap(const std::string& materialName, uint32_t normalTextureID);
     // Get the resource pointers from their ID;
     Mesh* GetMesh(uint32_t id);
     Texture* GetTexture(uint32_t id);

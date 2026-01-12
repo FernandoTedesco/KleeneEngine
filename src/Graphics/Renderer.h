@@ -13,6 +13,7 @@ class Editor;
 class ShadowMap;
 class FrameBuffer;
 class PostProcessManager;
+class Material;
 
 class Renderer
 {
@@ -46,6 +47,7 @@ private:
     Shader* particleShader;
     void PassShadowMap(Scene* scene, Camera* camera, Window* window,
 		       ResourceManager* resourceManager);
+    void BindMaterialState(Shader* shader, Material* material, MeshRenderer* meshRenderer);
     void PassColor(Scene* scene, Camera* camera, Window* window, Editor* editor,
 		   ResourceManager* resourceManager);
     void PassPostProcess();

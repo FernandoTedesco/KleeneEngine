@@ -36,7 +36,13 @@ void Mesh::SetupMesh()
 			  (void*)offsetof(Mesh::Vertex, textureCoordinates));
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
 			  (void*)offsetof(Mesh::Vertex, normal));
+    glEnableVertexAttribArray(3);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			  (void*)offsetof(Mesh::Vertex, tangent));
 
+    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
+			  (void*)offsetof(Mesh::Vertex, bitangent));
     // EBO Initialization
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(this->indexes[0]) * this->indexes.size(),
@@ -181,5 +187,61 @@ Mesh::~Mesh()
     {
 	glDeleteBuffers(1, &EBO);
 	EBO = 0;
+    }
+}
+
+void Mesh::CalculateTangents()
+{
+    if (indexes.empty())
+	return;
+    for (auto& v : vertices)
+    {
+	v.tangent = glm::vec3(0.0f);
+	v.bitangent = glm::vec3(0.0f);
+    }
+    for (size_t i = 0; i < indexes.size(); i += 3)
+    {
+	unsigned int i1 = indexes[i];
+	unsigned int i2 = indexes[i + 1];
+	unsigned int i3 = indexes[i + 2];
+
+	Vertex& v1 = vertices[i1];
+	Vertex& v2 = vertices[i2];
+	Vertex& v3 = vertices[i3];
+
+	glm::vec3 edge1 = v2.position - v1.position;
+	glm::vec3 edge2 = v3.position - v1.position;
+	glm::vec2 deltaUV1 = v2.textureCoordinates - v1.textureCoordinates;
+	glm::vec2 deltaUV2 = v3.textureCoordinates - v1.textureCoordinates;
+	float det = (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+	if (std::abs(det) < 0.000001f)
+	    continue;
+
+	float f = 1.0f / det;
+
+	glm::vec3 tangent, bitangent;
+
+	tangent.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+	tangent.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+	tangent.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+	bitangent.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+	bitangent.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+	bitangent.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+	v1.tangent += tangent;
+	v2.tangent += tangent;
+	v3.tangent += tangent;
+
+	v1.bitangent += bitangent;
+	v2.bitangent += bitangent;
+	v3.bitangent += bitangent;
+    }
+    for (auto& v : vertices)
+    {
+	if (glm::length(v.tangent) > 0.0f)
+	    v.tangent = glm::normalize(v.tangent);
+	if (glm::length(v.bitangent) > 0.0f)
+	    v.bitangent = glm::normalize(v.bitangent);
     }
 }

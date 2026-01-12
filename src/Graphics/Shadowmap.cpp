@@ -42,6 +42,7 @@ ShadowMap::~ShadowMap()
 }
 void ShadowMap::Bind()
 {
+    glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, shadowWidth, shadowHeight);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -55,10 +56,18 @@ void ShadowMap::Unbind(int screenWidth, int screenHeight)
 }
 glm::mat4 ShadowMap::GetLightSpaceMatrix(glm::vec3 lightPosition, glm::vec3 lightDirection)
 {
-    float nearPlane = 1.0f;
-    float farPlane = 150.0f;
+    float nearPlane = 0.1f;
+    float farPlane = 300.0f;
+
+    glm::vec3 virtualLightPosition = lightPosition - (glm::normalize(lightDirection) * 150.0f);
+
     glm::mat4 lightProjectionMatrix = glm::ortho(-35.0f, 35.0f, -35.0f, 35.0f, nearPlane, farPlane);
+    glm::vec3 upVector = glm::vec3(0.0f, 1.0f, 0.0f);
+    if (abs(glm::dot(glm::normalize(lightDirection), upVector)) > 0.9f)
+    {
+	upVector = glm::vec3(0.0f, 0.0f, 1.0f);
+    }
     glm::mat4 lightViewMatrix =
-	glm::lookAt(lightPosition, lightPosition + lightDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::lookAt(virtualLightPosition, virtualLightPosition + lightDirection, upVector);
     return lightProjectionMatrix * lightViewMatrix;
 }

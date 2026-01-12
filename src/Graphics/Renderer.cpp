@@ -68,17 +68,29 @@ void Renderer::RenderFrame(Scene* scene, ResourceManager* resourceManager, Shade
 void Renderer::PassShadowMap(Scene* scene, Camera* camera, Window* window,
 			     ResourceManager* resourceManager)
 {
+
     glm::vec3 lightPosition = glm::vec3(-2.0f, 20.0f, -1.0f);
     glm::vec3 lightDirection = glm::normalize(glm::vec3(0.1f, -1.0f, 0.1f));
+    bool foundShadowCaster = false;
+    for (GameObject* object : scene->gameObjects)
+    {
+	if (!object->isActive)
+	    continue;
+	Light* light = object->GetComponent<Light>();
+	if (light && light->type == LightType::Directional)
+	{
+	    lightPosition = object->position;
+	    lightDirection = light->GetDirection();
+	    foundShadowCaster = true;
+	    break;
+	}
+    }
     glm::mat4 lightSpaceMatrix = shadowMap->GetLightSpaceMatrix(lightPosition, lightDirection);
 
     shadowShader->Use();
     shadowShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 
-    glViewport(0, 0, 4096, 4096);
-    glBindFramebuffer(GL_FRAMEBUFFER, shadowMap->GetMapID());
-    glClear(GL_DEPTH_BUFFER_BIT);
-    glCullFace(GL_FRONT);
+    shadowMap->Bind();
 
     for (GameObject* object : scene->gameObjects)
     {
@@ -90,9 +102,7 @@ void Renderer::PassShadowMap(Scene* scene, Camera* camera, Window* window,
 	    DrawMesh(scene, meshRenderer, resourceManager, shadowShader, true);
 	}
     }
-    glCullFace(GL_BACK);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, window->GetWidth(), window->GetHeight());
+    shadowMap->Unbind(window->GetWidth(), window->GetHeight());
     mainShader->Use();
     mainShader->SetMat4("lightSpaceMatrix", lightSpaceMatrix);
 }
@@ -134,7 +144,7 @@ void Renderer::SetupLights(Scene* scene, Shader* shader)
 
 	    shader->SetFloat("lights[" + number + "].cutOff",
 			     glm::cos(glm::radians(light->cutOff)));
-	    shader->SetFloat("lights[" + number + "].quadratic",
+	    shader->SetFloat("lights[" + number + "].outerCutOff",
 			     glm::cos(glm::radians(light->outerCutOff)));
 
 	    lightIndex++;
@@ -149,13 +159,19 @@ void Renderer::PassColor(Scene* scene, Camera* camera, Window* window, Editor* e
 {
     frameBuffer->Bind();
     glEnable(GL_DEPTH_TEST);
+
     mainShader->Use();
     PrepareScene(camera, mainShader, window);
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glActiveTexture(GL_TEXTURE1);
+
+    glm::vec3 lightPosition = glm::vec3(-2.0f, 20.0f, -1.0f);
+    glm::vec3 lightDirection = glm::normalize(glm::vec3(0.1f, -1.0f, 0.1f));
+
+    glActiveTexture(GL_TEXTURE10);
     glBindTexture(GL_TEXTURE_2D, shadowMap->GetMapID());
-    mainShader->SetInt("shadowMap", 1);
+    mainShader->SetInt("shadowMap", 10);
     glActiveTexture(GL_TEXTURE0);
 
     if (editor && editor->debugWireframemode)
@@ -223,27 +239,19 @@ void Renderer::DrawMesh(Scene* scene, MeshRenderer* meshRenderer, ResourceManage
     {
 	if (material)
 	{
-	    glActiveTexture(GL_TEXTURE0);
-	    if (material->diffuseMap)
-	    {
-		glBindTexture(GL_TEXTURE_2D, material->diffuseMap->GetID());
-	    } else
-	    {
-		glBindTexture(GL_TEXTURE_2D, 0);
-	    }
-	    shader->SetInt("material.diffuse", 0);
-	    material->Use(shader);
-	    shader->SetVec3("material.color", meshRenderer->colorTint);
-	    shader->SetVec2("material.tiling", meshRenderer->textureTiling);
-	    shader->SetVec2("material.offset", meshRenderer->textureOffset);
-	    shader->SetFloat("material.specular", material->specular);
-	    shader->SetFloat("material.shininess", material->shininess);
+	    BindMaterialState(shader, material, meshRenderer);
+
 	} else
 	{
 	    shader->SetVec3("material.color", glm::vec3(1.0f, 0.0f, 1.0f));
 	    shader->SetVec2("material.tiling", glm::vec2(1.0f, 1.0f));
 	    shader->SetFloat("material.specular", 0.5f);
 	    shader->SetFloat("material.shininess", 32.0f);
+	    shader->SetBool("material.useNormalMap", false);
+	    glActiveTexture(GL_TEXTURE0);
+	    glBindTexture(GL_TEXTURE_2D, 0);
+	    glActiveTexture(GL_TEXTURE1);
+	    glBindTexture(GL_TEXTURE_2D, 0);
 	}
     }
     if (meshRenderer->owner)
@@ -254,4 +262,35 @@ void Renderer::DrawMesh(Scene* scene, MeshRenderer* meshRenderer, ResourceManage
     mesh->Draw();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
+}
+
+void Renderer::BindMaterialState(Shader* shader, Material* material, MeshRenderer* meshRenderer)
+{
+    glActiveTexture(GL_TEXTURE0);
+    if (material->diffuseMap)
+    {
+	glBindTexture(GL_TEXTURE_2D, material->diffuseMap->GetID());
+    } else
+    {
+	glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    shader->SetInt("material.diffuse", 0);
+
+    glActiveTexture(GL_TEXTURE1);
+    if (material->normalMap)
+    {
+	glBindTexture(GL_TEXTURE_2D, material->normalMap->GetID());
+	shader->SetInt("material.normalMap", 1);
+	shader->SetBool("material.useNormalMap", true);
+    } else
+    {
+	glBindTexture(GL_TEXTURE_2D, 0);
+	shader->SetBool("material.useNormalMap", false);
+    }
+    glActiveTexture(GL_TEXTURE0);
+    shader->SetVec3("material.color", meshRenderer->colorTint);
+    shader->SetVec2("material.tiling", meshRenderer->textureTiling);
+    shader->SetVec2("material.offset", meshRenderer->textureOffset);
+    shader->SetFloat("material.specular", material->specular);
+    shader->SetFloat("material.shininess", material->shininess);
 }

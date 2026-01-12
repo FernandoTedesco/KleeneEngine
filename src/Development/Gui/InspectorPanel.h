@@ -14,6 +14,8 @@ public:
     void Draw(Scene* scene, int& selectedEntityIndex, ResourceManager* resourceManager);
 
 private:
+    Texture* DrawTextureSelector(const char* label, Texture* currentTexture,
+				 ResourceManager* resourceManager);
     std::vector<std::string> availableMeshes;
     std::vector<std::string> availableTextures;
     bool listLoaded = false;
