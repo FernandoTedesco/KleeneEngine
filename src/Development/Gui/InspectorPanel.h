@@ -22,11 +22,16 @@ private:
     int selectedMeshIndex = 0;
     int selectedTextureIndex = 0;
 
+    // could be unified sometime (?)
     void DrawTransform(GameObject* object);
     void DrawMeshRenderer(GameObject* object, ResourceManager* resourceManager);
     void DrawLight(GameObject* object);
     void DrawTerrain(GameObject* object);
     void DrawParticleSystem(GameObject* object);
+    void DrawPlayerController(GameObject* object);
+    void DrawSpriteRenderer(GameObject* object);
+    void DrawSpriteAnimator(GameObject* object);
+    void DrawCameraDirector(GameObject* object);
 
     void DrawAddComponentButton(GameObject* object, ResourceManager* resourceManager);
     void RefreshAssetLists();

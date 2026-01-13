@@ -6,6 +6,10 @@
 #include "Components/SpriteRenderer.h"
 #include "Components/Light.h"
 #include "Components/ParticleSystem.h"
+#include "Components/SpriteRenderer.h"
+#include "Components/SpriteAnimator.h"
+#include "Components/CameraDirector.h"
+
 #include "Core/Paths.h"
 #include "Graphics/Material.h"
 #include <iostream>
@@ -48,8 +52,11 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
 	    DrawMeshRenderer(object, resourceManager);
 	    DrawLight(object);
 	    DrawParticleSystem(object);
-	    // DrawPlayerController(object);
-	    // DrawSpriteRenderer(object);
+	    DrawPlayerController(object);
+	    DrawSpriteRenderer(object);
+	    DrawSpriteAnimator(object);
+	    DrawCameraDirector(object);
+
 	    ImGui::Separator();
 	    DrawAddComponentButton(object, resourceManager);
 	    ImGui::Separator();
@@ -164,6 +171,12 @@ void InspectorPanel::DrawMeshRenderer(GameObject* object, ResourceManager* resou
 		{
 		    material->normalMap = newNormal;
 		}
+		Texture* newSpecular = DrawTextureSelector("Specular/Roughness",
+							   material->specularMap, resourceManager);
+		if (newSpecular != material->specularMap)
+		{
+		    material->specularMap = newSpecular;
+		}
 	    }
 	}
     }
@@ -227,10 +240,26 @@ void InspectorPanel::DrawAddComponentButton(GameObject* object, ResourceManager*
 	{
 	    object->AddComponent<Light>();
 	}
+	if (!object->GetComponent<CameraDirector>() && ImGui::MenuItem("CameraDirector"))
+	{
+	    object->AddComponent<CameraDirector>();
+	}
 	if (!object->GetComponent<Terrain>() && ImGui::MenuItem("Terrain"))
 	{
 	    Terrain* terrain = object->AddComponent<Terrain>();
 	    terrain->SetResourceManager(resourceManager);
+	}
+	if (!object->GetComponent<SpriteRenderer>() && ImGui::MenuItem("SpriteRenderer"))
+	{
+	    object->AddComponent<SpriteRenderer>();
+	}
+	if (!object->GetComponent<SpriteAnimator>() && ImGui::MenuItem("SpriteAnimator"))
+	{
+	    object->AddComponent<SpriteAnimator>();
+	}
+	if (!object->GetComponent<PlayerController>() && ImGui::MenuItem("PlayerController"))
+	{
+	    object->AddComponent<PlayerController>();
 	}
 	if (!object->GetComponent<ParticleSystem>() && ImGui::MenuItem("ParticleSystem"))
 	{
@@ -400,4 +429,162 @@ Texture* InspectorPanel::DrawTextureSelector(const char* label, Texture* current
     }
     ImGui::PopID();
     return resultTexture;
+}
+
+void InspectorPanel::DrawPlayerController(GameObject* object)
+{
+    PlayerController* playerController = object->GetComponent<PlayerController>();
+    if (!playerController)
+	return;
+    if (ImGui::CollapsingHeader("Player Controller", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	if (ImGui::BeginPopupContextItem("PlayerControllerCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<PlayerController>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+	ImGui::DragFloat("Move Speed", &playerController->moveSpeed, 0.1f, 0.0f, 100.0f);
+	ImGui::TextDisabled("Status:%s", (playerController->moveSpeed > 0 ? "Active" : "Stopped"));
+    }
+}
+
+void InspectorPanel::DrawSpriteRenderer(GameObject* object)
+{
+    SpriteRenderer* spriteRenderer = object->GetComponent<SpriteRenderer>();
+    if (!spriteRenderer)
+	return;
+    if (ImGui::CollapsingHeader("Sprite Renderer", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	if (ImGui::BeginPopupContextItem("SpriteRendererCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<SpriteRenderer>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+	ImGui::Checkbox("Billboard Mode", &spriteRenderer->isBillboard);
+	if (spriteRenderer->targetCamera == nullptr)
+	{
+	    ImGui::TextColored(ImVec4(1, 0, 0, 1), "No Camera Linked!");
+	}
+    }
+}
+
+void InspectorPanel::DrawSpriteAnimator(GameObject* object)
+{
+    SpriteAnimator* animator = object->GetComponent<SpriteAnimator>();
+    if (!animator)
+	return;
+
+    if (ImGui::CollapsingHeader("Sprite Animator", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+	if (ImGui::BeginPopupContextItem("SpriteAnimCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<SpriteAnimator>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+	ImGui::Text("Sheet Layout");
+	bool gridChanged = false;
+	if (ImGui::InputInt("Columns", &animator->cols))
+	    gridChanged = true;
+	if (ImGui::InputInt("Rows", &animator->rows))
+	    gridChanged = true;
+
+	if (gridChanged)
+	{
+	    if (animator->cols < 1)
+		animator->cols = 1;
+	    if (animator->rows < 1)
+		animator->rows = 1;
+	    animator->SetupSpriteSheet(animator->cols, animator->rows);
+	}
+	ImGui::Separator();
+	ImGui::Text("Animations List");
+
+	static char newAnimatorName[32] = "New Animation";
+	ImGui::InputText("##NewName", newAnimatorName, 32);
+	ImGui::SameLine();
+	if (ImGui::Button("Create Clip"))
+	{
+	    animator->AddAnimation(newAnimatorName, 0, 1, 0.1f, true);
+	}
+	ImGui::BeginChild("AnimatorList", ImVec2(0, 150), true);
+	std::string animationToRemove = "";
+	for (auto& [name, clip] : animator->animations)
+	{
+	    ImGui::PushID(name.c_str());
+	    if (ImGui::TreeNode(name.c_str()))
+	    {
+		ImGui::DragInt("Start Frame", &clip.startFrame, 1, 0,
+			       (animator->cols * animator->rows) - 1);
+		ImGui::DragInt("Count", &clip.frameCount, 1, 1, 100);
+		ImGui::DragFloat("Speed", &clip.speed, 0.01f, 0.001f, 5.0f);
+		ImGui::Checkbox("Loop", &clip.loop);
+
+		if (ImGui::Button("Play Now"))
+		{
+		    animator->Play(name);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Delete", ImVec2(60, 0)))
+		{
+		    animationToRemove = name;
+		}
+		ImGui::TreePop();
+	    }
+	    ImGui::PopID();
+	}
+	ImGui::EndChild();
+	if (!animationToRemove.empty())
+	{
+	    animator->animations.erase(animationToRemove);
+	}
+	ImGui::TextDisabled("Current %s | Frame: %d", animator->currentAnimationName.c_str(),
+			    animator->currentFrameIndex);
+    }
+}
+
+void InspectorPanel::DrawCameraDirector(GameObject* object)
+{
+    CameraDirector* cameraDirector = object->GetComponent<CameraDirector>();
+    if (!cameraDirector)
+	return;
+
+    if (ImGui::CollapsingHeader("Camera Director", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+
+	if (ImGui::BeginPopupContextItem("CamDirCtx"))
+	{
+	    if (ImGui::MenuItem("Remove Component"))
+	    {
+		object->RemoveComponent<CameraDirector>();
+		ImGui::EndPopup();
+		return;
+	    }
+	    ImGui::EndPopup();
+	}
+	ImGui::DragFloat3("CamOffset", &cameraDirector->offset[0], 0.1f);
+	ImGui::DragFloat("Smoothness", &cameraDirector->smoothSpeed, 0.1f, 0.1f, 20.0f);
+
+	if (cameraDirector->globalCameraRef == nullptr)
+	{
+	    ImGui::TextColored(ImVec4(1, 0, 0, 1), "WAITING FOR CAMERA LINK...");
+	} else
+	{
+	    ImGui::TextColored(ImVec4(0, 1, 0, 1), "Camera Linked Active");
+	}
+    }
 }

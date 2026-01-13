@@ -2,13 +2,13 @@
 #include "Scenes/GameObject.h"
 #include "Core/Input.h"
 #include <cmath>
-PlayerController::PlayerController(GameObject* characterObject) : character(characterObject)
+PlayerController::PlayerController()
 {
     this->moveSpeed = 5.0f;
 }
 void PlayerController::Update(float dt)
 {
-    if (!character)
+    if (!owner)
 	return;
     HandleMovement(dt);
 }
@@ -26,6 +26,7 @@ void PlayerController::HandleMovement(float dt)
     if (glm::length(direction) > 0.0f)
     {
 	direction = glm::normalize(direction);
-	character->position += direction * moveSpeed * dt;
+	glm::vec3 newPos = owner->position + (direction * moveSpeed * dt);
+	owner->SetPosition(newPos);
     }
 }

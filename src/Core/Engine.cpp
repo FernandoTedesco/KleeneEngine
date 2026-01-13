@@ -69,7 +69,7 @@ Engine::Engine()
 void Engine::Update(float dt)
 {
     camera->ProcessInput();
-    camera->CameraUpdate(dt, glm::vec3(0.0f));
+
     if (activeScene != nullptr)
     {
 	activeScene->Update(dt);

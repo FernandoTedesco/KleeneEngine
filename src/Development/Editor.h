@@ -38,7 +38,8 @@ public:
 
 private:
     void CheckToolState(const glm::vec3& rayOrigin, const glm::vec3& rayDirection);
-    void DrawAtlasSelector(Terrain* terrain);
+    void DrawAtlasSelector(Terrain* terrain, GameObject* object);
+
     // Core Pointers
     Window* window;
     Scene* scene;

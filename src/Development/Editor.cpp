@@ -277,11 +277,24 @@ void Editor::DrawTileMapSelector()
 
     if (selectedEntityIndex >= 0 && selectedEntityIndex < scene->gameObjects.size())
     {
+	GameObject* currentObject = scene->gameObjects[selectedEntityIndex];
 	if (auto terrain = scene->gameObjects[selectedEntityIndex]->GetComponent<Terrain>())
 	{
-	    if (terrain->atlasTextureName.empty())
-		terrain->atlasTextureName = "atlas.png";
-	    Editor::DrawAtlasSelector(terrain);
+	    Editor::DrawAtlasSelector(terrain, currentObject);
+
+	    if (terrain->atlasTextureName.empty() && terrain->atlasTextureName != "None")
+		;
+	    {
+		activeAtlasID = resourceManager->CreateTexture(
+		    terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
+		{
+		    if (activeAtlasID == 0)
+		    {
+			activeAtlasID = resourceManager->CreateTexture(
+			    terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
+		    }
+		}
+	    }
 
 	    activeAtlasID = resourceManager->CreateTexture(
 		terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
@@ -369,21 +382,62 @@ void Editor::DrawTileMapSelector()
     ImGui::End();
 }
 
-void Editor::DrawAtlasSelector(Terrain* terrain)
+void Editor::DrawAtlasSelector(Terrain* terrain, GameObject* object)
 {
     if (ImGui::BeginCombo("Atlas File", terrain->atlasTextureName.c_str()))
     {
 	if (std::filesystem::exists(Paths::Tilemaps))
 	{
+	    if (ImGui::Selectable("None", terrain->atlasTextureName == "None"))
+	    {
+		terrain->atlasTextureName = "None";
+	    }
 	    for (const auto& entry : std::filesystem::directory_iterator(Paths::Tilemaps))
 	    {
-		if (entry.path().extension() == "png")
+		std::string filename = entry.path().filename().string();
+		bool isAuxMap = filename.find("_n.") != std::string::npos ||
+				filename.find("_s.") != std::string::npos;
+		if (entry.path().extension() == ".png" && !isAuxMap)
 		{
-		    std::string filename = entry.path().filename().string();
 		    bool isSelected = (terrain->atlasTextureName == filename);
 		    if (ImGui::Selectable(filename.c_str(), isSelected))
 		    {
 			terrain->atlasTextureName = filename;
+			std::filesystem::path p(filename);
+			std::string stem = p.stem().string();
+			std::string ext = p.extension().string();
+
+			terrain->atlasNormalname = stem + "_n" + ext;
+			terrain->atlasSpecularName = stem + "_s" + ext;
+
+			uint32_t diffID = resourceManager->CreateTexture(
+			    terrain->atlasTextureName, Paths::Tilemaps / terrain->atlasTextureName);
+			uint32_t normID = resourceManager->CreateTexture(
+			    terrain->atlasNormalname, Paths::Tilemaps / terrain->atlasNormalname);
+			uint32_t specID = resourceManager->CreateTexture(
+			    terrain->atlasSpecularName,
+			    Paths::Tilemaps / terrain->atlasSpecularName);
+			if (auto rend = object->GetComponent<MeshRenderer>())
+			{
+			    if (auto material = resourceManager->GetMaterial(rend->materialID))
+			    {
+				material->diffuseMap = resourceManager->GetTexture(diffID);
+				material->normalMap = resourceManager->GetTexture(normID);
+				material->specularMap = resourceManager->GetTexture(specID);
+				if (material->diffuseMap)
+				{
+				    int tileSize = 32;
+				    terrain->atlasCols =
+					material->diffuseMap->GetWidth() / tileSize;
+				    terrain->atlasRows =
+					material->diffuseMap->GetHeight() / tileSize;
+				    if (terrain->atlasCols < 1)
+					terrain->atlasCols = 1;
+				    if (terrain->atlasRows < 1)
+					terrain->atlasRows = 1;
+				}
+			    }
+			}
 		    }
 		    if (isSelected)
 			ImGui::SetItemDefaultFocus();

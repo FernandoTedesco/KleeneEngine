@@ -31,6 +31,7 @@
                         0.0
                     ],
                     "ReceiveShadows": true,
+                    "SpecularFile": "None",
                     "TextureFile": "atlas.png",
                     "Tiling": [
                         1.0,
@@ -74,6 +75,7 @@
                         0.0
                     ],
                     "ReceiveShadows": true,
+                    "SpecularFile": "None",
                     "TextureFile": "atlas.png",
                     "Tiling": [
                         1.0,
@@ -20129,6 +20131,7 @@
                         0.0
                     ],
                     "ReceiveShadows": true,
+                    "SpecularFile": "None",
                     "TextureFile": "Wallbricks.png",
                     "Tiling": [
                         1.0,
@@ -20166,12 +20169,13 @@
                         1.0
                     ],
                     "MeshFile": "cube.obj",
-                    "NormalFile": "Wallbricks_n.png",
+                    "NormalFile": "FINAL.png",
                     "Offset": [
                         0.0,
                         0.0
                     ],
                     "ReceiveShadows": true,
+                    "SpecularFile": "None",
                     "TextureFile": "Wallbricks2.png",
                     "Tiling": [
                         10.0,
@@ -20198,8 +20202,100 @@
                     1.0
                 ]
             }
+        },
+        {
+            "Components": {
+                "MeshRenderer": {
+                    "CastShadows": true,
+                    "Color": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "MeshFile": "cube.obj",
+                    "NormalFile": "defaultnormal.png",
+                    "Offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "ReceiveShadows": true,
+                    "SpecularFile": "None",
+                    "TextureFile": "Wallbricks.png",
+                    "Tiling": [
+                        10.0,
+                        10.0
+                    ]
+                }
+            },
+            "ID": 5,
+            "Name": "Object_4",
+            "Transform": {
+                "Position": [
+                    -2.1000001430511475,
+                    1.0,
+                    -15.460000038146973
+                ],
+                "Rotation": [
+                    0.0,
+                    0.0,
+                    90.0
+                ],
+                "Scale": [
+                    6.0,
+                    6.0,
+                    1.0
+                ]
+            }
+        },
+        {
+            "Components": {
+                "MeshRenderer": {
+                    "CastShadows": true,
+                    "Color": [
+                        1.0,
+                        1.0,
+                        1.0
+                    ],
+                    "MeshFile": "quad.obj",
+                    "NormalFile": "defaultnormal.png",
+                    "Offset": [
+                        0.0,
+                        0.0
+                    ],
+                    "ReceiveShadows": true,
+                    "SpecularFile": "None",
+                    "TextureFile": "Mk1.png",
+                    "Tiling": [
+                        1.0,
+                        1.0
+                    ]
+                },
+                "SpriteRenderer": {
+                    "IsBillboard": true,
+                    "LockY": true
+                }
+            },
+            "ID": 7,
+            "Name": "quad.obj",
+            "Transform": {
+                "Position": [
+                    -3.5,
+                    0.0,
+                    -6.5
+                ],
+                "Rotation": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "Scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                ]
+            }
         }
     ],
-    "ObjectCount": 4,
+    "ObjectCount": 6,
     "Version": 1
 }

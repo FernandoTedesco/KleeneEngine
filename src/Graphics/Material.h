@@ -9,6 +9,7 @@ public:
     Material();
     Texture* diffuseMap = nullptr;
     Texture* normalMap = nullptr;
+    Texture* specularMap = nullptr;
     float specular = 0.5f;
     float shininess = 32.0f;
     glm::vec3 colorTint = glm::vec3(1.0f, 1.0f, 1.0f);

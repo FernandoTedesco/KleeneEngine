@@ -56,10 +56,12 @@ ${CMAKE_SOURCE_DIR}/src/Utils/Telemetry.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/MemoryTracker.cpp
 ${CMAKE_SOURCE_DIR}/src/Utils/Math.h
 ${CMAKE_SOURCE_DIR}/src/Audio/AudioManager.cpp
+
 ${CMAKE_SOURCE_DIR}/src/Components/PlayerController.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/SpriteRenderer.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/Terrain.cpp
 ${CMAKE_SOURCE_DIR}/src/Components/ParticleSystem.cpp
+${CMAKE_SOURCE_DIR}/src/Components/SpriteAnimator.cpp
 
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/EditorUI.cpp
 ${CMAKE_SOURCE_DIR}/src/Development/Gui/ToolBar.cpp
@@ -75,7 +77,17 @@ file(GLOB_RECURSE FORMAT_FILES
 ${CMAKE_SOURCE_DIR}/src/*.cpp
 ${CMAKE_SOURCE_DIR}/src/*.h
 ${CMAKE_SOURCE_DIR}/src/*.hpp)
-add_custom_target(FORMAT_CODE COMMAND ${CLANG_FORMAT_EXE} -i -style=file ${FORMAT_FILES})
+
+set(FORMAT_SCRIPT "${CMAKE_BINARY_DIR}/format_code_impl.cmake")
+
+file(WRITE "${FORMAT_SCRIPT}"
+"set(FILES \"${FORMAT_FILES}\")\n"
+"foreach(FILE \${FILES})\n"
+"execute_process(COMMAND \"${CLANG_FORMAT_EXE}\" -i -style=file \"\${FILE}\")\n"
+"endforeach()"
+)
+
+add_custom_target(FORMAT_CODE COMMAND ${CMAKE_COMMAND} -P ${FORMAT_SCRIPT})
 add_dependencies(KleeneRuntime FORMAT_CODE)
 endif()
 

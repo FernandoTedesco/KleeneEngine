@@ -15,6 +15,7 @@ uniform sampler2D shadowMap;
 struct Material{
     sampler2D diffuse;
     sampler2D normalMap;
+    sampler2D specularMap;
     bool useNormalMap;
     vec2 tiling;
     vec2 offset;
@@ -62,8 +63,10 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 normal, vec3 lightDir)
     return shadow;
 }
 
-vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 albedo, float shadow)
+vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 albedo, float shadow, float specMask)
     {
+        
+        
         vec3 lightDirection;
         float attenuation = 1.0;
         if(light.type == 0)
@@ -84,12 +87,12 @@ vec3 CalcLight(Light light, vec3 normal, vec3 viewDirection, vec3 fragPos, vec3 
             float epsilon = light.cutOff - light.outerCutOff;
             spotIntensity = clamp((theta - light.outerCutOff)/epsilon, 0.0, 1.0);
         }
-        vec3 ambient = 0.05 * light.color * albedo;
+        vec3 ambient = 0.01 * light.color * albedo;
         float diff = max(dot(normal,lightDirection),0.0);
         vec3 diffuse = diff * light.color * albedo;
         vec3 reflectDirection= reflect(-lightDirection, normal);
         float spec = pow(max(dot(viewDirection,reflectDirection), 0.0), material.shininess);
-        vec3 specular = material.specular * spec *light.color;
+        vec3 specular = (material.specular * spec *light.color)*specMask;
         ambient *= light.intensity;
         diffuse *= light.intensity;
         specular *= light.intensity;
@@ -109,13 +112,16 @@ void main()
     {
         discard;
     }
+    float specMask = texture(material.specularMap, tiledCoords).r;
     vec3 albedo = pow(vec3(texColor),vec3(2.2))*material.color;
     vec3 norm;
     if(material.useNormalMap)
     {
-        norm = texture(material.normalMap, tiledCoords).rgb;
-        norm = norm * 2.0 - 1.0;
-        norm = normalize(TBN * norm);
+        vec3 rawNormal = texture(material.normalMap, tiledCoords).rgb;
+        rawNormal = rawNormal *2.0 - 1.0;
+        float normalStrenght = 10.0;
+        rawNormal.xy *= normalStrenght;
+        norm = normalize(TBN * rawNormal);
     }
     else
     {
@@ -131,7 +137,7 @@ void main()
             vec3 lightDir = normalize (-lights[i].direction);
             shadow = ShadowCalculation(FragPosLightSpace, norm, lightDir);
         }
-        result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo, shadow);
+        result += CalcLight(lights[i], norm, viewDirection, FragPos, albedo, shadow, specMask);
     }
     
    

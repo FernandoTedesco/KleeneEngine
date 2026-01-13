@@ -287,6 +287,15 @@ void Renderer::BindMaterialState(Shader* shader, Material* material, MeshRendere
 	glBindTexture(GL_TEXTURE_2D, 0);
 	shader->SetBool("material.useNormalMap", false);
     }
+    glActiveTexture(GL_TEXTURE2);
+    if (material->specularMap)
+    {
+	glBindTexture(GL_TEXTURE_2D, material->specularMap->GetID());
+    } else
+    {
+	glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    shader->SetInt("material.specularMap", 2);
     glActiveTexture(GL_TEXTURE0);
     shader->SetVec3("material.color", meshRenderer->colorTint);
     shader->SetVec2("material.tiling", meshRenderer->textureTiling);

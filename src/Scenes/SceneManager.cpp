@@ -7,6 +7,10 @@
 #include "Components/MeshRenderer.h"
 #include "Components/Light.h"
 #include "Components/Terrain.h"
+#include "Components/PlayerController.h"
+#include "Components/SpriteRenderer.h"
+#include "Components/SpriteAnimator.h"
+#include "Components/CameraDirector.h"
 
 #include "Development/Terminal.h"
 #include "Core/Paths.h"
@@ -75,6 +79,7 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 	    }
 	    std::string diffuseName = "default.png";
 	    std::string normalName = "None";
+	    std::string specularName = "None";
 
 	    Material* material = resourceManager->GetMaterial(mesh->materialID);
 	    if (material)
@@ -112,10 +117,28 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 			}
 		    }
 		}
+		if (material->specularMap)
+		{
+		    for (size_t i = 0; i < resourceManager->textureVector.size(); i++)
+		    {
+			if (resourceManager->textureVector[i] == material->specularMap)
+			{
+			    if (i < resourceManager->texturePaths.size())
+			    {
+				specularName =
+				    std::filesystem::path(resourceManager->texturePaths[i])
+					.filename()
+					.string();
+				break;
+			    }
+			}
+		    }
+		}
 	    }
 	    comp["MeshFile"] = std::filesystem::path(meshPathStr).filename().string();
 	    comp["TextureFile"] = diffuseName;
 	    comp["NormalFile"] = normalName;
+	    comp["SpecularFile"] = specularName;
 
 	    comp["Tiling"] = Vec2ToJson(mesh->textureTiling);
 	    comp["Offset"] = Vec2ToJson(mesh->textureOffset);
@@ -140,7 +163,49 @@ bool SceneManager::SaveScene(std::filesystem::path fileName, Scene& targetScene,
 
 	    objectData["Components"]["Light"] = comp;
 	}
-
+	PlayerController* playerController = object->GetComponent<PlayerController>();
+	if (playerController != nullptr)
+	{
+	    json comp;
+	    comp["MoveSpeed"] = playerController->moveSpeed;
+	    objectData["Components"]["PlayerController"] = comp;
+	}
+	SpriteRenderer* spriteRenderer = object->GetComponent<SpriteRenderer>();
+	if (spriteRenderer != nullptr)
+	{
+	    json comp;
+	    comp["IsBillboard"] = spriteRenderer->isBillboard;
+	    comp["LockY"] = spriteRenderer->lockY;
+	    objectData["Components"]["SpriteRenderer"] = comp;
+	}
+	SpriteAnimator* spriteAnimator = object->GetComponent<SpriteAnimator>();
+	if (spriteAnimator != nullptr)
+	{
+	    json comp;
+	    comp["Cols"] = spriteAnimator->cols;
+	    comp["Rows"] = spriteAnimator->rows;
+	    json animsArray = json::array();
+	    for (const auto& [name, clip] : spriteAnimator->animations)
+	    {
+		json clipJson;
+		clipJson["Name"] = clip.name;
+		clipJson["StartFrame"] = clip.startFrame;
+		clipJson["FrameCount"] = clip.frameCount;
+		clipJson["Speed"] = clip.speed;
+		clipJson["Loop"] = clip.loop;
+		animsArray.push_back(clipJson);
+	    }
+	    comp["Animations"] = animsArray;
+	    objectData["Components"]["SpriteAnimator"] = comp;
+	}
+	CameraDirector* cameraDirector = object->GetComponent<CameraDirector>();
+	if (cameraDirector != nullptr)
+	{
+	    json comp;
+	    comp["Offset"] = Vec3ToJson(cameraDirector->offset);
+	    comp["SmoothedSpeed"] = cameraDirector->smoothSpeed;
+	    objectData["Components"]["CameraDirector"] = comp;
+	}
 	Terrain* terrain = object->GetComponent<Terrain>();
 	if (terrain != nullptr)
 	{
@@ -217,6 +282,7 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			std::string meshName = mData.value("MeshFile", "cube.obj");
 			std::string textureName = mData.value("TextureFile", "default.png");
 			std::string normalName = mData.value("NormalFile", "None");
+			std::string specularName = mData.value("SpecularFile", "None");
 
 			uint32_t meshID =
 			    resourceManager->CreateMesh(meshName, Paths::Models / meshName);
@@ -233,6 +299,17 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			    normalID = resourceManager->CreateTexture(normalName, normalPath);
 			    hasNormal = true;
 			}
+			uint32_t specularID = 0;
+			bool hasSpecular = false;
+			if (specularName != "None" && !specularName.empty())
+			{
+			    std::filesystem::path specPath = Paths::Textures / specularName;
+			    if (std::filesystem::exists(specPath))
+			    {
+				specularID = resourceManager->CreateTexture(specularName, specPath);
+				hasSpecular = true;
+			    }
+			}
 
 			std::string materialName = "Mat_" + textureName;
 			uint32_t materialID =
@@ -243,6 +320,12 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			    if (material)
 				material->normalMap = resourceManager->GetTexture(normalID);
 			}
+			if (hasSpecular)
+			{
+			    Material* material = resourceManager->GetMaterial(materialID);
+			    if (material)
+				material->specularMap = resourceManager->GetTexture(specularID);
+			}
 			MeshRenderer* meshRenderer = newObject->AddComponent<MeshRenderer>();
 			meshRenderer->SetMesh(meshID);
 			meshRenderer->SetMaterial(materialID);
@@ -252,6 +335,48 @@ bool SceneManager::LoadScene(std::filesystem::path fileName, Scene& targetScene,
 			meshRenderer->colorTint = JsonToVec3(mData["Color"], glm::vec3(1.0f));
 			meshRenderer->castShadows = mData.value("CastShadows", true);
 			meshRenderer->receiveShadows = mData.value("ReceiveShadows", true);
+		    }
+		    if (comps.contains("PlayerController"))
+		    {
+			const auto& PlayerControllerData = comps["PlayerController"];
+			PlayerController* playerController =
+			    newObject->AddComponent<PlayerController>();
+			playerController->moveSpeed = PlayerControllerData.value("MoveSpeed", 5.0f);
+		    }
+		    if (comps.contains("SpriteRenderer"))
+		    {
+			const auto& sData = comps["SpriteRenderer"];
+			SpriteRenderer* spriteRenderer = newObject->AddComponent<SpriteRenderer>();
+			spriteRenderer->isBillboard = sData.value("IsBillboard", false);
+			spriteRenderer->lockY = sData.value("LockY", false);
+		    }
+		    if (comps.contains("SpriteAnimator"))
+		    {
+			const auto& aData = comps["SpriteAnimator"];
+			SpriteAnimator* spriteAnimator = newObject->AddComponent<SpriteAnimator>();
+			int c = aData.value("Cols", 1);
+			int r = aData.value("Rows", 1);
+			spriteAnimator->SetupSpriteSheet(c, r);
+
+			if (aData.contains("Animations"))
+			{
+			    for (const auto& animJson : aData["Animations"])
+			    {
+				std::string n = animJson.value("Name", "Default");
+				int start = animJson.value("StartFrame", 0);
+				int count = animJson.value("FrameCount", 1);
+				float speed = animJson.value("Loop", true);
+				bool loop = animJson.value("Loop", true);
+				spriteAnimator->AddAnimation(n, start, count, speed, loop);
+			    }
+			}
+		    }
+		    if (comps.contains("CameraDirector"))
+		    {
+			const auto& cData = comps["CameraDirector"];
+			CameraDirector* cameraDirector = newObject->AddComponent<CameraDirector>();
+			cameraDirector->offset = JsonToVec3(cData["Offset"], glm::vec3(0, 10, 8));
+			cameraDirector->smoothSpeed = cData.value("SmoothSpeed", 5.0f);
 		    }
 		    if (comps.contains("Light"))
 		    {
