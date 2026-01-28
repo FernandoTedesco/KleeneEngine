@@ -124,12 +124,13 @@ void Camera::CameraUpdate(float dt, glm::vec3 targetPosition)
     switch (cameraMode)
     {
     case GAMEPLAY: {
-	glm::vec3 cameraOffset = glm::vec3(0.0f, 6.0f, 4.0f);
+
+	glm::vec3 cameraOffset = glm::vec3(0.0f, 8.0f, 5.0f);
 	glm::vec3 desiredPosition = targetPosition + cameraOffset;
 	float smoothSpeed = 5.0f * dt;
 	glm::vec3 smoothedPosition = glm::mix(cameraPos, desiredPosition, smoothSpeed);
 	this->SetCameraPosition(smoothedPosition);
-	this->SetCameraRotation(-58.0f, -90.0f);
+	this->SetCameraRotation(-75.0f, -90.0f);
     }
 
     break;

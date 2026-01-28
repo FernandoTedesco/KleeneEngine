@@ -14,6 +14,7 @@ public:
     ~SpriteRenderer();
     bool isBilldBoard = true;
     bool lockY = true;
+    float debugTilt = 0.0f;
     void SetTargetCamera(Camera* camera);
     void Update(float dt) override;
 

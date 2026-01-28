@@ -1,11 +1,40 @@
 #include "Scene.h"
+#include "Components/CameraDirector.h"
+#include "Components/SpriteRenderer.h"
+#include "Components/PlayerController.h"
 
 Scene::Scene()
 {
     skybox = nullptr;
     particleManager = nullptr;
+    cachedPlayer = nullptr;
+    isPlaying = false;
 }
-
+void Scene::OnRuntimeStart(Camera* mainCamera)
+{
+    isPlaying = true;
+    for (auto& obj : gameObjects)
+    {
+	if (auto* dir = obj->GetComponent<CameraDirector>())
+	{
+	    dir->globalCameraRef = mainCamera;
+	}
+	if (auto* sprite = obj->GetComponent<SpriteRenderer>())
+	{
+	    sprite->targetCamera = mainCamera;
+	    sprite->debugTilt = -20.0f;
+	}
+	if (obj->GetComponent<PlayerController>())
+	{
+	    cachedPlayer = obj;
+	}
+    }
+}
+void Scene::OnRuntimeStop()
+{
+    isPlaying = false;
+    cachedPlayer = nullptr;
+}
 Scene::~Scene()
 {
     Clear();
@@ -13,12 +42,14 @@ Scene::~Scene()
 
 void Scene::Update(float dt)
 {
+    float effectiveDt = isPlaying ? dt : 0.0f;
+
     for (size_t i = 0; i < gameObjects.size(); i++)
     {
 	GameObject* gameObject = gameObjects[i];
 	if (gameObject != nullptr && gameObject->isActive)
 	{
-	    gameObject->Update(dt);
+	    gameObject->Update(effectiveDt);
 	}
     }
     if (!pendingDestruction.empty())

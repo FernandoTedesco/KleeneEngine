@@ -5,6 +5,9 @@
 #include "GameObject.h"
 #include "Graphics/Skybox.h"
 #include "Graphics/ParticleManager.h"
+
+class Camera;
+
 class Scene
 {
     friend class SceneManager;
@@ -12,8 +15,13 @@ class Scene
 public:
     Scene();
     ~Scene();
+    void OnRuntimeStart(Camera* mainCamera);
+    void OnRuntimeStop();
 
     ParticleManager* particleManager = nullptr;
+
+    GameObject* cachedPlayer = nullptr;
+    bool isPlaying = false;
 
     std::vector<GameObject*> gameObjects;
     std::vector<GameObject*> pendingDestruction;

@@ -24,6 +24,7 @@
 #include "Graphics/PostProcessManager.h"
 
 #include "Components/MeshRenderer.h"
+#include "Components/SpriteRenderer.h"
 #include "Components/Light.h"
 
 #include "Paths.h"
@@ -59,7 +60,7 @@ Engine::Engine()
 
     isRunning = true;
 
-    std::filesystem::path scenePath = Paths::Assets / "scenes/default4.Kleene";
+    std::filesystem::path scenePath = Paths::Assets / "scenes/default5.Kleene";
     //    Terminal::Log(LOG_INFO, "Path: " + scenePath.string());
     SceneManager::LoadScene(scenePath.string(), *activeScene, resourceManager);
 
@@ -70,10 +71,28 @@ void Engine::Update(float dt)
 {
     camera->ProcessInput();
 
+    if (Input::IsKeyPressed(Input::F3_KEY) && activeScene != nullptr)
+    {
+	activeScene->OnRuntimeStart(this->camera);
+    }
+    if (Input::IsKeyPressed(Input::F1_KEY) ||
+	Input::IsKeyPressed(Input::F2_KEY) && activeScene != nullptr)
+    {
+	activeScene->OnRuntimeStop();
+    }
+
     if (activeScene != nullptr)
     {
 	activeScene->Update(dt);
     }
+    if (activeScene != nullptr && activeScene->cachedPlayer != nullptr)
+    {
+	camera->CameraUpdate(dt, activeScene->cachedPlayer->position);
+    } else
+    {
+	camera->CameraUpdate(dt, glm::vec3(0.0f));
+    }
+
     if (particleManager != nullptr)
     {
 	// particleManager->Simulate(dt);

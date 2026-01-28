@@ -14,18 +14,17 @@ SpriteRenderer::~SpriteRenderer()
 
 void SpriteRenderer::HandleBillboarding()
 {
-    glm::vec3 camPosition = targetCamera->GetCameraPos();
+    /*glm::vec3 camPosition = targetCamera->GetCameraPos();
     glm::vec3 myPosition = owner->position;
 
     float deltaX = camPosition.x - myPosition.x;
     float deltaZ = camPosition.z - myPosition.z;
 
     float angleRadians = std::atan2(deltaX, deltaZ);
-    float angleDegrees = glm::degrees(angleRadians);
+    float angleDegrees = glm::degrees(angleRadians);*/
 
-    owner->rotation.x = 0.0f;
-    owner->rotation.y = angleDegrees;
-    owner->rotation.z = 0.0f;
+    owner->rotation.x = debugTilt;
+    owner->rotation.y = 0.0f;
 }
 
 void SpriteRenderer::Update(float dt)

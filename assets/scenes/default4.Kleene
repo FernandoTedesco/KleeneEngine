@@ -20249,6 +20249,14 @@
         },
         {
             "Components": {
+                "CameraDirector": {
+                    "Offset": [
+                        0.0,
+                        4.0,
+                        4.0
+                    ],
+                    "SmoothedSpeed": 5.0
+                },
                 "MeshRenderer": {
                     "CastShadows": true,
                     "Color": [
@@ -20270,16 +20278,19 @@
                         1.0
                     ]
                 },
+                "PlayerController": {
+                    "MoveSpeed": 5.0
+                },
                 "SpriteRenderer": {
                     "IsBillboard": true,
                     "LockY": true
                 }
             },
-            "ID": 7,
+            "ID": 6,
             "Name": "quad.obj",
             "Transform": {
                 "Position": [
-                    -3.5,
+                    -3.6000022888183594,
                     0.0,
                     -6.5
                 ],
