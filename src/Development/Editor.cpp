@@ -1,7 +1,7 @@
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
-#include "Imgui_impl_sdl2.h"
+#include "imgui_impl_sdl2.h"
 #include "Utils/Telemetry.h"
 #include "Utils/MemoryTracker.h"
 #include "implot.h"

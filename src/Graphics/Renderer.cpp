@@ -18,7 +18,7 @@
 #include "Graphics/FrameBuffer.h"
 #include "Development/Editor.h"
 #include "PostProcessManager.h"
-#include "Shadowmap.h"
+#include "ShadowMap.h"
 Renderer::Renderer(Window* window)
 {
     // Paths & Resources

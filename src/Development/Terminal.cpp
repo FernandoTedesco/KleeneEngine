@@ -1,9 +1,13 @@
 #include "Terminal.h"
-#include <Windows.h>
 #include <stdio.h>
 #include <iostream>
 #include "Editor.h"
 unsigned int Terminal::ActiveFilters = LOG_ALL;
+
+// Windows-only console window (AllocConsole/ReadConsoleInput/etc.), disabled on other platforms for
+// now.
+#ifdef _WIN32
+#include <Windows.h>
 static const char* signature =
     R"(                                                                                        
   ▄▄▄▄   ▄▄▄ ▄▄                             ▄▄▄▄▄▄▄                                     
@@ -175,6 +179,33 @@ void Terminal::WriteArt()
 	      << std::endl;
 }
 
+#else
+Terminal::Terminal()
+{
+}
+unsigned long Terminal::UpdateConsoleInput()
+{
+    return 0;
+}
+void Terminal::ProcessConsoleInput()
+{
+}
+void Terminal::Log(LogCategory type, const std::string& message)
+{
+    if (!(ActiveFilters & type))
+    {
+	return;
+    }
+    std::cout << message << std::endl;
+}
+void Terminal::Clear()
+{
+}
+void Terminal::WriteArt()
+{
+}
+#endif
+
 void Terminal::ChangeLog()
 {
     std::cout << "Changelog of build 0.9:" << std::endl;
@@ -259,7 +290,13 @@ void Terminal::ExecuteConsoleCommand()
     }
 }
 
+#ifdef _WIN32
 Terminal::~Terminal()
 {
     FreeConsole();
 }
+#else
+Terminal::~Terminal()
+{
+}
+#endif

@@ -24,13 +24,13 @@ json Vec3ToJson(const glm::vec3& v)
 {
     return {v.x, v.y, v.z};
 }
-glm::vec3 JsonToVec3(const json& j, const glm::vec3& default = glm::vec3(0.0f))
+glm::vec3 JsonToVec3(const json& j, const glm::vec3& defaultValue = glm::vec3(0.0f))
 {
     if (j.is_array() && j.size() >= 3)
     {
 	return glm::vec3(j[0], j[1], j[2]);
     }
-    return default;
+    return defaultValue;
 }
 json Vec2ToJson(const glm::vec2& v)
 {

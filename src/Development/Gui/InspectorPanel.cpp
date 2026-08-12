@@ -39,7 +39,7 @@ void InspectorPanel::Draw(Scene* scene, int& selectedEntityIndex, ResourceManage
 	    ImGui::SameLine();
 
 	    char nameBuffer[64];
-	    strncpy_s(nameBuffer, object->name.c_str(), sizeof(nameBuffer));
+	    strncpy(nameBuffer, object->name.c_str(), sizeof(nameBuffer) - 1);
 	    nameBuffer[sizeof(nameBuffer) - 1] = 0;
 	    if (ImGui::InputText("Name", nameBuffer, 64))
 	    {

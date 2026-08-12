@@ -1,4 +1,7 @@
 #include "MemoryTracker.h"
+
+// Windows-only feature (GlobalMemoryStatusEx/psapi), disabled on other platforms for now.
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
@@ -44,3 +47,14 @@ void MemoryTracker::PollMemory()
 
     Offset = (Offset + 1) % MEMORY_HISTORY_SIZE;
 }
+#else
+void MemoryTracker::Init()
+{
+}
+void MemoryTracker::Update(float deltaTime)
+{
+}
+void MemoryTracker::PollMemory()
+{
+}
+#endif

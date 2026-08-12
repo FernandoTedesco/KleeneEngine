@@ -1,9 +1,12 @@
+#include "Telemetry.h"
+
+// Windows-only feature (psapi + NVML), disabled on other platforms for now.
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
 #include <psapi.h>
 #include <iostream>
-#include "Telemetry.h"
 #include "nvml.h"
 
 namespace SystemMetrics {
@@ -130,3 +133,24 @@ void GpuTelemetry::PollHardware()
     PowerHistory[HistoryOffset] = CurrentState.powerWatts;
     HistoryOffset = (HistoryOffset + 1) % HISTORY_SIZE;
 }
+#else
+namespace SystemMetrics {
+float GetRAMUsage()
+{
+    return 0.0f;
+}
+} // namespace SystemMetrics
+
+void GpuTelemetry::Init()
+{
+}
+void GpuTelemetry::Shutdown()
+{
+}
+void GpuTelemetry::Update(float deltaTime)
+{
+}
+void GpuTelemetry::PollHardware()
+{
+}
+#endif

@@ -6,9 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 
 
 
+if(WIN32)
 set(SDL2_LIB "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2.lib")
 set(SDL2_MAIN_LIB "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2main.lib")
 set(SDL2_DLL "${CMAKE_SOURCE_DIR}/deps/SDL2/lib/x64/SDL2.dll")
+else()
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2 REQUIRED sdl2)
+endif()
 set(SOURCE_IMGUI
 ${CMAKE_SOURCE_DIR}/deps/ImGui/imgui.cpp
 ${CMAKE_SOURCE_DIR}/deps/ImGui/imgui_draw.cpp
@@ -101,11 +106,17 @@ ${CMAKE_SOURCE_DIR}/deps
 ${CMAKE_SOURCE_DIR}/deps/Nvidia
 ${CMAKE_SOURCE_DIR}/deps/ImGui
 ${CMAKE_SOURCE_DIR}/deps/ImGui/backends
-${CMAKE_SOURCE_DIR}/deps/SDL2/include
 ${CMAKE_SOURCE_DIR}/deps/ImPlot
 ${CMAKE_SOURCE_DIR}/deps/Miniaudio
 )
 
+if(WIN32)
+target_include_directories(KleeneRuntime PRIVATE ${CMAKE_SOURCE_DIR}/deps/SDL2/include)
+else()
+target_include_directories(KleeneRuntime PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
+
+if(WIN32)
 target_link_libraries(KleeneRuntime PRIVATE
 ${SDL2_MAIN_LIB}
 ${SDL2_LIB}
@@ -117,4 +128,8 @@ COMMAND ${CMAKE_COMMAND} -E copy_if_different
 "${SDL2_DLL}"
 $<TARGET_FILE_DIR:KleeneRuntime>
 )
+else()
+target_link_libraries(KleeneRuntime PRIVATE ${SDL2_LIBRARIES})
+target_link_directories(KleeneRuntime PRIVATE ${SDL2_LIBRARY_DIRS})
+endif()
 
